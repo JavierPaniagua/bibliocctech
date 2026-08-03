@@ -1,0 +1,48 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        {% block title %}
+            Biblioteca Escolar
+        {% endblock %}
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="{% static 'css/estilos.css' %}"
+    >
+</head>
+
+<body>
+    <header class="encabezado">
+        <div class="encabezado-contenido">
+            <div>
+                <h1>Biblioteca Escolar</h1>
+                <p>Sistema de gestión bibliotecaria</p>
+            </div>
+
+            <div class="usuario">
+                Bibliotecaria
+            </div>
+        </div>
+    </header>
+
+    <main class="contenedor">
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <footer class="pie">
+        Sistema de Biblioteca Escolar - 2026
+    </footer>
+</body>
+</html>

@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Alumnos | Biblioteca Escolar
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecera-pagina">
+    <div>
+        <h2>Alumnos</h2>
+
+        <p>
+            Registro y consulta de alumnos.
+        </p>
+    </div>
+
+    <a
+        href="{% url 'alumnos:crear' %}"
+        class="boton boton-primario"
+    >
+        + Registrar alumno
+    </a>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="mensaje mensaje-{{ message.tags }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="panel">
+
+    <form method="get" class="buscador">
+        <input
+            type="text"
+            name="buscar"
+            value="{{ busqueda }}"
+            class="campo campo-buscar"
+            placeholder="Buscar por cédula, nombre, apellido o curso"
+        >
+
+        <button
+            type="submit"
+            class="boton boton-primario"
+        >
+            Buscar
+        </button>
+
+        {% if busqueda %}
+            <a
+                href="{% url 'alumnos:lista' %}"
+                class="boton boton-secundario"
+            >
+                Limpiar
+            </a>
+        {% endif %}
+    </form>
+
+    <div class="tabla-contenedor">
+        <table class="tabla">
+            <thead>
+                <tr>
+                    <th>Cédula</th>
+                    <th>Alumno</th>
+                    <th>Curso</th>
+                    <th>Sección</th>
+                    <th>Especialidad</th>
+                    <th>Turno</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for alumno in alumnos %}
+                    <tr>
+                        <td>{{ alumno.cedula }}</td>
+
+                        <td>
+                            {{ alumno.apellidos }},
+                            {{ alumno.nombres }}
+                        </td>
+
+                        <td>{{ alumno.curso }}</td>
+
+                        <td>
+                            {{ alumno.seccion|default:"-" }}
+                        </td>
+
+                        <td>
+                            {{ alumno.especialidad|default:"-" }}
+                        </td>
+
+                        <td>{{ alumno.get_turno_display }}</td>
+
+                        <td>
+                            {% if alumno.activo %}
+                                <span class="estado estado-activo">
+                                    Activo
+                                </span>
+                            {% else %}
+                                <span class="estado estado-inactivo">
+                                    Inactivo
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <a
+                                href="{% url 'alumnos:editar' alumno.id %}"
+                                class="enlace-editar"
+                            >
+                                Editar
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="8" class="sin-registros">
+                            No se encontraron alumnos.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <p class="cantidad-registros">
+        Total encontrado: {{ alumnos|length }}
+    </p>
+
+</div>
+
+{% endblock %}

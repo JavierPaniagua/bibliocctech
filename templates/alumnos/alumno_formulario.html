@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {{ titulo }} | Biblioteca Escolar
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecera-pagina">
+    <div>
+        <h2>{{ titulo }}</h2>
+
+        <p>
+            Complete los datos solicitados.
+        </p>
+    </div>
+
+    <a
+        href="{% url 'alumnos:lista' %}"
+        class="boton boton-secundario"
+    >
+        Volver
+    </a>
+</div>
+
+<div class="panel formulario-panel">
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        {% if formulario.non_field_errors %}
+            <div class="mensaje mensaje-error">
+                {{ formulario.non_field_errors }}
+            </div>
+        {% endif %}
+
+        <div class="formulario-grid">
+
+            {% for campo in formulario %}
+                <div
+                    class="grupo-campo
+                    {% if campo.name == 'activo' %}
+                        grupo-casilla
+                    {% endif %}"
+                >
+                    <label for="{{ campo.id_for_label }}">
+                        {{ campo.label }}
+
+                        {% if campo.field.required %}
+                            <span class="obligatorio">*</span>
+                        {% endif %}
+                    </label>
+
+                    {{ campo }}
+
+                    {% if campo.help_text %}
+                        <small>{{ campo.help_text }}</small>
+                    {% endif %}
+
+                    {% for error in campo.errors %}
+                        <span class="error-campo">
+                            {{ error }}
+                        </span>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+        </div>
+
+        <div class="acciones-formulario">
+            <button
+                type="submit"
+                class="boton boton-primario"
+            >
+                {{ texto_boton }}
+            </button>
+
+            <a
+                href="{% url 'alumnos:lista' %}"
+                class="boton boton-secundario"
+            >
+                Cancelar
+            </a>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}

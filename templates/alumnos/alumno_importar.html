@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Importar alumnos | Biblioteca Escolar
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecera-pagina">
+    <div>
+        <h2>Importar alumnos desde Excel</h2>
+
+        <p>
+            Seleccione la plantilla completada con los datos
+            de los estudiantes.
+        </p>
+    </div>
+
+    <a
+        href="{% url 'alumnos:lista' %}"
+        class="boton boton-secundario"
+    >
+        Volver
+    </a>
+</div>
+
+<div class="panel formulario-panel">
+
+    <div class="aviso-importacion">
+        <h3>Antes de importar</h3>
+
+        <ul>
+            <li>
+                Utilice la plantilla oficial de alumnos.
+            </li>
+
+            <li>
+                No cambie los nombres de las columnas.
+            </li>
+
+            <li>
+                La cédula no debe repetirse.
+            </li>
+
+            <li>
+                Las especialidades permitidas son
+                Electrónica y Electricidad.
+            </li>
+
+            <li>
+                El archivo debe estar guardado como .xlsx.
+            </li>
+        </ul>
+    </div>
+
+    <form
+        method="post"
+        enctype="multipart/form-data"
+        novalidate
+    >
+        {% csrf_token %}
+
+        <div class="grupo-campo">
+            <label for="{{ formulario.archivo.id_for_label }}">
+                {{ formulario.archivo.label }}
+            </label>
+
+            {{ formulario.archivo }}
+
+            {% for error in formulario.archivo.errors %}
+                <span class="error-campo">
+                    {{ error }}
+                </span>
+            {% endfor %}
+        </div>
+
+        <div class="acciones-formulario">
+            <button
+                type="submit"
+                class="boton boton-primario"
+            >
+                Importar alumnos
+            </button>
+
+            <a
+                href="{% url 'alumnos:lista' %}"
+                class="boton boton-secundario"
+            >
+                Cancelar
+            </a>
+        </div>
+    </form>
+
+</div>
+
+{% if resultados %}
+
+    <section class="resultado-importacion">
+
+        <h2>Resultado de la importación</h2>
+
+        <div class="resumen-importacion">
+
+            <div class="resultado resultado-correcto">
+                <strong>{{ resultados.importados }}</strong>
+                <span>Alumnos importados</span>
+            </div>
+
+            <div class="resultado resultado-duplicado">
+                <strong>{{ resultados.duplicados }}</strong>
+                <span>Registros duplicados</span>
+            </div>
+
+            <div class="resultado resultado-error">
+                <strong>{{ resultados.cantidad_errores }}</strong>
+                <span>Filas con observaciones</span>
+            </div>
+
+        </div>
+
+        {% if resultados.errores %}
+
+            <div class="lista-errores">
+                <h3>Observaciones encontradas</h3>
+
+                <ul>
+                    {% for error in resultados.errores %}
+                        <li>{{ error }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+        {% else %}
+
+            <div class="mensaje mensaje-success">
+                Todos los alumnos fueron importados correctamente.
+            </div>
+
+        {% endif %}
+
+        {% if resultados.importados > 0 %}
+            <a
+                href="{% url 'alumnos:lista' %}"
+                class="boton boton-primario"
+            >
+                Ver alumnos registrados
+            </a>
+        {% endif %}
+
+    </section>
+
+{% endif %}
+
+{% endblock %}

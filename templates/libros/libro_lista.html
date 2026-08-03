@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Libros | Biblioteca Escolar
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecera-pagina">
+    <div>
+        <h2>Libros</h2>
+
+        <p>
+            Inventario de títulos y ejemplares.
+        </p>
+    </div>
+
+    <a
+        href="{% url 'libros:crear' %}"
+        class="boton boton-primario"
+    >
+        + Registrar libro
+    </a>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="mensaje mensaje-{{ message.tags }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="panel">
+
+    <form method="get" class="buscador">
+        <input
+            type="text"
+            name="buscar"
+            value="{{ busqueda }}"
+            class="campo campo-buscar"
+            placeholder="Buscar por título, autor, ISBN, categoría o código"
+        >
+
+        <button
+            type="submit"
+            class="boton boton-primario"
+        >
+            Buscar
+        </button>
+
+        {% if busqueda %}
+            <a
+                href="{% url 'libros:lista' %}"
+                class="boton boton-secundario"
+            >
+                Limpiar
+            </a>
+        {% endif %}
+    </form>
+
+    <div class="tabla-contenedor">
+        <table class="tabla">
+            <thead>
+                <tr>
+                    <th>Título</th>
+                    <th>Autor</th>
+                    <th>Categoría</th>
+                    <th>ISBN</th>
+                    <th>Ubicación</th>
+                    <th>Total</th>
+                    <th>Disponibles</th>
+                    <th>Prestados</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for libro in libros %}
+                    <tr>
+                        <td>
+                            <strong>{{ libro.titulo }}</strong>
+                        </td>
+
+                        <td>{{ libro.autor|default:"-" }}</td>
+                        <td>{{ libro.categoria }}</td>
+                        <td>{{ libro.isbn|default:"-" }}</td>
+                        <td>{{ libro.ubicacion|default:"-" }}</td>
+                        <td>{{ libro.cantidad_total }}</td>
+                        <td>{{ libro.cantidad_disponible }}</td>
+                        <td>{{ libro.cantidad_prestada }}</td>
+
+                        <td>
+                            <a
+                                href="{% url 'libros:detalle' libro.id %}"
+                                class="enlace-editar"
+                            >
+                                Ver
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="9" class="sin-registros">
+                            No se encontraron libros.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <p class="cantidad-registros">
+        Total de títulos: {{ libros|length }}
+    </p>
+
+</div>
+
+{% endblock %}

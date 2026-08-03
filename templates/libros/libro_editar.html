@@ -1,0 +1,75 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Editar libro | Biblioteca Escolar
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecera-pagina">
+    <div>
+        <h2>Editar libro</h2>
+        <p>{{ libro.titulo }}</p>
+    </div>
+
+    <a
+        href="{% url 'libros:detalle' libro.id %}"
+        class="boton boton-secundario"
+    >
+        Volver
+    </a>
+</div>
+
+<div class="panel formulario-panel">
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="formulario-grid">
+
+            {% for campo in formulario %}
+                <div
+                    class="grupo-campo
+                    {% if campo.name == 'descripcion' %}
+                        campo-completo
+                    {% endif %}
+                    {% if campo.name == 'activo' %}
+                        grupo-casilla
+                    {% endif %}"
+                >
+                    <label for="{{ campo.id_for_label }}">
+                        {{ campo.label }}
+                    </label>
+
+                    {{ campo }}
+
+                    {% for error in campo.errors %}
+                        <span class="error-campo">
+                            {{ error }}
+                        </span>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+        </div>
+
+        <div class="acciones-formulario">
+            <button
+                type="submit"
+                class="boton boton-primario"
+            >
+                Actualizar libro
+            </button>
+
+            <a
+                href="{% url 'libros:detalle' libro.id %}"
+                class="boton boton-secundario"
+            >
+                Cancelar
+            </a>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}

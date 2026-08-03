@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Registrar libro | Biblioteca Escolar
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecera-pagina">
+    <div>
+        <h2>Registrar libro</h2>
+
+        <p>
+            Registre el título y la cantidad de ejemplares.
+        </p>
+    </div>
+
+    <a
+        href="{% url 'libros:lista' %}"
+        class="boton boton-secundario"
+    >
+        Volver
+    </a>
+</div>
+
+<div class="panel formulario-panel">
+
+    <form method="post" novalidate>
+        {% csrf_token %}
+
+        <div class="formulario-grid">
+
+            {% for campo in formulario %}
+                <div
+                    class="grupo-campo
+                    {% if campo.name == 'descripcion' %}
+                        campo-completo
+                    {% endif %}
+                    {% if campo.name == 'activo' %}
+                        grupo-casilla
+                    {% endif %}"
+                >
+                    <label for="{{ campo.id_for_label }}">
+                        {{ campo.label }}
+
+                        {% if campo.field.required %}
+                            <span class="obligatorio">*</span>
+                        {% endif %}
+                    </label>
+
+                    {{ campo }}
+
+                    {% for error in campo.errors %}
+                        <span class="error-campo">
+                            {{ error }}
+                        </span>
+                    {% endfor %}
+                </div>
+            {% endfor %}
+
+        </div>
+
+        <div class="aviso-importacion">
+            El sistema generará automáticamente un código diferente
+            para cada ejemplar, por ejemplo:
+            <strong>CCTL-LIB-000001</strong>.
+        </div>
+
+        <div class="acciones-formulario">
+            <button
+                type="submit"
+                class="boton boton-primario"
+            >
+                Guardar libro y generar ejemplares
+            </button>
+
+            <a
+                href="{% url 'libros:lista' %}"
+                class="boton boton-secundario"
+            >
+                Cancelar
+            </a>
+        </div>
+    </form>
+
+</div>
+
+{% endblock %}

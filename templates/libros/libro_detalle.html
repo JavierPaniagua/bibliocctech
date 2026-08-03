@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {{ libro.titulo }} | Biblioteca Escolar
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecera-pagina">
+    <div>
+        <h2>{{ libro.titulo }}</h2>
+
+        <p>
+            Información del libro y sus ejemplares.
+        </p>
+    </div>
+
+    <div class="grupo-botones">
+        <a
+            href="{% url 'libros:editar' libro.id %}"
+            class="boton boton-primario"
+        >
+            Editar libro
+        </a>
+
+        <a
+            href="{% url 'libros:lista' %}"
+            class="boton boton-secundario"
+        >
+            Volver
+        </a>
+    </div>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="mensaje mensaje-{{ message.tags }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="panel">
+
+    <div class="ficha-libro">
+        <p><strong>Autor:</strong> {{ libro.autor|default:"-" }}</p>
+
+        <p>
+            <strong>Editorial:</strong>
+            {{ libro.editorial|default:"-" }}
+        </p>
+
+        <p><strong>Categoría:</strong> {{ libro.categoria }}</p>
+        <p><strong>ISBN:</strong> {{ libro.isbn|default:"-" }}</p>
+
+        <p>
+            <strong>Edición:</strong>
+            {{ libro.edicion|default:"-" }}
+        </p>
+
+        <p>
+            <strong>Año:</strong>
+            {{ libro.anio_publicacion|default:"-" }}
+        </p>
+
+        <p>
+            <strong>Ubicación:</strong>
+            {{ libro.ubicacion|default:"-" }}
+        </p>
+
+        <p>
+            <strong>Total:</strong>
+            {{ libro.cantidad_total }}
+        </p>
+
+        <p>
+            <strong>Disponibles:</strong>
+            {{ libro.cantidad_disponible }}
+        </p>
+    </div>
+
+    <h3>Ejemplares</h3>
+
+    <div class="tabla-contenedor">
+        <table class="tabla">
+            <thead>
+                <tr>
+                    <th>Código CCTL</th>
+                    <th>Estado</th>
+                    <th>Condición</th>
+                    <th>Adquisición</th>
+                    <th>Fecha</th>
+                    <th>Observaciones</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for ejemplar in ejemplares %}
+                    <tr>
+                        <td>
+                            <strong>{{ ejemplar.codigo }}</strong>
+                        </td>
+
+                        <td>{{ ejemplar.get_estado_display }}</td>
+
+                        <td>
+                            {{ ejemplar.get_condicion_display }}
+                        </td>
+
+                        <td>
+                            {{ ejemplar.get_forma_adquisicion_display }}
+                        </td>
+
+                        <td>
+                            {{ ejemplar.fecha_adquisicion|default:"-" }}
+                        </td>
+
+                        <td>
+                            {{ ejemplar.observaciones|default:"-" }}
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="6" class="sin-registros">
+                            Este libro no posee ejemplares.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+{% endblock %}

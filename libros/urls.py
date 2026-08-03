@@ -20,6 +20,12 @@ urlpatterns = [
     ),
 
     path(
+        'importar/',
+        views.libro_importar,
+        name='importar',
+    ),
+
+    path(
         '<int:libro_id>/',
         views.libro_detalle,
         name='detalle',

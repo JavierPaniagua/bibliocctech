@@ -15,12 +15,21 @@
         </p>
     </div>
 
+    <div class="grupo-botones">
+    <a
+        href="{% url 'docentes:importar' %}"
+        class="boton boton-excel"
+    >
+        Importar Excel
+    </a>
+
     <a
         href="{% url 'docentes:crear' %}"
         class="boton boton-primario"
     >
         + Registrar docente
     </a>
+</div>
 </div>
 
 {% if messages %}

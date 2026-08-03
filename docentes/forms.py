@@ -98,3 +98,29 @@ class DocenteForm(forms.ModelForm):
             )
 
         return cedula
+
+class ImportarDocentesForm(forms.Form):
+    archivo = forms.FileField(
+        label='Planilla Excel',
+        widget=forms.ClearableFileInput(
+            attrs={
+                'class': 'campo',
+                'accept': '.xlsx',
+            }
+        ),
+    )
+
+    def clean_archivo(self):
+        archivo = self.cleaned_data['archivo']
+
+        if not archivo.name.lower().endswith('.xlsx'):
+            raise forms.ValidationError(
+                'Seleccione un archivo de Excel con extensión .xlsx.'
+            )
+
+        if archivo.size > 5 * 1024 * 1024:
+            raise forms.ValidationError(
+                'El archivo no puede superar los 5 MB.'
+            )
+
+        return archivo

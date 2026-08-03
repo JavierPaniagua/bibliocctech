@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Inicio | Biblioteca Escolar
+Inicio | Biblioteca Escolar
 {% endblock %}
 
 {% block content %}
@@ -16,16 +16,26 @@
 
 <section class="tarjetas">
 
-    <a
-    href="{% url 'alumnos:lista' %}"
-    class="tarjeta tarjeta-azul"
->
+    <a href="{% url 'alumnos:lista' %}" class="tarjeta tarjeta-azul">
         <span class="icono">👥</span>
 
         <div>
             <h3>Alumnos</h3>
             <p>
                 Registrar, importar y buscar alumnos.
+            </p>
+        </div>
+    </a>
+
+
+    <a href="{% url 'docentes:lista' %}" class="tarjeta tarjeta-docentes">
+        <span class="icono">👨‍🏫</span>
+
+        <div>
+            <h3>Docentes</h3>
+
+            <p>
+                Registrar, importar y buscar docentes.
             </p>
         </div>
     </a>

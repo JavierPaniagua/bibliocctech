@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Docentes | Biblioteca Escolar
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecera-pagina">
+    <div>
+        <h2>Docentes</h2>
+
+        <p>
+            Registro y consulta de docentes.
+        </p>
+    </div>
+
+    <a
+        href="{% url 'docentes:crear' %}"
+        class="boton boton-primario"
+    >
+        + Registrar docente
+    </a>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="mensaje mensaje-{{ message.tags }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="panel">
+
+    <form method="get" class="buscador">
+        <input
+            type="text"
+            name="buscar"
+            value="{{ busqueda }}"
+            class="campo campo-buscar"
+            placeholder="Buscar por cédula, nombre, apellido o área"
+        >
+
+        <button
+            type="submit"
+            class="boton boton-primario"
+        >
+            Buscar
+        </button>
+
+        {% if busqueda %}
+            <a
+                href="{% url 'docentes:lista' %}"
+                class="boton boton-secundario"
+            >
+                Limpiar
+            </a>
+        {% endif %}
+    </form>
+
+    <div class="tabla-contenedor">
+        <table class="tabla">
+            <thead>
+                <tr>
+                    <th>Cédula</th>
+                    <th>Docente</th>
+                    <th>Área</th>
+                    <th>Especialidad</th>
+                    <th>Teléfono</th>
+                    <th>Correo</th>
+                    <th>Turno</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for docente in docentes %}
+                    <tr>
+                        <td>{{ docente.cedula }}</td>
+
+                        <td>
+                            {{ docente.apellidos }},
+                            {{ docente.nombres }}
+                        </td>
+
+                        <td>
+                            {{ docente.area|default:"-" }}
+                        </td>
+
+                        <td>
+                            {{ docente.get_especialidad_display }}
+                        </td>
+
+                        <td>
+                            {{ docente.telefono|default:"-" }}
+                        </td>
+
+                        <td>
+                            {{ docente.correo|default:"-" }}
+                        </td>
+
+                        <td>
+                            {{ docente.get_turno_display }}
+                        </td>
+
+                        <td>
+                            {% if docente.activo %}
+                                <span class="estado estado-activo">
+                                    Activo
+                                </span>
+                            {% else %}
+                                <span class="estado estado-inactivo">
+                                    Inactivo
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <a
+                                href="{% url 'docentes:editar' docente.id %}"
+                                class="enlace-editar"
+                            >
+                                Editar
+                            </a>
+                        </td>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="9" class="sin-registros">
+                            No se encontraron docentes.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <p class="cantidad-registros">
+        Total encontrado: {{ docentes|length }}
+    </p>
+
+</div>
+
+{% endblock %}

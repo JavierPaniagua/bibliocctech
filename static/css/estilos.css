@@ -551,3 +551,7 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+.tarjeta-docentes {
+    background-color: #4f6f52;
+}

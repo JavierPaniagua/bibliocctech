@@ -17,8 +17,15 @@
 
     <div class="grupo-botones">
         <a
-            href="{% url 'libros:editar' libro.id %}"
+            href="{% url 'libros:ejemplar_crear' libro.id %}"
             class="boton boton-primario"
+        >
+            + Agregar ejemplar
+        </a>
+
+        <a
+            href="{% url 'libros:editar' libro.id %}"
+            class="boton boton-secundario"
         >
             Editar libro
         </a>
@@ -43,15 +50,25 @@
 <div class="panel">
 
     <div class="ficha-libro">
-        <p><strong>Autor:</strong> {{ libro.autor|default:"-" }}</p>
+        <p>
+            <strong>Autor:</strong>
+            {{ libro.autor|default:"-" }}
+        </p>
 
         <p>
             <strong>Editorial:</strong>
             {{ libro.editorial|default:"-" }}
         </p>
 
-        <p><strong>Categoría:</strong> {{ libro.categoria }}</p>
-        <p><strong>ISBN:</strong> {{ libro.isbn|default:"-" }}</p>
+        <p>
+            <strong>Categoría:</strong>
+            {{ libro.categoria|default:"-" }}
+        </p>
+
+        <p>
+            <strong>ISBN:</strong>
+            {{ libro.isbn|default:"-" }}
+        </p>
 
         <p>
             <strong>Edición:</strong>
@@ -64,11 +81,6 @@
         </p>
 
         <p>
-            <strong>Ubicación:</strong>
-            {{ libro.ubicacion|default:"-" }}
-        </p>
-
-        <p>
             <strong>Total:</strong>
             {{ libro.cantidad_total }}
         </p>
@@ -77,20 +89,37 @@
             <strong>Disponibles:</strong>
             {{ libro.cantidad_disponible }}
         </p>
+
+        <p>
+            <strong>Prestados:</strong>
+            {{ libro.cantidad_prestada }}
+        </p>
     </div>
 
-    <h3>Ejemplares</h3>
+    <div class="cabecera-pagina">
+        <div>
+            <h3>Ejemplares</h3>
+
+            <p>
+                Cada fila representa un libro físico.
+            </p>
+        </div>
+    </div>
 
     <div class="tabla-contenedor">
         <table class="tabla">
             <thead>
                 <tr>
-                    <th>Código CCTL</th>
+                    <th>Inventario</th>
+                    <th>Ubicación</th>
                     <th>Estado</th>
                     <th>Condición</th>
                     <th>Adquisición</th>
+                    <th>Proveedor</th>
                     <th>Fecha</th>
                     <th>Observaciones</th>
+                    <th>Etiqueta</th>
+                    <th>Acciones</th>
                 </tr>
             </thead>
 
@@ -98,10 +127,24 @@
                 {% for ejemplar in ejemplares %}
                     <tr>
                         <td>
-                            <strong>{{ ejemplar.codigo }}</strong>
+                            <strong>
+                                {{ ejemplar.numero_inventario }}
+                            </strong>
                         </td>
 
-                        <td>{{ ejemplar.get_estado_display }}</td>
+                        <td>
+                            {% if ejemplar.estanteria or ejemplar.balda %}
+                                {{ ejemplar.ubicacion }}
+                            {% else %}
+                                <span class="estado-pendiente">
+                                    Pendiente
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ ejemplar.get_estado_display }}
+                        </td>
 
                         <td>
                             {{ ejemplar.get_condicion_display }}
@@ -112,16 +155,40 @@
                         </td>
 
                         <td>
+                            {{ ejemplar.proveedor|default:"-" }}
+                        </td>
+
+                        <td>
                             {{ ejemplar.fecha_adquisicion|default:"-" }}
                         </td>
 
                         <td>
                             {{ ejemplar.observaciones|default:"-" }}
                         </td>
+
+                        <td>
+                            {% if ejemplar.etiqueta_impresa %}
+                                Impresa
+                            {% else %}
+                                Pendiente
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            <a
+                                href="{% url 'libros:ejemplar_editar' ejemplar.id %}"
+                                class="enlace-editar"
+                            >
+                                Editar
+                            </a>
+                        </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="6" class="sin-registros">
+                        <td
+                            colspan="10"
+                            class="sin-registros"
+                        >
                             Este libro no posee ejemplares.
                         </td>
                     </tr>

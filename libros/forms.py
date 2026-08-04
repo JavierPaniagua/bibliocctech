@@ -18,6 +18,30 @@ class LibroCrearForm(forms.ModelForm):
         ),
     )
 
+    estanteria = forms.CharField(
+        label='Estantería',
+        required=False,
+        max_length=20,
+        widget=forms.TextInput(
+            attrs={
+                'class': 'campo',
+                'placeholder': 'Ejemplo: A',
+            }
+        ),
+    )
+
+    balda = forms.CharField(
+        label='Balda',
+        required=False,
+        max_length=20,
+        widget=forms.TextInput(
+            attrs={
+                'class': 'campo',
+                'placeholder': 'Ejemplo: 03',
+            }
+        ),
+    )
+
     condicion_inicial = forms.ChoiceField(
         label='Condición inicial',
         choices=Ejemplar.Condicion.choices,
@@ -51,6 +75,30 @@ class LibroCrearForm(forms.ModelForm):
         ),
     )
 
+    proveedor = forms.CharField(
+        label='Proveedor',
+        required=False,
+        max_length=200,
+        widget=forms.TextInput(
+            attrs={
+                'class': 'campo',
+                'placeholder': 'Proveedor o institución',
+            }
+        ),
+    )
+
+    observaciones = forms.CharField(
+        label='Observaciones del ejemplar',
+        required=False,
+        widget=forms.Textarea(
+            attrs={
+                'class': 'campo',
+                'rows': 3,
+                'placeholder': 'Observaciones opcionales',
+            }
+        ),
+    )
+
     class Meta:
         model = Libro
 
@@ -62,7 +110,6 @@ class LibroCrearForm(forms.ModelForm):
             'isbn',
             'edicion',
             'anio_publicacion',
-            'ubicacion',
             'descripcion',
             'activo',
         ]
@@ -100,7 +147,7 @@ class LibroCrearForm(forms.ModelForm):
             'isbn': forms.TextInput(
                 attrs={
                     'class': 'campo',
-                    'placeholder': 'ISBN con o sin guiones',
+                    'placeholder': 'ISBN opcional',
                 }
             ),
 
@@ -117,13 +164,6 @@ class LibroCrearForm(forms.ModelForm):
                     'min': 1000,
                     'max': 2100,
                     'placeholder': 'Ejemplo: 2024',
-                }
-            ),
-
-            'ubicacion': forms.TextInput(
-                attrs={
-                    'class': 'campo',
-                    'placeholder': 'Ejemplo: Estante A-01',
                 }
             ),
 
@@ -174,46 +214,36 @@ class LibroEditarForm(forms.ModelForm):
             'isbn',
             'edicion',
             'anio_publicacion',
-            'ubicacion',
             'descripcion',
             'activo',
         ]
 
         widgets = {
             'titulo': forms.TextInput(
-                attrs={
-                    'class': 'campo',
-                }
+                attrs={'class': 'campo'}
             ),
 
             'autor': forms.TextInput(
-                attrs={
-                    'class': 'campo',
-                }
+                attrs={'class': 'campo'}
             ),
 
             'editorial': forms.TextInput(
-                attrs={
-                    'class': 'campo',
-                }
+                attrs={'class': 'campo'}
             ),
 
             'categoria': forms.TextInput(
-                attrs={
-                    'class': 'campo',
-                }
+                attrs={'class': 'campo'}
             ),
 
             'isbn': forms.TextInput(
                 attrs={
                     'class': 'campo',
+                    'placeholder': 'ISBN opcional',
                 }
             ),
 
             'edicion': forms.TextInput(
-                attrs={
-                    'class': 'campo',
-                }
+                attrs={'class': 'campo'}
             ),
 
             'anio_publicacion': forms.NumberInput(
@@ -221,12 +251,6 @@ class LibroEditarForm(forms.ModelForm):
                     'class': 'campo',
                     'min': 1000,
                     'max': 2100,
-                }
-            ),
-
-            'ubicacion': forms.TextInput(
-                attrs={
-                    'class': 'campo',
                 }
             ),
 
@@ -238,9 +262,7 @@ class LibroEditarForm(forms.ModelForm):
             ),
 
             'activo': forms.CheckboxInput(
-                attrs={
-                    'class': 'casilla',
-                }
+                attrs={'class': 'casilla'}
             ),
         }
 
@@ -252,6 +274,80 @@ class LibroEditarForm(forms.ModelForm):
             .replace(' ', '')
             .replace('-', '')
         )
+
+
+class EjemplarForm(forms.ModelForm):
+    class Meta:
+        model = Ejemplar
+
+        fields = [
+            'numero_inventario',
+            'estanteria',
+            'balda',
+            'proveedor',
+            'estado',
+            'condicion',
+            'forma_adquisicion',
+            'fecha_adquisicion',
+            'observaciones',
+        ]
+
+        widgets = {
+            'numero_inventario': forms.NumberInput(
+                attrs={
+                    'class': 'campo',
+                    'min': 1,
+                    'placeholder': (
+                        'Vacío para generar automáticamente'
+                    ),
+                }
+            ),
+
+            'estanteria': forms.TextInput(
+                attrs={
+                    'class': 'campo',
+                    'placeholder': 'Ejemplo: A',
+                }
+            ),
+
+            'balda': forms.TextInput(
+                attrs={
+                    'class': 'campo',
+                    'placeholder': 'Ejemplo: 03',
+                }
+            ),
+
+            'proveedor': forms.TextInput(
+                attrs={'class': 'campo'}
+            ),
+
+            'estado': forms.Select(
+                attrs={'class': 'campo'}
+            ),
+
+            'condicion': forms.Select(
+                attrs={'class': 'campo'}
+            ),
+
+            'forma_adquisicion': forms.Select(
+                attrs={'class': 'campo'}
+            ),
+
+            'fecha_adquisicion': forms.DateInput(
+                attrs={
+                    'class': 'campo',
+                    'type': 'date',
+                }
+            ),
+
+            'observaciones': forms.Textarea(
+                attrs={
+                    'class': 'campo',
+                    'rows': 4,
+                }
+            ),
+        }
+
 
 class ImportarLibrosForm(forms.Form):
     archivo = forms.FileField(

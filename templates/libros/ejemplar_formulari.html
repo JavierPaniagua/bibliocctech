@@ -1,22 +1,23 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Registrar libro | Biblioteca Escolar
+    {{ titulo_pagina }} | Biblioteca Escolar
 {% endblock %}
 
 {% block content %}
 
 <div class="cabecera-pagina">
     <div>
-        <h2>Registrar libro</h2>
+        <h2>{{ titulo_pagina }}</h2>
 
         <p>
-            Registre el título y la cantidad de ejemplares.
+            Libro:
+            <strong>{{ libro.titulo }}</strong>
         </p>
     </div>
 
     <a
-        href="{% url 'libros:lista' %}"
+        href="{% url 'libros:detalle' libro.id %}"
         class="boton boton-secundario"
     >
         Volver
@@ -25,20 +26,33 @@
 
 <div class="panel formulario-panel">
 
+    <div class="aviso-importacion">
+        Si deja vacío el número de inventario,
+        el sistema asignará automáticamente el primer
+        número disponible.
+    </div>
+
     <form method="post" novalidate>
         {% csrf_token %}
+
+        {% if formulario.non_field_errors %}
+            <div class="mensaje mensaje-error">
+                {% for error in formulario.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
 
         <div class="formulario-grid">
 
             {% for campo in formulario %}
                 <div
-                    class="grupo-campo
-                    {% if campo.name == 'descripcion' %}
-                        campo-completo
-                    {% endif %}
-                    {% if campo.name == 'activo' %}
-                        grupo-casilla
-                    {% endif %}"
+                    class="
+                        grupo-campo
+                        {% if campo.name == 'observaciones' %}
+                            campo-completo
+                        {% endif %}
+                    "
                 >
                     <label for="{{ campo.id_for_label }}">
                         {{ campo.label }}
@@ -50,6 +64,10 @@
 
                     {{ campo }}
 
+                    {% if campo.help_text %}
+                        <small>{{ campo.help_text }}</small>
+                    {% endif %}
+
                     {% for error in campo.errors %}
                         <span class="error-campo">
                             {{ error }}
@@ -60,23 +78,16 @@
 
         </div>
 
-        <div class="aviso-importacion">
-            El sistema generará automáticamente un número de
-            inventario diferente para cada ejemplar.
-            También podrá completar la estantería y la balda
-            posteriormente.
-        </div>
-
         <div class="acciones-formulario">
             <button
                 type="submit"
                 class="boton boton-primario"
             >
-                Guardar libro y generar ejemplares
+                Guardar ejemplar
             </button>
 
             <a
-                href="{% url 'libros:lista' %}"
+                href="{% url 'libros:detalle' libro.id %}"
                 class="boton boton-secundario"
             >
                 Cancelar

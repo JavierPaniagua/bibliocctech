@@ -195,29 +195,29 @@ class Prestamo(models.Model):
                 )
             )
 
-        if self.fecha_devolucion_prevista:
-            if (
-                self.fecha_devolucion_prevista
-                < self.fecha_prestamo
-            ):
-                raise ValidationError(
-                    {
-                        'fecha_devolucion_prevista': (
-                            'La devolución prevista no puede '
-                            'ser anterior al préstamo.'
-                        )
-                    }
-                )
-
-def save(self, *args, **kwargs):
-    if not self.fecha_devolucion_prevista:
-        self.fecha_devolucion_prevista = (
-            sumar_dias_habiles(
-                self.fecha_prestamo,
-                5,
+        if (
+            self.fecha_devolucion_prevista
+            and self.fecha_devolucion_prevista
+            < self.fecha_prestamo
+        ):
+            raise ValidationError(
+                {
+                    'fecha_devolucion_prevista': (
+                        'La devolución prevista no puede '
+                        'ser anterior al préstamo.'
+                    )
+                }
             )
-        )
 
-    self.full_clean()
+    def save(self, *args, **kwargs):
+        if not self.fecha_devolucion_prevista:
+            self.fecha_devolucion_prevista = (
+                sumar_dias_habiles(
+                    self.fecha_prestamo,
+                    5,
+                )
+            )
 
-    super().save(*args, **kwargs)
+        self.full_clean()
+
+        super().save(*args, **kwargs)

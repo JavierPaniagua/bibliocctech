@@ -11,8 +11,7 @@
         <h2>Importar libros desde Excel</h2>
 
         <p>
-            Cargue títulos y genere automáticamente sus
-            ejemplares.
+            Importación del inventario histórico del CCTL.
         </p>
     </div>
 
@@ -24,31 +23,52 @@
     </a>
 </div>
 
+{% if messages %}
+    {% for message in messages %}
+        <div class="mensaje mensaje-{{ message.tags }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+{% if not vista_previa and not resultados %}
+
 <div class="panel formulario-panel">
 
     <div class="aviso-importacion">
-        <h3>Antes de importar</h3>
+        <h3>Información que se importará</h3>
 
         <ul>
-            <li>Utilice la plantilla oficial del CCTL.</li>
-            <li>No cambie los nombres de las columnas.</li>
+            <li>Se revisarán todas las hojas del Excel.</li>
 
             <li>
-                Cada fila representa un título diferente.
+                Cada fila representará un ejemplar físico.
             </li>
 
             <li>
-                La columna cantidad indica cuántos ejemplares
-                se crearán.
+                Los libros con el mismo título y autor se
+                agruparán.
             </li>
 
             <li>
-                Cada ejemplar recibirá un código
-                CCTL-LIB automático.
+                Se importarán código de acceso, fecha, autor,
+                título, proveedor, procedencia, balda y
+                observación.
             </li>
 
             <li>
-                No repita el mismo ISBN o título.
+                Los códigos repetidos recibirán otro número
+                disponible.
+            </li>
+
+            <li>
+                Los ejemplares sin balda podrán actualizarse
+                posteriormente.
+            </li>
+
+            <li>
+                El ISBN permanecerá vacío cuando el Excel no
+                lo contenga.
             </li>
         </ul>
     </div>
@@ -59,6 +79,12 @@
         novalidate
     >
         {% csrf_token %}
+
+        <input
+            type="hidden"
+            name="accion"
+            value="analizar"
+        >
 
         <div class="grupo-campo">
             <label for="{{ formulario.archivo.id_for_label }}">
@@ -79,7 +105,7 @@
                 type="submit"
                 class="boton boton-primario"
             >
-                Importar libros
+                Analizar Excel
             </button>
 
             <a
@@ -93,17 +119,173 @@
 
 </div>
 
-{% if resultados %}
+{% endif %}
 
-<section class="resultado-importacion">
 
-    <h2>Resultado de la importación</h2>
+{% if vista_previa %}
+
+<section class="panel">
+
+    <div class="cabecera-pagina">
+        <div>
+            <h2>Vista previa</h2>
+
+            <p>
+                Revise el resumen antes de guardar en la
+                base de datos.
+            </p>
+        </div>
+    </div>
 
     <div class="resumen-importacion resumen-cuatro">
 
         <div class="resultado resultado-correcto">
-            <strong>{{ resultados.importados }}</strong>
-            <span>Títulos importados</span>
+            <strong>
+                {{ vista_previa.titulos_estimados }}
+            </strong>
+
+            <span>Títulos estimados</span>
+        </div>
+
+        <div class="resultado resultado-correcto">
+            <strong>
+                {{ vista_previa.ejemplares_estimados }}
+            </strong>
+
+            <span>Ejemplares encontrados</span>
+        </div>
+
+        <div class="resultado resultado-duplicado">
+            <strong>
+                {{ vista_previa.codigos_repetidos }}
+            </strong>
+
+            <span>Códigos repetidos</span>
+        </div>
+
+        <div class="resultado resultado-duplicado">
+            <strong>
+                {{ vista_previa.sin_codigo }}
+            </strong>
+
+            <span>Ejemplares sin código</span>
+        </div>
+
+        <div class="resultado resultado-duplicado">
+            <strong>
+                {{ vista_previa.sin_ubicacion }}
+            </strong>
+
+            <span>Sin ubicación</span>
+        </div>
+
+        <div class="resultado resultado-error">
+            <strong>
+                {{ vista_previa.cantidad_errores }}
+            </strong>
+
+            <span>Datos para revisar</span>
+        </div>
+
+    </div>
+
+    {% if vista_previa.hojas_omitidas %}
+        <div class="lista-errores">
+            <h3>Hojas sin estructura reconocida</h3>
+
+            <ul>
+                {% for hoja in vista_previa.hojas_omitidas %}
+                    <li>{{ hoja }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% if vista_previa.errores %}
+        <div class="lista-errores">
+            <h3>Observaciones del análisis</h3>
+
+            <ul>
+                {% for error in vista_previa.errores %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="aviso-importacion">
+        <strong>Importante:</strong>
+
+        confirmar guardará definitivamente los títulos y
+        ejemplares encontrados.
+    </div>
+
+    <div class="acciones-formulario">
+
+        <form method="post">
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="accion"
+                value="confirmar"
+            >
+
+            <button
+                type="submit"
+                class="boton boton-primario"
+            >
+                Confirmar importación
+            </button>
+        </form>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <input
+                type="hidden"
+                name="accion"
+                value="cancelar"
+            >
+
+            <button
+                type="submit"
+                class="boton boton-secundario"
+            >
+                Cancelar
+            </button>
+        </form>
+
+    </div>
+
+</section>
+
+{% endif %}
+
+
+{% if resultados %}
+
+<section class="panel">
+
+    <div class="cabecera-pagina">
+        <div>
+            <h2>Importación terminada</h2>
+
+            <p>
+                Los registros fueron guardados en la base
+                de datos.
+            </p>
+        </div>
+    </div>
+
+    <div class="resumen-importacion resumen-cuatro">
+
+        <div class="resultado resultado-correcto">
+            <strong>
+                {{ resultados.titulos_creados }}
+            </strong>
+
+            <span>Títulos nuevos</span>
         </div>
 
         <div class="resultado resultado-correcto">
@@ -111,28 +293,30 @@
                 {{ resultados.ejemplares_creados }}
             </strong>
 
-            <span>Ejemplares generados</span>
+            <span>Ejemplares creados</span>
         </div>
 
         <div class="resultado resultado-duplicado">
-            <strong>{{ resultados.duplicados }}</strong>
-            <span>Libros duplicados</span>
-        </div>
-
-        <div class="resultado resultado-error">
             <strong>
-                {{ resultados.cantidad_errores }}
+                {{ resultados.codigos_reasignados }}
             </strong>
 
-            <span>Filas con observaciones</span>
+            <span>Números reasignados</span>
+        </div>
+
+        <div class="resultado resultado-duplicado">
+            <strong>
+                {{ resultados.sin_ubicacion }}
+            </strong>
+
+            <span>Ubicaciones pendientes</span>
         </div>
 
     </div>
 
     {% if resultados.errores %}
-
         <div class="lista-errores">
-            <h3>Observaciones encontradas</h3>
+            <h3>Observaciones</h3>
 
             <ul>
                 {% for error in resultados.errores %}
@@ -140,23 +324,16 @@
                 {% endfor %}
             </ul>
         </div>
-
-    {% else %}
-
-        <div class="mensaje mensaje-success">
-            Todos los libros fueron importados correctamente.
-        </div>
-
     {% endif %}
 
-    {% if resultados.importados > 0 %}
+    <div class="acciones-formulario">
         <a
             href="{% url 'libros:lista' %}"
             class="boton boton-primario"
         >
             Ver libros registrados
         </a>
-    {% endif %}
+    </div>
 
 </section>
 

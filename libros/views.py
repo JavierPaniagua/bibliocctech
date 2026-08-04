@@ -1,3 +1,10 @@
+import hashlib
+from pathlib import Path
+from tempfile import gettempdir
+
+
+
+
 from datetime import date, datetime
 
 from django.contrib import messages
@@ -8,9 +15,15 @@ from django.utils.dateparse import parse_date
 from openpyxl import load_workbook
 
 from .forms import (
+    EjemplarForm,
     ImportarLibrosForm,
     LibroCrearForm,
     LibroEditarForm,
+)
+
+from .importador_historico import (
+    analizar_archivo,
+    importar_archivo,
 )
 from .models import Ejemplar, Libro
 
@@ -28,7 +41,9 @@ def libro_lista(request):
             | Q(editorial__icontains=busqueda)
             | Q(categoria__icontains=busqueda)
             | Q(isbn__icontains=busqueda)
-            | Q(ejemplares__codigo__icontains=busqueda)
+            | Q(ejemplares__numero_inventario__icontains=busqueda)
+            | Q(ejemplares__estanteria__icontains=busqueda)
+            | Q(ejemplares__balda__icontains=busqueda)
         ).distinct()
 
     contexto = {
@@ -67,12 +82,32 @@ def libro_crear(request):
                 'fecha_adquisicion'
             ]
 
+            estanteria = formulario.cleaned_data[
+                'estanteria'
+            ]
+
+            balda = formulario.cleaned_data[
+                'balda'
+            ]
+
+            proveedor = formulario.cleaned_data[
+                'proveedor'
+            ]
+
+            observaciones = formulario.cleaned_data[
+                'observaciones'
+            ]
+
             for _ in range(cantidad):
                 Ejemplar.objects.create(
                     libro=libro,
+                    estanteria=estanteria,
+                    balda=balda,
+                    proveedor=proveedor,
                     condicion=condicion,
                     forma_adquisicion=forma_adquisicion,
                     fecha_adquisicion=fecha_adquisicion,
+                    observaciones=observaciones,
                 )
 
             messages.success(
@@ -99,8 +134,7 @@ def libro_crear(request):
         'libros/libro_formulario.html',
         contexto,
     )
-
-
+    
 def libro_detalle(request, libro_id):
     libro = get_object_or_404(
         Libro.objects.prefetch_related('ejemplares'),
@@ -157,11 +191,346 @@ def libro_editar(request, libro_id):
         contexto,
     )
 
-def limpiar_texto(valor):
-    if valor is None:
-        return ''
+@transaction.atomic
+def ejemplar_crear(request, libro_id):
+    libro = get_object_or_404(
+        Libro,
+        id=libro_id,
+    )
 
-    return str(valor).strip()
+    if request.method == 'POST':
+        formulario = EjemplarForm(request.POST)
+
+        if formulario.is_valid():
+            ejemplar = formulario.save(
+                commit=False,
+            )
+
+            ejemplar.libro = libro
+            ejemplar.save()
+
+            messages.success(
+                request,
+                (
+                    'El ejemplar fue registrado con el número '
+                    f'{ejemplar.numero_inventario}.'
+                ),
+            )
+
+            return redirect(
+                'libros:detalle',
+                libro_id=libro.id,
+            )
+    else:
+        formulario = EjemplarForm()
+
+    contexto = {
+        'formulario': formulario,
+        'libro': libro,
+        'titulo_pagina': 'Agregar ejemplar',
+    }
+
+    return render(
+        request,
+        'libros/ejemplar_formulario.html',
+        contexto,
+    )
+
+
+@transaction.atomic
+def ejemplar_editar(request, ejemplar_id):
+    ejemplar = get_object_or_404(
+        Ejemplar.objects.select_related('libro'),
+        id=ejemplar_id,
+    )
+
+    if request.method == 'POST':
+        formulario = EjemplarForm(
+            request.POST,
+            instance=ejemplar,
+        )
+
+        if formulario.is_valid():
+            formulario.save()
+
+            messages.success(
+                request,
+                'Los datos del ejemplar fueron actualizados.',
+            )
+
+            return redirect(
+                'libros:detalle',
+                libro_id=ejemplar.libro_id,
+            )
+    else:
+        formulario = EjemplarForm(
+            instance=ejemplar,
+        )
+
+    contexto = {
+        'formulario': formulario,
+        'ejemplar': ejemplar,
+        'libro': ejemplar.libro,
+        'titulo_pagina': 'Editar ejemplar',
+    }
+
+    return render(
+        request,
+        'libros/ejemplar_formulario.html',
+        contexto,
+    )
+
+
+
+def guardar_archivo_temporal(archivo):
+    carpeta_temporal = (
+        Path(gettempdir())
+        / 'bibliocctech_importaciones'
+    )
+
+    carpeta_temporal.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    huella = hashlib.sha256()
+
+    nombre_temporal = (
+        f'importacion_{archivo.size}_'
+        f'{archivo.name}'
+    )
+
+    ruta_temporal = (
+        carpeta_temporal
+        / nombre_temporal
+    )
+
+    contador = 1
+
+    while ruta_temporal.exists():
+        ruta_temporal = (
+            carpeta_temporal
+            / (
+                f'importacion_{contador}_'
+                f'{archivo.name}'
+            )
+        )
+
+        contador += 1
+
+    with open(ruta_temporal, 'wb') as destino:
+        for bloque in archivo.chunks():
+            destino.write(bloque)
+            huella.update(bloque)
+
+    return (
+        str(ruta_temporal),
+        huella.hexdigest(),
+    )
+
+
+def eliminar_archivo_temporal(ruta):
+    if not ruta:
+        return
+
+    try:
+        archivo = Path(ruta)
+
+        if archivo.exists():
+            archivo.unlink()
+    except OSError:
+        pass
+
+
+def limpiar_importacion_temporal(request):
+    ruta = request.session.pop(
+        'importacion_libros_ruta',
+        None,
+    )
+
+    request.session.pop(
+        'importacion_libros_nombre',
+        None,
+    )
+
+    request.session.pop(
+        'importacion_libros_huella',
+        None,
+    )
+
+    eliminar_archivo_temporal(ruta)
+
+
+def libro_importar(request):
+    vista_previa = None
+    resultados = None
+
+    if request.method == 'POST':
+        accion = request.POST.get(
+            'accion',
+            'analizar',
+        )
+
+        if accion == 'analizar':
+            limpiar_importacion_temporal(request)
+
+            formulario = ImportarLibrosForm(
+                request.POST,
+                request.FILES,
+            )
+
+            if formulario.is_valid():
+                archivo = formulario.cleaned_data[
+                    'archivo'
+                ]
+
+                ruta_temporal = None
+
+                try:
+                    (
+                        ruta_temporal,
+                        huella_archivo,
+                    ) = guardar_archivo_temporal(
+                        archivo
+                    )
+
+                    vista_previa = analizar_archivo(
+                        ruta_temporal
+                    )
+
+                    if vista_previa['registros'] == 0:
+                        eliminar_archivo_temporal(
+                            ruta_temporal
+                        )
+
+                        formulario.add_error(
+                            'archivo',
+                            (
+                                'No se encontraron registros '
+                                'válidos en el archivo.'
+                            ),
+                        )
+                    else:
+                        request.session[
+                            'importacion_libros_ruta'
+                        ] = ruta_temporal
+
+                        request.session[
+                            'importacion_libros_nombre'
+                        ] = archivo.name
+
+                        request.session[
+                            'importacion_libros_huella'
+                        ] = huella_archivo
+
+                except Exception as error:
+                    eliminar_archivo_temporal(
+                        ruta_temporal
+                    )
+
+                    formulario.add_error(
+                        'archivo',
+                        (
+                            'No se pudo analizar el archivo. '
+                            f'Detalle: {error}'
+                        ),
+                    )
+
+        elif accion == 'confirmar':
+            formulario = ImportarLibrosForm()
+
+            ruta_temporal = request.session.get(
+                'importacion_libros_ruta'
+            )
+
+            nombre_archivo = request.session.get(
+                'importacion_libros_nombre'
+            )
+
+            huella_archivo = request.session.get(
+                'importacion_libros_huella'
+            )
+
+            if (
+                not ruta_temporal
+                or not Path(ruta_temporal).exists()
+                or not nombre_archivo
+                or not huella_archivo
+            ):
+                messages.error(
+                    request,
+                    (
+                        'La vista previa venció. Seleccione '
+                        'nuevamente el archivo Excel.'
+                    ),
+                )
+
+                limpiar_importacion_temporal(request)
+
+            else:
+                try:
+                    resultados = importar_archivo(
+                        ruta_archivo=ruta_temporal,
+                        nombre_archivo=nombre_archivo,
+                        huella_archivo=huella_archivo,
+                    )
+
+                    messages.success(
+                        request,
+                        (
+                            'La importación se realizó '
+                            'correctamente.'
+                        ),
+                    )
+
+                    limpiar_importacion_temporal(request)
+
+                except ValueError as error:
+                    messages.error(
+                        request,
+                        str(error),
+                    )
+
+                    limpiar_importacion_temporal(request)
+
+                except Exception as error:
+                    messages.error(
+                        request,
+                        (
+                            'No se pudo completar la '
+                            f'importación. Detalle: {error}'
+                        ),
+                    )
+
+                    limpiar_importacion_temporal(request)
+
+        elif accion == 'cancelar':
+            formulario = ImportarLibrosForm()
+            limpiar_importacion_temporal(request)
+
+            messages.info(
+                request,
+                'La importación fue cancelada.',
+            )
+
+        else:
+            formulario = ImportarLibrosForm()
+
+    else:
+        formulario = ImportarLibrosForm()
+        limpiar_importacion_temporal(request)
+
+    contexto = {
+        'formulario': formulario,
+        'vista_previa': vista_previa,
+        'resultados': resultados,
+    }
+
+    return render(
+        request,
+        'libros/libro_importar.html',
+        contexto,
+    )
 
 
 def limpiar_isbn(valor):
@@ -264,96 +633,6 @@ def normalizar_adquisicion(valor):
 
     return equivalencias.get(texto)
 
-
-def libro_importar(request):
-    resultados = None
-
-    if request.method == 'POST':
-        formulario = ImportarLibrosForm(
-            request.POST,
-            request.FILES,
-        )
-
-        if formulario.is_valid():
-            archivo = formulario.cleaned_data['archivo']
-
-            try:
-                libro_excel = load_workbook(
-                    archivo,
-                    read_only=True,
-                    data_only=True,
-                )
-
-                if 'Libros' not in libro_excel.sheetnames:
-                    formulario.add_error(
-                        'archivo',
-                        (
-                            'El archivo debe contener una hoja '
-                            'llamada Libros.'
-                        ),
-                    )
-                else:
-                    hoja = libro_excel['Libros']
-
-                    encabezados_esperados = [
-                        'titulo',
-                        'autor',
-                        'editorial',
-                        'categoria',
-                        'isbn',
-                        'edicion',
-                        'anio_publicacion',
-                        'ubicacion',
-                        'cantidad',
-                        'condicion',
-                        'forma_adquisicion',
-                        'fecha_adquisicion',
-                        'activo',
-                        'descripcion',
-                    ]
-
-                    encabezados_archivo = [
-                        limpiar_texto(
-                            hoja.cell(
-                                row=4,
-                                column=columna,
-                            ).value
-                        ).lower()
-                        for columna in range(1, 15)
-                    ]
-
-                    if encabezados_archivo != encabezados_esperados:
-                        formulario.add_error(
-                            'archivo',
-                            (
-                                'Las columnas fueron modificadas. '
-                                'Utilice la plantilla oficial.'
-                            ),
-                        )
-                    else:
-                        resultados = procesar_libros_excel(hoja)
-
-            except Exception:
-                formulario.add_error(
-                    'archivo',
-                    (
-                        'No se pudo leer la planilla. Compruebe '
-                        'que sea un archivo Excel válido.'
-                    ),
-                )
-    else:
-        formulario = ImportarLibrosForm()
-
-    contexto = {
-        'formulario': formulario,
-        'resultados': resultados,
-    }
-
-    return render(
-        request,
-        'libros/libro_importar.html',
-        contexto,
-    )
 
 
 def procesar_libros_excel(hoja):

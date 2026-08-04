@@ -9,6 +9,21 @@ from alumnos.models import Alumno
 from docentes.models import Docente
 from libros.models import Ejemplar
 
+def sumar_dias_habiles(fecha_inicial, cantidad_dias):
+    fecha_resultado = fecha_inicial
+    dias_agregados = 0
+
+    while dias_agregados < cantidad_dias:
+        fecha_resultado += timedelta(days=1)
+
+        # weekday(): lunes = 0 y domingo = 6
+        if fecha_resultado.weekday() < 5:
+            dias_agregados += 1
+
+    return fecha_resultado
+
+
+
 
 class Prestamo(models.Model):
     class Estado(models.TextChoices):
@@ -194,13 +209,15 @@ class Prestamo(models.Model):
                     }
                 )
 
-    def save(self, *args, **kwargs):
-        if not self.fecha_devolucion_prevista:
-            self.fecha_devolucion_prevista = (
-                self.fecha_prestamo
-                + timedelta(days=5)
+def save(self, *args, **kwargs):
+    if not self.fecha_devolucion_prevista:
+        self.fecha_devolucion_prevista = (
+            sumar_dias_habiles(
+                self.fecha_prestamo,
+                5,
             )
+        )
 
-        self.full_clean()
+    self.full_clean()
 
-        super().save(*args, **kwargs)
+    super().save(*args, **kwargs)

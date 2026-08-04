@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'core',
     'alumnos',
     'docentes',
-    'libros',
     'prestamos',
     'libros',
 ]

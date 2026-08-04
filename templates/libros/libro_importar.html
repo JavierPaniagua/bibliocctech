@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Importar libros | Biblioteca Escolar
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecera-pagina">
+    <div>
+        <h2>Importar libros desde Excel</h2>
+
+        <p>
+            Cargue títulos y genere automáticamente sus
+            ejemplares.
+        </p>
+    </div>
+
+    <a
+        href="{% url 'libros:lista' %}"
+        class="boton boton-secundario"
+    >
+        Volver
+    </a>
+</div>
+
+<div class="panel formulario-panel">
+
+    <div class="aviso-importacion">
+        <h3>Antes de importar</h3>
+
+        <ul>
+            <li>Utilice la plantilla oficial del CCTL.</li>
+            <li>No cambie los nombres de las columnas.</li>
+
+            <li>
+                Cada fila representa un título diferente.
+            </li>
+
+            <li>
+                La columna cantidad indica cuántos ejemplares
+                se crearán.
+            </li>
+
+            <li>
+                Cada ejemplar recibirá un código
+                CCTL-LIB automático.
+            </li>
+
+            <li>
+                No repita el mismo ISBN o título.
+            </li>
+        </ul>
+    </div>
+
+    <form
+        method="post"
+        enctype="multipart/form-data"
+        novalidate
+    >
+        {% csrf_token %}
+
+        <div class="grupo-campo">
+            <label for="{{ formulario.archivo.id_for_label }}">
+                {{ formulario.archivo.label }}
+            </label>
+
+            {{ formulario.archivo }}
+
+            {% for error in formulario.archivo.errors %}
+                <span class="error-campo">
+                    {{ error }}
+                </span>
+            {% endfor %}
+        </div>
+
+        <div class="acciones-formulario">
+            <button
+                type="submit"
+                class="boton boton-primario"
+            >
+                Importar libros
+            </button>
+
+            <a
+                href="{% url 'libros:lista' %}"
+                class="boton boton-secundario"
+            >
+                Cancelar
+            </a>
+        </div>
+    </form>
+
+</div>
+
+{% if resultados %}
+
+<section class="resultado-importacion">
+
+    <h2>Resultado de la importación</h2>
+
+    <div class="resumen-importacion resumen-cuatro">
+
+        <div class="resultado resultado-correcto">
+            <strong>{{ resultados.importados }}</strong>
+            <span>Títulos importados</span>
+        </div>
+
+        <div class="resultado resultado-correcto">
+            <strong>
+                {{ resultados.ejemplares_creados }}
+            </strong>
+
+            <span>Ejemplares generados</span>
+        </div>
+
+        <div class="resultado resultado-duplicado">
+            <strong>{{ resultados.duplicados }}</strong>
+            <span>Libros duplicados</span>
+        </div>
+
+        <div class="resultado resultado-error">
+            <strong>
+                {{ resultados.cantidad_errores }}
+            </strong>
+
+            <span>Filas con observaciones</span>
+        </div>
+
+    </div>
+
+    {% if resultados.errores %}
+
+        <div class="lista-errores">
+            <h3>Observaciones encontradas</h3>
+
+            <ul>
+                {% for error in resultados.errores %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+    {% else %}
+
+        <div class="mensaje mensaje-success">
+            Todos los libros fueron importados correctamente.
+        </div>
+
+    {% endif %}
+
+    {% if resultados.importados > 0 %}
+        <a
+            href="{% url 'libros:lista' %}"
+            class="boton boton-primario"
+        >
+            Ver libros registrados
+        </a>
+    {% endif %}
+
+</section>
+
+{% endif %}
+
+{% endblock %}

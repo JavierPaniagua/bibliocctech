@@ -555,3 +555,43 @@ body {
 .tarjeta-docentes {
     background-color: #4f6f52;
 }
+
+.campo-completo {
+    grid-column: 1 / -1;
+}
+
+.ficha-libro {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px 25px;
+    margin-bottom: 30px;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #f3f8fa;
+}
+
+.ficha-libro p {
+    margin: 0;
+}
+
+@media (max-width: 800px) {
+    .ficha-libro {
+        grid-template-columns: 1fr;
+    }
+}
+
+.resumen-cuatro {
+    grid-template-columns: repeat(4, 1fr);
+}
+
+@media (max-width: 900px) {
+    .resumen-cuatro {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .resumen-cuatro {
+        grid-template-columns: 1fr;
+    }
+}

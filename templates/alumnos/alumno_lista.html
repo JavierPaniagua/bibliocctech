@@ -48,7 +48,7 @@
             name="buscar"
             value="{{ busqueda }}"
             class="campo campo-buscar"
-            placeholder="Buscar por cédula, nombre, apellido o curso"
+            placeholder="Buscar por cédula, alumno, curso o especialidad"
         >
 
         <button
@@ -88,10 +88,9 @@
                     <tr>
                         <td>{{ alumno.cedula }}</td>
 
-                        <td>
-                            {{ alumno.apellidos }},
-                            {{ alumno.nombres }}
-                        </td>
+                        
+                        <td>{{ alumno.nombre_visible }}</td>
+                        
 
                         <td>{{ alumno.curso }}</td>
 

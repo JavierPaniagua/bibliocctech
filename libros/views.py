@@ -1,6 +1,7 @@
 import hashlib
 from pathlib import Path
 from tempfile import gettempdir
+from django.utils import timezone
 
 from django.contrib import messages
 from django.db import transaction
@@ -703,5 +704,148 @@ def libro_importar(request):
     return render(
         request,
         'libros/libro_importar.html',
+        contexto,
+    )
+
+def etiqueta_individual(request, numero_inventario):
+    ejemplar = get_object_or_404(
+        Ejemplar.objects.select_related("libro"),
+        numero_inventario=numero_inventario,
+    )
+
+    if request.method == "POST":
+        ejemplar.etiqueta_impresa = True
+        ejemplar.fecha_impresion_etiqueta = timezone.now()
+
+        ejemplar.save(
+            update_fields=[
+                "etiqueta_impresa",
+                "fecha_impresion_etiqueta",
+            ]
+        )
+
+        messages.success(
+            request,
+            (
+                "La etiqueta del ejemplar "
+                f"{ejemplar.numero_inventario} fue marcada como impresa."
+            ),
+        )
+
+        return redirect(
+            "libros:detalle",
+            libro_id=ejemplar.libro_id,
+        )
+
+    contexto = {
+        "ejemplar": ejemplar,
+        "libro": ejemplar.libro,
+    }
+
+    return render(
+        request,
+        "libros/etiqueta_individual.html",
+        contexto,
+    )
+
+def etiquetas_mosaico(request):
+    etiquetas = []
+    numero_desde = ""
+    cantidad = 14
+    solo_pendientes = True
+
+    if request.method == "POST":
+        accion = request.POST.get("accion", "preparar")
+
+        try:
+            numero_desde = int(
+                request.POST.get("numero_desde", 1)
+            )
+        except (TypeError, ValueError):
+            numero_desde = 1
+
+        try:
+            cantidad = int(
+                request.POST.get("cantidad", 14)
+            )
+        except (TypeError, ValueError):
+            cantidad = 27
+
+        cantidad = max(1, min(cantidad, 270))
+
+        solo_pendientes = (
+            request.POST.get("solo_pendientes") == "si"
+        )
+
+        ejemplares = Ejemplar.objects.select_related(
+            "libro"
+        ).filter(
+            numero_inventario__gte=numero_desde
+        )
+
+        if solo_pendientes:
+            ejemplares = ejemplares.filter(
+                etiqueta_impresa=False
+            )
+
+        etiquetas = list(
+            ejemplares.order_by(
+                "numero_inventario"
+            )[:cantidad]
+        )
+
+        if accion == "marcar_impresas":
+            numeros_seleccionados = request.POST.getlist(
+                "ejemplares_seleccionados"
+            )
+
+            if numeros_seleccionados:
+                Ejemplar.objects.filter(
+                    numero_inventario__in=numeros_seleccionados
+                ).update(
+                    etiqueta_impresa=True,
+                    fecha_impresion_etiqueta=timezone.now(),
+                )
+
+                messages.success(
+                    request,
+                    (
+                        f"{len(numeros_seleccionados)} "
+                        "etiquetas fueron marcadas como impresas."
+                    ),
+                )
+
+                return redirect("libros:etiquetas_mosaico")
+
+    primer_ejemplar = Ejemplar.objects.order_by(
+        "numero_inventario"
+    ).first()
+
+    primer_pendiente = Ejemplar.objects.filter(
+        etiqueta_impresa=False
+    ).order_by(
+        "numero_inventario"
+    ).first()
+
+    contexto = {
+        "etiquetas": etiquetas,
+        "numero_desde": numero_desde,
+        "cantidad": cantidad,
+        "solo_pendientes": solo_pendientes,
+        "primer_inventario": (
+            primer_ejemplar.numero_inventario
+            if primer_ejemplar
+            else None
+        ),
+        "primer_pendiente": (
+            primer_pendiente.numero_inventario
+            if primer_pendiente
+            else None
+        ),
+    }
+
+    return render(
+        request,
+        "libros/etiquetas_mosaico.html",
         contexto,
     )

@@ -3,49 +3,61 @@ from django.urls import path
 from . import views
 
 
-app_name = 'libros'
+app_name = "libros"
 
 
 urlpatterns = [
     path(
-        '',
+        "",
         views.libro_lista,
-        name='lista',
+        name="lista",
     ),
 
     path(
-        'nuevo/',
+        "nuevo/",
         views.libro_crear,
-        name='crear',
+        name="crear",
     ),
 
     path(
-        'importar/',
+        "importar/",
         views.libro_importar,
-        name='importar',
+        name="importar",
     ),
 
     path(
-        'ejemplares/<int:ejemplar_id>/editar/',
+        "ejemplares/<int:ejemplar_id>/editar/",
         views.ejemplar_editar,
-        name='ejemplar_editar',
+        name="ejemplar_editar",
     ),
 
     path(
-        '<int:libro_id>/ejemplares/nuevo/',
+        "ejemplares/<int:numero_inventario>/etiqueta/",
+        views.etiqueta_individual,
+        name="etiqueta_individual",
+    ),
+
+    path(
+        "<int:libro_id>/ejemplares/nuevo/",
         views.ejemplar_crear,
-        name='ejemplar_crear',
+        name="ejemplar_crear",
     ),
 
     path(
-        '<int:libro_id>/',
-        views.libro_detalle,
-        name='detalle',
-    ),
-
-    path(
-        '<int:libro_id>/editar/',
+        "<int:libro_id>/editar/",
         views.libro_editar,
-        name='editar',
+        name="editar",
     ),
+
+    path(
+        "<int:libro_id>/",
+        views.libro_detalle,
+        name="detalle",
+    ),
+    
+    path(
+    "etiquetas/mosaico/",
+    views.etiquetas_mosaico,
+    name="etiquetas_mosaico",
+),
 ]

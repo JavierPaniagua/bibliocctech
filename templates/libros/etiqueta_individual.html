@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Etiqueta {{ ejemplar.numero_inventario }} | Biblioteca CCTL
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecera-pagina no-imprimir">
+
+    <div>
+        <h2>Etiqueta individual</h2>
+
+        <p>
+            Ejemplar número {{ ejemplar.numero_inventario }}
+        </p>
+    </div>
+
+    <a
+        href="{% url 'libros:detalle' libro.id %}"
+        class="boton boton-secundario"
+    >
+        Volver
+    </a>
+
+</div>
+
+<div class="panel-etiqueta">
+
+    <div class="vista-previa no-imprimir">
+        Vista previa de la etiqueta
+    </div>
+
+    <div class="etiqueta-libro">
+
+        <div class="etiqueta-encabezado">
+            BIBLIOTECA CCTL
+        </div>
+
+        <div class="etiqueta-contenido">
+
+            <div class="numero-inventario">
+                {{ ejemplar.numero_inventario }}
+            </div>
+
+            <div class="titulo-libro">
+                {{ libro.titulo|truncatechars:48 }}
+            </div>
+
+            <div class="signatura">
+                {% if libro.signatura_topografica %}
+                    {{ libro.signatura_topografica }}
+                {% else %}
+                    SIN CLASIFICAR
+                {% endif %}
+            </div>
+
+            <div class="ubicacion">
+                {% if ejemplar.estanteria %}
+                    Estantería {{ ejemplar.estanteria }}
+                {% else %}
+                    Sin estantería
+                {% endif %}
+
+                <span>·</span>
+
+                {% if ejemplar.balda %}
+                    Balda
+                    {{ ejemplar.estanteria }}{{ ejemplar.balda }}
+                {% else %}
+                    Sin balda
+                {% endif %}
+            </div>
+
+        </div>
+
+        <div class="etiqueta-pie">
+            N.º DE INVENTARIO
+        </div>
+
+    </div>
+
+    <div class="acciones-etiqueta no-imprimir">
+
+        <button
+            type="button"
+            class="boton boton-primario"
+            onclick="window.print()"
+        >
+            Imprimir etiqueta
+        </button>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <button
+                type="submit"
+                class="boton boton-excel"
+            >
+                Confirmar que fue impresa
+            </button>
+        </form>
+
+        <a
+            href="{% url 'libros:detalle' libro.id %}"
+            class="boton boton-secundario"
+        >
+            Cancelar
+        </a>
+
+    </div>
+
+    {% if ejemplar.etiqueta_impresa %}
+        <div class="estado-impresion no-imprimir">
+            Esta etiqueta ya fue marcada como impresa.
+
+            {% if ejemplar.fecha_impresion_etiqueta %}
+                Fecha:
+                {{ ejemplar.fecha_impresion_etiqueta|date:"d/m/Y H:i" }}
+            {% endif %}
+        </div>
+    {% endif %}
+
+</div>
+
+<style>
+    .panel-etiqueta {
+        padding: 28px;
+        border-radius: 12px;
+        background: white;
+        box-shadow: 0 5px 16px rgba(26, 57, 75, 0.1);
+    }
+
+    .vista-previa {
+        margin-bottom: 20px;
+        color: #60727e;
+        text-align: center;
+    }
+
+    .etiqueta-libro {
+        display: flex;
+        flex-direction: column;
+        width: 80mm;
+        height: 45mm;
+        margin: 0 auto;
+        overflow: hidden;
+        border: 1.2mm solid #111111;
+        background: white;
+        color: #111111;
+        font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .etiqueta-encabezado {
+        padding: 2mm;
+        background: #111111;
+        color: white;
+        font-size: 11pt;
+        font-weight: bold;
+        letter-spacing: 0.8mm;
+        text-align: center;
+    }
+
+    .etiqueta-contenido {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        justify-content: center;
+        padding: 1.5mm 3mm;
+        text-align: center;
+    }
+
+    .numero-inventario {
+        margin-bottom: 0.5mm;
+        font-size: 22pt;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    .titulo-libro {
+        max-height: 9mm;
+        overflow: hidden;
+        font-size: 8.5pt;
+        font-weight: bold;
+        line-height: 1.15;
+    }
+
+    .signatura {
+        margin-top: 1mm;
+        font-size: 11pt;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    .ubicacion {
+        margin-top: 1mm;
+        font-size: 8pt;
+        font-weight: bold;
+    }
+
+    .ubicacion span {
+        margin: 0 1.5mm;
+    }
+
+    .etiqueta-pie {
+        padding: 1mm;
+        border-top: 0.4mm solid #111111;
+        font-size: 6.5pt;
+        font-weight: bold;
+        letter-spacing: 0.5mm;
+        text-align: center;
+    }
+
+    .acciones-etiqueta {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 25px;
+    }
+
+    .acciones-etiqueta form {
+        margin: 0;
+    }
+
+    .estado-impresion {
+        max-width: 80mm;
+        margin: 20px auto 0;
+        padding: 12px;
+        border-left: 5px solid #218767;
+        border-radius: 6px;
+        background: #e3f5ee;
+        color: #07644f;
+    }
+
+    @media print {
+        @page {
+            size: 80mm 45mm;
+            margin: 0;
+        }
+
+        html,
+        body {
+            width: 80mm;
+            height: 45mm;
+            margin: 0;
+            padding: 0;
+            background: white;
+        }
+
+        .encabezado,
+        .pie-pagina,
+        .no-imprimir {
+            display: none !important;
+        }
+
+        .contenido-principal {
+            width: 80mm;
+            height: 45mm;
+            margin: 0;
+            padding: 0;
+        }
+
+        .panel-etiqueta {
+            width: 80mm;
+            height: 45mm;
+            margin: 0;
+            padding: 0;
+            box-shadow: none;
+        }
+
+        .etiqueta-libro {
+            width: 80mm;
+            height: 45mm;
+            margin: 0;
+            break-inside: avoid;
+        }
+    }
+</style>
+
+{% endblock %}

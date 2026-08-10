@@ -40,10 +40,7 @@ Inicio | Biblioteca Escolar
         </div>
     </a>
 
-    <a
-    href="{% url 'libros:lista' %}"
-    class="tarjeta tarjeta-verde"
->
+    <a href="{% url 'libros:lista' %}" class="tarjeta tarjeta-verde">
         <span class="icono">📚</span>
 
         <div>
@@ -54,78 +51,69 @@ Inicio | Biblioteca Escolar
         </div>
     </a>
 
-    <a href="#" class="tarjeta tarjeta-naranja">
+    <a href="{% url 'prestamos:crear' %}" class="tarjeta tarjeta-naranja">
         <span class="icono">📤</span>
 
         <div>
             <h3>Registrar préstamo</h3>
-            <p>
-                Entregar un libro a un alumno.
-            </p>
+            <p>Entregar un libro a un alumno o docente.</p>
         </div>
     </a>
 
-    <a href="#" class="tarjeta tarjeta-celeste">
+    <a href="{% url 'prestamos:lista' %}?estado=activos" class="tarjeta tarjeta-celeste">
         <span class="icono">📥</span>
 
         <div>
             <h3>Registrar devolución</h3>
-            <p>
-                Registrar la devolución de un libro.
-            </p>
+            <p>Buscar un préstamo activo y devolver el libro.</p>
         </div>
     </a>
 
-    <a href="#" class="tarjeta tarjeta-roja">
+    <a href="{% url 'prestamos:lista' %}?estado=vencidos" class="tarjeta tarjeta-roja">
         <span class="icono">⏰</span>
 
         <div>
             <h3>Préstamos vencidos</h3>
-            <p>
-                Consultar libros que no fueron devueltos.
-            </p>
+            <p>Consultar libros que no fueron devueltos.</p>
         </div>
     </a>
 
-    <a href="#" class="tarjeta tarjeta-morada">
-        <span class="icono">📊</span>
-
-        <div>
-            <h3>Reportes</h3>
-            <p>
-                Consultar inventario y movimientos.
-            </p>
-        </div>
-    </a>
+    <a href="{% url 'prestamos:reporte' %}" class="tarjeta tarjeta-morada">
 
 </section>
-
 <section class="resumen">
+
     <h2>Resumen de la biblioteca</h2>
 
     <div class="resumen-tarjetas">
 
         <div class="dato">
-            <strong>0</strong>
-            <span>Libros registrados</span>
+            <strong>{{ total_titulos }}</strong>
+            <span>Títulos registrados</span>
         </div>
 
         <div class="dato">
-            <strong>0</strong>
+            <strong>{{ total_ejemplares }}</strong>
+            <span>Ejemplares físicos</span>
+        </div>
+
+        <div class="dato">
+            <strong>{{ ejemplares_disponibles }}</strong>
             <span>Ejemplares disponibles</span>
         </div>
 
         <div class="dato">
-            <strong>0</strong>
+            <strong>{{ prestamos_activos }}</strong>
             <span>Préstamos activos</span>
         </div>
 
         <div class="dato dato-alerta">
-            <strong>0</strong>
+            <strong>{{ prestamos_vencidos }}</strong>
             <span>Préstamos vencidos</span>
         </div>
 
     </div>
+
 </section>
 
 {% endblock %}

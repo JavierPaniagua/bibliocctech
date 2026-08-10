@@ -1,0 +1,615 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Etiquetas en mosaico | Biblioteca CCTL
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecera-pagina no-imprimir">
+
+    <div>
+        <h2>Imprimir etiquetas en mosaico</h2>
+
+        <p>
+            Prepare etiquetas institucionales para imprimir en hoja oficio.
+        </p>
+    </div>
+
+    <a
+        href="{% url 'libros:lista' %}"
+        class="boton boton-secundario"
+    >
+        Volver
+    </a>
+
+</div>
+
+<div class="panel-configuracion no-imprimir">
+
+    <div class="informacion-mosaico">
+
+        <h3>Preparar etiquetas</h3>
+
+        <ul>
+            <li>
+                Indique el número de inventario desde el cual comenzará.
+            </li>
+
+            <li>
+                El sistema seguirá el orden de los ejemplares existentes.
+            </li>
+
+            <li>
+                Los números faltantes serán ignorados automáticamente.
+            </li>
+
+            <li>
+                En una hoja oficio caben hasta 14 etiquetas.
+            </li>
+
+            <li>
+                Puede indicar una cantidad mayor para preparar varias hojas.
+            </li>
+        </ul>
+
+        {% if primer_inventario %}
+            <p>
+                <strong>Primer inventario existente:</strong>
+                {{ primer_inventario }}
+            </p>
+        {% endif %}
+
+        {% if primer_pendiente %}
+            <p>
+                <strong>Primera etiqueta pendiente:</strong>
+                {{ primer_pendiente }}
+            </p>
+        {% endif %}
+
+    </div>
+
+    <form method="post" class="formulario-mosaico">
+
+        {% csrf_token %}
+
+        <input
+            type="hidden"
+            name="accion"
+            value="preparar"
+        >
+
+        <div class="grupo-campo">
+
+            <label for="numero_desde">
+                Número de inventario inicial
+            </label>
+
+            <input
+                type="number"
+                id="numero_desde"
+                name="numero_desde"
+                min="1"
+                value="{{ numero_desde|default:primer_pendiente }}"
+                class="campo"
+                required
+            >
+
+        </div>
+
+        <div class="grupo-campo">
+
+            <label for="cantidad">
+                Cantidad de etiquetas
+            </label>
+
+            <input
+                type="number"
+                id="cantidad"
+                name="cantidad"
+                min="1"
+                max="280"
+                value="{{ cantidad }}"
+                class="campo"
+                required
+            >
+
+            <small>
+                Una hoja oficio contiene hasta 14 etiquetas.
+            </small>
+
+        </div>
+
+        <label class="campo-verificacion">
+
+            <input
+                type="checkbox"
+                name="solo_pendientes"
+                value="si"
+                {% if solo_pendientes %}checked{% endif %}
+            >
+
+            Imprimir solamente etiquetas pendientes
+
+        </label>
+
+        <div class="grupo-botones">
+
+            <button
+                type="submit"
+                class="boton boton-primario"
+            >
+                Preparar etiquetas
+            </button>
+
+            <a
+                href="{% url 'libros:etiquetas_mosaico' %}"
+                class="boton boton-secundario"
+            >
+                Limpiar
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+{% if etiquetas %}
+
+    <div class="barra-impresion no-imprimir">
+
+        <div>
+            <strong>
+                {{ etiquetas|length }} etiquetas preparadas
+            </strong>
+
+            <p>
+                Revise los datos antes de enviar a la impresora.
+            </p>
+        </div>
+
+        <div class="grupo-botones">
+
+            <button
+                type="button"
+                class="boton boton-primario"
+                onclick="window.print()"
+            >
+                Imprimir mosaico
+            </button>
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                <input
+                    type="hidden"
+                    name="accion"
+                    value="marcar_impresas"
+                >
+
+                <input
+                    type="hidden"
+                    name="numero_desde"
+                    value="{{ numero_desde }}"
+                >
+
+                <input
+                    type="hidden"
+                    name="cantidad"
+                    value="{{ cantidad }}"
+                >
+
+                {% if solo_pendientes %}
+                    <input
+                        type="hidden"
+                        name="solo_pendientes"
+                        value="si"
+                    >
+                {% endif %}
+
+                {% for ejemplar in etiquetas %}
+                    <input
+                        type="hidden"
+                        name="ejemplares_seleccionados"
+                        value="{{ ejemplar.numero_inventario }}"
+                    >
+                {% endfor %}
+
+                <button
+                    type="submit"
+                    class="boton boton-excel"
+                >
+                    Confirmar impresión
+                </button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+    <div class="vista-hoja no-imprimir">
+        Vista previa aproximada de la hoja oficio
+    </div>
+
+    <div class="zona-impresion">
+
+        {% for ejemplar in etiquetas %}
+
+            <div class="etiqueta-mosaico">
+
+                <div class="etiqueta-encabezado">
+                    BIBLIOTECA CCTL
+                </div>
+
+                <div class="etiqueta-cuerpo">
+
+                    <div class="numero-inventario">
+                        {{ ejemplar.numero_inventario }}
+                    </div>
+
+                    <div class="titulo-etiqueta">
+                        {{ ejemplar.libro.titulo|truncatechars:48 }}
+                    </div>
+
+                    <div class="signatura-etiqueta">
+
+                        {% if ejemplar.libro.signatura_topografica %}
+                            {{ ejemplar.libro.signatura_topografica }}
+                        {% else %}
+                            SIN CLASIFICAR
+                        {% endif %}
+
+                    </div>
+
+                    <div class="ubicacion-etiqueta">
+
+                        {% if ejemplar.estanteria %}
+                            Estantería {{ ejemplar.estanteria }}
+                        {% else %}
+                            Sin estantería
+                        {% endif %}
+
+                        <span class="separador">·</span>
+
+                        {% if ejemplar.balda %}
+                            Balda
+                            {{ ejemplar.estanteria }}{{ ejemplar.balda }}
+                        {% else %}
+                            Sin balda
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+            {% if forloop.counter|divisibleby:"14" %}
+                <div class="salto-pagina"></div>
+            {% endif %}
+
+        {% endfor %}
+
+    </div>
+
+{% elif request.method == "POST" %}
+
+    <div class="mensaje mensaje-warning no-imprimir">
+
+        No se encontraron ejemplares para preparar las etiquetas.
+
+        Revise el número inicial o desmarque la opción
+        «Imprimir solamente etiquetas pendientes».
+
+    </div>
+
+{% endif %}
+
+<style>
+    .panel-configuracion {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr;
+        gap: 30px;
+        margin-bottom: 25px;
+        padding: 25px;
+        border-radius: 12px;
+        background: white;
+        color: #263740;
+        box-shadow: 0 5px 16px rgba(26, 57, 75, 0.1);
+    }
+
+    .informacion-mosaico {
+        padding: 20px;
+        border-left: 5px solid #2e607d;
+        border-radius: 8px;
+        background: #e8eef2;
+        color: #263740;
+    }
+
+    .informacion-mosaico h3 {
+        margin-top: 0;
+        color: #1c435e;
+    }
+
+    .informacion-mosaico ul {
+        padding-left: 22px;
+    }
+
+    .informacion-mosaico li {
+        margin-bottom: 7px;
+        color: #263740;
+    }
+
+    .informacion-mosaico p {
+        color: #263740;
+    }
+
+    .formulario-mosaico {
+        align-self: center;
+    }
+
+    .grupo-campo {
+        margin-bottom: 18px;
+    }
+
+    .grupo-campo label {
+        display: block;
+        margin-bottom: 7px;
+        color: #263740;
+        font-weight: bold;
+    }
+
+    .grupo-campo small {
+        display: block;
+        margin-top: 6px;
+        color: #60727e;
+    }
+
+    .campo-verificacion {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        margin-bottom: 22px;
+        color: #263740;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .campo-verificacion input {
+        width: 19px;
+        height: 19px;
+    }
+
+    .barra-impresion {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 20px;
+        padding: 18px 22px;
+        border-radius: 9px;
+        background: white;
+        color: #263740;
+        box-shadow: 0 4px 13px rgba(26, 57, 75, 0.09);
+    }
+
+    .barra-impresion p {
+        margin: 5px 0 0;
+        color: #60727e;
+    }
+
+    .barra-impresion form {
+        margin: 0;
+    }
+
+    .vista-hoja {
+        margin-bottom: 12px;
+        color: #60727e;
+        text-align: center;
+    }
+
+    /*
+       Hoja oficio:
+       216 mm de ancho por 356 mm de alto.
+       Dos columnas y siete filas.
+    */
+
+    .zona-impresion {
+        display: grid;
+        grid-template-columns: repeat(2, 80mm);
+        justify-content: center;
+        align-content: start;
+        gap: 3mm 5mm;
+        width: 216mm;
+        min-height: 356mm;
+        margin: 0 auto;
+        padding: 8mm;
+        overflow: hidden;
+        background: white;
+        box-shadow: 0 5px 18px rgba(0, 0, 0, 0.15);
+    }
+
+    .etiqueta-mosaico {
+        display: flex;
+        flex-direction: column;
+        width: 80mm;
+        height: 45mm;
+        overflow: hidden;
+        border: 0.8mm solid #526875;
+        background: #f4f7f9;
+        color: #263740;
+        font-family: Arial, Helvetica, sans-serif;
+        break-inside: avoid;
+        page-break-inside: avoid;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .etiqueta-encabezado {
+        flex-shrink: 0;
+        padding: 1.7mm;
+        border-bottom: 0.5mm solid #526875;
+        background: #1c435e;
+        color: white;
+        font-size: 10pt;
+        font-weight: bold;
+        letter-spacing: 0.7mm;
+        line-height: 1;
+        text-align: center;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+    }
+
+    .etiqueta-cuerpo {
+        display: flex;
+        flex: 1;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 0;
+        padding: 1mm 3mm 1.5mm;
+        text-align: center;
+    }
+
+    /*
+       Número de inventario:
+       grande, centrado y sin texto adicional.
+    */
+
+    .numero-inventario {
+        width: 100%;
+        margin: 0 0 0.8mm;
+        color: #1c435e;
+        font-size: 32pt;
+        font-weight: 900;
+        letter-spacing: 0.5mm;
+        line-height: 0.95;
+        text-align: center;
+    }
+
+    .titulo-etiqueta {
+        width: 100%;
+        max-height: 8mm;
+        overflow: hidden;
+        margin-top: 0.3mm;
+        color: #263740;
+        font-size: 10pt;
+        font-weight: 800;
+        line-height: 1.05;
+    }
+
+    .signatura-etiqueta {
+        width: 100%;
+        margin-top: 0.9mm;
+        color: #2e607d;
+        font-size: 13.5pt;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    .ubicacion-etiqueta {
+        width: 100%;
+        margin-top: 1mm;
+        color: #374b57;
+        font-size: 9pt;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .separador {
+        margin: 0 1.5mm;
+        color: #2e607d;
+        font-size: 11pt;
+        font-weight: bold;
+    }
+
+    .salto-pagina {
+        display: none;
+    }
+
+    @media (max-width: 900px) {
+        .panel-configuracion {
+            grid-template-columns: 1fr;
+        }
+
+        .barra-impresion {
+            align-items: stretch;
+            flex-direction: column;
+        }
+
+        .zona-impresion {
+            width: 100%;
+            grid-template-columns: 80mm;
+        }
+    }
+
+    @media print {
+        @page {
+            size: legal portrait;
+            margin: 8mm;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            background: white;
+        }
+
+        .encabezado,
+        .pie-pagina,
+        .no-imprimir {
+            display: none !important;
+        }
+
+        .contenido-principal {
+            width: auto;
+            margin: 0;
+            padding: 0;
+        }
+
+        .zona-impresion {
+            display: grid;
+            grid-template-columns: repeat(2, 80mm);
+            justify-content: center;
+            align-content: start;
+            gap: 3mm 5mm;
+            width: auto;
+            min-height: 0;
+            margin: 0;
+            padding: 0;
+            overflow: visible;
+            box-shadow: none;
+        }
+
+        .etiqueta-mosaico {
+            width: 80mm;
+            height: 45mm;
+            break-inside: avoid;
+            page-break-inside: avoid;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+
+        .etiqueta-encabezado {
+            background: #1c435e !important;
+            color: white !important;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+
+        .salto-pagina {
+            display: block;
+            grid-column: 1 / -1;
+            width: 100%;
+            height: 0;
+            break-after: page;
+            page-break-after: always;
+        }
+    }
+</style>
+
+{% endblock %}

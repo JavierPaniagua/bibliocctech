@@ -1,0 +1,329 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Préstamos | Biblioteca Escolar
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecera-pagina">
+    <div>
+        <h2>Préstamos de libros</h2>
+        <p>Registro y seguimiento de préstamos y devoluciones.</p>
+    </div>
+
+    <a
+        href="{% url 'prestamos:crear' %}"
+        class="boton boton-primario"
+    >
+        + Registrar préstamo
+    </a>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="mensaje mensaje-{{ message.tags }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<div class="tarjeta">
+
+    <form method="get" class="formulario-busqueda">
+
+        <input
+            type="text"
+            name="q"
+            value="{{ busqueda }}"
+            placeholder="Buscar por cédula, persona, título o inventario"
+            class="campo-busqueda"
+            autocomplete="off"
+        >
+
+        <select name="estado" class="campo-filtro">
+            <option
+                value="activos"
+                {% if filtro == 'activos' %}selected{% endif %}
+            >
+                Préstamos activos
+            </option>
+
+            <option
+                value="vencidos"
+                {% if filtro == 'vencidos' %}selected{% endif %}
+            >
+                Préstamos vencidos
+            </option>
+
+            <option
+                value="devueltos"
+                {% if filtro == 'devueltos' %}selected{% endif %}
+            >
+                Libros devueltos
+            </option>
+
+            <option
+                value="todos"
+                {% if filtro == 'todos' %}selected{% endif %}
+            >
+                Todos
+            </option>
+        </select>
+
+        <button type="submit" class="boton boton-primario">
+            Buscar
+        </button>
+
+        {% if busqueda %}
+            <a
+                href="{% url 'prestamos:lista' %}?estado={{ filtro }}"
+                class="boton boton-secundario"
+            >
+                Limpiar
+            </a>
+        {% endif %}
+
+    </form>
+
+    <div class="tabla-responsive">
+
+        <table class="tabla">
+
+            <thead>
+                <tr>
+                    <th>Inventario</th>
+                    <th>Libro</th>
+                    <th>Beneficiario</th>
+                    <th>Cédula</th>
+                    <th>Préstamo</th>
+                    <th>Devolución</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for prestamo in prestamos %}
+
+                    <tr>
+
+                        <td>
+                            <strong>
+                                {{ prestamo.ejemplar.numero_inventario }}
+                            </strong>
+                        </td>
+
+                        <td>
+                            <strong>
+                                {{ prestamo.ejemplar.libro.titulo }}
+                            </strong>
+
+                            {% if prestamo.ejemplar.libro.autor %}
+                                <br>
+                                <small>
+                                    {{ prestamo.ejemplar.libro.autor }}
+                                </small>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if prestamo.alumno %}
+                                {{ prestamo.alumno.nombre_visible }}
+                                <br>
+                                <small>Alumno</small>
+                            {% elif prestamo.docente %}
+                                {{ prestamo.docente }}
+                                <br>
+                                <small>Docente</small>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if prestamo.alumno %}
+                                {{ prestamo.alumno.cedula }}
+                            {% elif prestamo.docente %}
+                                {{ prestamo.docente.cedula }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ prestamo.fecha_prestamo|date:"d/m/Y" }}
+                        </td>
+
+                        <td>
+                            {% if prestamo.fecha_devolucion_real %}
+                                {{ prestamo.fecha_devolucion_real|date:"d/m/Y" }}
+                            {% else %}
+                                {{ prestamo.fecha_devolucion_prevista|date:"d/m/Y" }}
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if prestamo.estado == 'DEVUELTO' %}
+
+                                <span class="estado estado-disponible">
+                                    Devuelto
+                                </span>
+
+                            {% elif prestamo.fecha_devolucion_prevista < fecha_actual %}
+
+                                <span class="estado estado-no-disponible">
+                                    Vencido
+                                </span>
+
+                            {% else %}
+
+                                <span class="estado estado-prestado">
+                                    Prestado
+                                </span>
+
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if prestamo.estado == 'ACTIVO' %}
+
+                                <a
+                                    href="{% url 'prestamos:devolver' prestamo.id %}"
+                                    class="boton boton-excel boton-pequeno"
+                                >
+                                    Devolver
+                                </a>
+
+                            {% else %}
+                                <span class="texto-secundario">
+                                    Finalizado
+                                </span>
+                            {% endif %}
+                        </td>
+
+                    </tr>
+
+                {% empty %}
+
+                    <tr>
+                        <td colspan="8" class="sin-resultados">
+                            No se encontraron préstamos.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<style>
+    .formulario-busqueda {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 22px;
+    }
+
+    .campo-busqueda {
+        flex: 1;
+        min-width: 260px;
+        padding: 12px;
+        border: 1px solid #bdcbd3;
+        border-radius: 7px;
+        font-size: 16px;
+    }
+
+    .campo-filtro {
+        min-width: 190px;
+        padding: 12px;
+        border: 1px solid #bdcbd3;
+        border-radius: 7px;
+        background: white;
+        font-size: 15px;
+    }
+
+    .tabla-responsive {
+        overflow-x: auto;
+    }
+
+    .tabla {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .tabla th {
+        background: #1c435e;
+        color: white;
+        padding: 12px 10px;
+        text-align: left;
+        white-space: nowrap;
+    }
+
+    .tabla td {
+        padding: 12px 10px;
+        border-bottom: 1px solid #d6e0e5;
+        vertical-align: middle;
+    }
+
+    .tabla small,
+    .texto-secundario {
+        color: #60727e;
+    }
+
+    .estado {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 13px;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    .estado-disponible {
+        color: #08745d;
+        background: #ddf4ed;
+    }
+
+    .estado-prestado {
+        color: #8a5a00;
+        background: #fff0c7;
+    }
+
+    .estado-no-disponible {
+        color: #a32d3c;
+        background: #fbe1e5;
+    }
+
+    .boton-pequeno {
+        padding: 8px 12px;
+        font-size: 14px;
+    }
+
+    .sin-resultados {
+        padding: 30px !important;
+        text-align: center;
+        color: #60727e;
+    }
+
+    @media (max-width: 700px) {
+        .formulario-busqueda {
+            flex-direction: column;
+        }
+
+        .campo-busqueda,
+        .campo-filtro {
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+        }
+    }
+</style>
+
+{% endblock %}

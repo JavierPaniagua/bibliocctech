@@ -1,0 +1,394 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Reporte de préstamos | Biblioteca Escolar
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecera-pagina no-imprimir">
+
+    <div>
+        <h2>Reporte de préstamos</h2>
+        <p>Resumen general de movimientos de la biblioteca.</p>
+    </div>
+
+    <div class="grupo-botones">
+
+        <button
+            type="button"
+            class="boton boton-primario"
+            onclick="window.print()"
+        >
+            Imprimir reporte
+        </button>
+
+        <a
+            href="{% url 'prestamos:lista' %}"
+            class="boton boton-secundario"
+        >
+            Volver
+        </a>
+
+    </div>
+
+</div>
+
+<div class="encabezado-impresion">
+
+    <h1>Biblioteca Escolar CCTL</h1>
+
+    <h2>Reporte general de préstamos</h2>
+
+    <p>
+        Fecha de emisión: {{ fecha_actual|date:"d/m/Y" }}
+    </p>
+
+</div>
+
+<section class="resumen-reporte">
+
+    <div class="dato-reporte">
+        <strong>{{ total_prestamos }}</strong>
+        <span>Total de préstamos</span>
+    </div>
+
+    <div class="dato-reporte dato-activo">
+        <strong>{{ prestamos_activos }}</strong>
+        <span>Préstamos activos</span>
+    </div>
+
+    <div class="dato-reporte dato-devuelto">
+        <strong>{{ prestamos_devueltos }}</strong>
+        <span>Libros devueltos</span>
+    </div>
+
+    <div class="dato-reporte dato-vencido">
+        <strong>{{ prestamos_vencidos }}</strong>
+        <span>Préstamos vencidos</span>
+    </div>
+
+</section>
+
+<div class="tarjeta reporte-contenido">
+
+    <h3>Detalle de préstamos</h3>
+
+    <div class="tabla-responsive">
+
+        <table class="tabla tabla-reporte">
+
+            <thead>
+                <tr>
+                    <th>N.º</th>
+                    <th>Inventario</th>
+                    <th>Libro</th>
+                    <th>Beneficiario</th>
+                    <th>Cédula</th>
+                    <th>Préstamo</th>
+                    <th>Fecha prevista</th>
+                    <th>Devolución real</th>
+                    <th>Estado</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for prestamo in prestamos %}
+
+                    <tr>
+
+                        <td>{{ forloop.counter }}</td>
+
+                        <td>
+                            {{ prestamo.ejemplar.numero_inventario }}
+                        </td>
+
+                        <td>
+                            <strong>
+                                {{ prestamo.ejemplar.libro.titulo }}
+                            </strong>
+                        </td>
+
+                        <td>
+                            {% if prestamo.alumno %}
+                                {{ prestamo.alumno.nombre_visible }}
+                                <br>
+                                <small>Alumno</small>
+                            {% elif prestamo.docente %}
+                                {{ prestamo.docente }}
+                                <br>
+                                <small>Docente</small>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if prestamo.alumno %}
+                                {{ prestamo.alumno.cedula }}
+                            {% elif prestamo.docente %}
+                                {{ prestamo.docente.cedula }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {{ prestamo.fecha_prestamo|date:"d/m/Y" }}
+                        </td>
+
+                        <td>
+                            {{ prestamo.fecha_devolucion_prevista|date:"d/m/Y" }}
+                        </td>
+
+                        <td>
+                            {% if prestamo.fecha_devolucion_real %}
+                                {{ prestamo.fecha_devolucion_real|date:"d/m/Y" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if prestamo.estado == 'DEVUELTO' %}
+
+                                <span class="estado estado-devuelto">
+                                    Devuelto
+                                </span>
+
+                            {% elif prestamo.fecha_devolucion_prevista < fecha_actual %}
+
+                                <span class="estado estado-vencido">
+                                    Vencido
+                                </span>
+
+                            {% else %}
+
+                                <span class="estado estado-activo">
+                                    Activo
+                                </span>
+
+                            {% endif %}
+                        </td>
+
+                    </tr>
+
+                {% empty %}
+
+                    <tr>
+                        <td colspan="9" class="sin-registros">
+                            No existen préstamos registrados.
+                        </td>
+                    </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+<style>
+    .encabezado-impresion {
+        display: none;
+    }
+
+    .resumen-reporte {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+
+    .dato-reporte {
+        padding: 20px;
+        border-left: 5px solid #1c435e;
+        border-radius: 9px;
+        background: white;
+        box-shadow: 0 3px 12px rgba(26, 57, 75, 0.09);
+    }
+
+    .dato-reporte strong {
+        display: block;
+        margin-bottom: 5px;
+        color: #173c57;
+        font-size: 31px;
+    }
+
+    .dato-reporte span {
+        color: #60727e;
+    }
+
+    .dato-activo {
+        border-left-color: #df9414;
+    }
+
+    .dato-devuelto {
+        border-left-color: #218767;
+    }
+
+    .dato-vencido {
+        border-left-color: #bd3548;
+    }
+
+    .reporte-contenido h3 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: #173c57;
+    }
+
+    .tabla-reporte {
+        font-size: 14px;
+    }
+
+    .tabla-reporte th,
+    .tabla-reporte td {
+        padding: 10px 8px;
+    }
+
+    .tabla-reporte small {
+        color: #60727e;
+    }
+
+    .estado {
+        display: inline-block;
+        padding: 5px 9px;
+        border-radius: 20px;
+        font-size: 12px;
+        font-weight: bold;
+        white-space: nowrap;
+    }
+
+    .estado-activo {
+        background: #fff0c7;
+        color: #805300;
+    }
+
+    .estado-devuelto {
+        background: #ddf4ed;
+        color: #08745d;
+    }
+
+    .estado-vencido {
+        background: #fbe1e5;
+        color: #a32d3c;
+    }
+
+    .sin-registros {
+        padding: 30px !important;
+        color: #60727e;
+        text-align: center;
+    }
+
+    @media (max-width: 850px) {
+        .resumen-reporte {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 500px) {
+        .resumen-reporte {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media print {
+        @page {
+            size: legal landscape;
+            margin: 1cm;
+        }
+
+        body {
+            background: white;
+            color: black;
+            font-size: 10pt;
+        }
+
+        .encabezado,
+        .pie-pagina,
+        .no-imprimir {
+            display: none !important;
+        }
+
+        .contenido-principal {
+            width: 100%;
+            margin: 0;
+        }
+
+        .encabezado-impresion {
+            display: block;
+            margin-bottom: 18px;
+            text-align: center;
+        }
+
+        .encabezado-impresion h1 {
+            margin: 0 0 5px;
+            font-size: 18pt;
+        }
+
+        .encabezado-impresion h2 {
+            margin: 0 0 5px;
+            font-size: 14pt;
+        }
+
+        .encabezado-impresion p {
+            margin: 0;
+        }
+
+        .resumen-reporte {
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-bottom: 15px;
+        }
+
+        .dato-reporte {
+            padding: 10px;
+            border: 1px solid #777;
+            box-shadow: none;
+        }
+
+        .dato-reporte strong {
+            font-size: 18pt;
+        }
+
+        .tarjeta {
+            padding: 0;
+            box-shadow: none;
+        }
+
+        .tabla-responsive {
+            overflow: visible;
+        }
+
+        .tabla-reporte {
+            width: 100%;
+            font-size: 8pt;
+        }
+
+        .tabla-reporte th {
+            border: 1px solid #555;
+            background: #dddddd !important;
+            color: black !important;
+        }
+
+        .tabla-reporte td {
+            border: 1px solid #777;
+        }
+
+        .tabla-reporte tr {
+            break-inside: avoid;
+        }
+
+        .estado {
+            padding: 0;
+            background: transparent !important;
+            color: black !important;
+        }
+    }
+</style>
+
+{% endblock %}

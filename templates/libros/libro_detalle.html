@@ -7,6 +7,7 @@
 {% block content %}
 
 <div class="cabecera-pagina">
+
     <div>
         <h2>{{ libro.titulo }}</h2>
 
@@ -16,6 +17,7 @@
     </div>
 
     <div class="grupo-botones">
+
         <a
             href="{% url 'libros:ejemplar_crear' libro.id %}"
             class="boton boton-primario"
@@ -36,20 +38,15 @@
         >
             Volver
         </a>
-    </div>
-</div>
 
-{% if messages %}
-    {% for message in messages %}
-        <div class="mensaje mensaje-{{ message.tags }}">
-            {{ message }}
-        </div>
-    {% endfor %}
-{% endif %}
+    </div>
+
+</div>
 
 <div class="panel">
 
     <div class="ficha-libro">
+
         <p>
             <strong>Autor:</strong>
             {{ libro.autor|default:"-" }}
@@ -119,9 +116,11 @@
             <strong>Prestados:</strong>
             {{ libro.cantidad_prestada }}
         </p>
+
     </div>
 
-    <div class="cabecera-pagina">
+    <div class="encabezado-ejemplares">
+
         <div>
             <h3>Ejemplares</h3>
 
@@ -129,37 +128,42 @@
                 Cada fila representa un libro físico.
             </p>
         </div>
+
     </div>
 
     <div class="tabla-contenedor">
-        <table class="tabla">
+
+        <table class="tabla tabla-ejemplares">
+
             <thead>
                 <tr>
                     <th>Inventario</th>
-                    <th>Código anterior</th>
                     <th>Ubicación</th>
                     <th>Estado</th>
                     <th>Condición</th>
                     <th>Adquisición</th>
-                    <th>Proveedor</th>
-                    <th>Fecha</th>
-                    <th>Observaciones</th>
                     <th>Etiqueta</th>
                     <th>Acciones</th>
                 </tr>
             </thead>
 
             <tbody>
+
                 {% for ejemplar in ejemplares %}
+
                     <tr>
-                        <td>
-                            <strong>
-                                {{ ejemplar.numero_inventario }}
-                            </strong>
-                        </td>
 
                         <td>
-                            {{ ejemplar.codigo_anterior|default:"-" }}
+                            <strong class="numero-tabla">
+                                {{ ejemplar.numero_inventario }}
+                            </strong>
+
+                            {% if ejemplar.codigo_anterior %}
+                                <small>
+                                    Anterior:
+                                    {{ ejemplar.codigo_anterior }}
+                                </small>
+                            {% endif %}
                         </td>
 
                         <td>
@@ -185,24 +189,10 @@
                         </td>
 
                         <td>
-                            {{ ejemplar.proveedor|default:"-" }}
-                        </td>
-
-                        <td>
-                            {% if ejemplar.fecha_adquisicion %}
-                                {{ ejemplar.fecha_adquisicion|date:"d/m/Y" }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            {{ ejemplar.observaciones|default:"-" }}
-                        </td>
-
-                        <td>
                             {% if ejemplar.etiqueta_impresa %}
-                                Impresa
+                                <span class="etiqueta-impresa">
+                                    Impresa
+                                </span>
                             {% else %}
                                 <span class="estado-pendiente">
                                     Pendiente
@@ -211,28 +201,206 @@
                         </td>
 
                         <td>
-                            <a
-                                href="{% url 'libros:ejemplar_editar' ejemplar.id %}"
-                                class="enlace-editar"
-                            >
-                                Editar
-                            </a>
+                            <div class="acciones-ejemplar">
+
+                                <a
+                                    href="{% url 'libros:ejemplar_editar' ejemplar.id %}"
+                                    class="accion-editar"
+                                >
+                                    Editar
+                                </a>
+
+                                <a
+                                    href="{% url 'libros:etiqueta_individual' ejemplar.numero_inventario %}"
+                                    class="accion-imprimir"
+                                >
+                                    Imprimir
+                                </a>
+
+                            </div>
                         </td>
+
                     </tr>
+
                 {% empty %}
+
                     <tr>
-                        <td
-                            colspan="11"
-                            class="sin-registros"
-                        >
+                        <td colspan="7" class="sin-registros">
                             Este libro no posee ejemplares.
                         </td>
                     </tr>
+
                 {% endfor %}
+
             </tbody>
+
         </table>
+
     </div>
 
 </div>
+
+<style>
+    .panel {
+        padding: 25px;
+        border-radius: 12px;
+        background: white;
+        color: #1f303a;
+        box-shadow: 0 5px 16px rgba(26, 57, 75, 0.1);
+    }
+
+    .ficha-libro {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px 28px;
+        margin-bottom: 30px;
+        padding: 20px;
+        border-radius: 9px;
+        background: #f0f5f7;
+    }
+
+    .ficha-libro p {
+        margin: 0;
+        color: #1f303a;
+        overflow-wrap: anywhere;
+    }
+
+    .encabezado-ejemplares {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+    }
+
+    .encabezado-ejemplares h3 {
+        margin: 0 0 5px;
+        color: #173c57;
+        font-size: 21px;
+    }
+
+    .encabezado-ejemplares p {
+        margin: 0;
+        color: #60727e;
+    }
+
+    .tabla-contenedor {
+        width: 100%;
+        overflow: visible;
+    }
+
+    .tabla-ejemplares {
+        width: 100%;
+        table-layout: fixed;
+    }
+
+    .tabla-ejemplares th,
+    .tabla-ejemplares td {
+        padding: 12px 9px;
+        vertical-align: middle;
+        overflow-wrap: anywhere;
+    }
+
+    .tabla-ejemplares th:nth-child(1) {
+        width: 14%;
+    }
+
+    .tabla-ejemplares th:nth-child(2) {
+        width: 18%;
+    }
+
+    .tabla-ejemplares th:nth-child(3),
+    .tabla-ejemplares th:nth-child(4),
+    .tabla-ejemplares th:nth-child(5),
+    .tabla-ejemplares th:nth-child(6) {
+        width: 13%;
+    }
+
+    .tabla-ejemplares th:nth-child(7) {
+        width: 16%;
+    }
+
+    .numero-tabla {
+        display: block;
+        margin-bottom: 4px;
+        color: #173c57;
+        font-size: 17px;
+    }
+
+    .tabla-ejemplares small {
+        display: block;
+        color: #60727e;
+        font-size: 12px;
+    }
+
+    .estado-pendiente {
+        color: #a26800;
+        font-weight: bold;
+    }
+
+    .etiqueta-impresa {
+        color: #08745d;
+        font-weight: bold;
+    }
+
+    .acciones-ejemplar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+
+    .accion-editar,
+    .accion-imprimir {
+        display: inline-block;
+        padding: 7px 9px;
+        border-radius: 6px;
+        color: white;
+        font-size: 13px;
+        font-weight: bold;
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .accion-editar {
+        background: #1388a2;
+    }
+
+    .accion-imprimir {
+        background: #218767;
+    }
+
+    .accion-editar:hover {
+        background: #0e748b;
+    }
+
+    .accion-imprimir:hover {
+        background: #176b52;
+    }
+
+    .sin-registros {
+        padding: 30px !important;
+        color: #60727e;
+        text-align: center;
+    }
+
+    @media (max-width: 800px) {
+        .ficha-libro {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .tabla-contenedor {
+            overflow-x: auto;
+        }
+
+        .tabla-ejemplares {
+            min-width: 720px;
+        }
+    }
+
+    @media (max-width: 550px) {
+        .ficha-libro {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
 
 {% endblock %}

@@ -9,20 +9,41 @@ from alumnos.models import Alumno
 from docentes.models import Docente
 from libros.models import Ejemplar
 
-def sumar_dias_habiles(fecha_inicial, cantidad_dias):
+
+def sumar_dias_habiles(
+    fecha_inicial,
+    cantidad_dias,
+):
     fecha_resultado = fecha_inicial
     dias_agregados = 0
 
     while dias_agregados < cantidad_dias:
         fecha_resultado += timedelta(days=1)
 
-        # weekday(): lunes = 0 y domingo = 6
+        # Lunes = 0 y domingo = 6.
         if fecha_resultado.weekday() < 5:
             dias_agregados += 1
 
     return fecha_resultado
 
 
+def contar_dias_habiles(
+    fecha_inicial,
+    fecha_final,
+):
+    if fecha_final <= fecha_inicial:
+        return 0
+
+    fecha_actual = fecha_inicial
+    cantidad = 0
+
+    while fecha_actual < fecha_final:
+        fecha_actual += timedelta(days=1)
+
+        if fecha_actual.weekday() < 5:
+            cantidad += 1
+
+    return cantidad
 
 
 class Prestamo(models.Model):
@@ -91,6 +112,7 @@ class Prestamo(models.Model):
     class Meta:
         verbose_name = 'Préstamo'
         verbose_name_plural = 'Préstamos'
+
         ordering = [
             '-fecha_prestamo',
             '-id',
@@ -109,35 +131,48 @@ class Prestamo(models.Model):
                         & Q(docente__isnull=False)
                     )
                 ),
-                name='prestamo_un_solo_beneficiario',
+                name=(
+                    'prestamo_un_solo_beneficiario'
+                ),
             ),
 
             models.UniqueConstraint(
                 fields=['ejemplar'],
                 condition=Q(estado='ACTIVO'),
-                name='ejemplar_unico_prestamo_activo',
+                name=(
+                    'ejemplar_unico_prestamo_activo'
+                ),
             ),
         ]
 
     def __str__(self):
         return (
-            f'{self.ejemplar.codigo} - '
+            f'{self.ejemplar.numero_inventario} - '
             f'{self.nombre_beneficiario}'
         )
 
     @property
     def nombre_beneficiario(self):
         if self.alumno:
-            return (
-                f'{self.alumno.apellidos}, '
-                f'{self.alumno.nombres}'
+            nombre_visible = getattr(
+                self.alumno,
+                'nombre_visible',
+                '',
             )
+
+            if nombre_visible:
+                return nombre_visible
+
+            return (
+                f'{self.alumno.nombres} '
+                f'{self.alumno.apellidos}'
+            ).strip()
 
         if self.docente:
             return (
-                f'{self.docente.apellidos}, '
-                f'{self.docente.nombres}'
-            )
+                f'{self.docente.nombres} '
+                f'{self.docente.apellidos}'
+            ).strip()
 
         return 'Sin beneficiario'
 
@@ -163,9 +198,14 @@ class Prestamo(models.Model):
 
     @property
     def esta_vencido(self):
+        if (
+            self.estado != self.Estado.ACTIVO
+            or not self.fecha_devolucion_prevista
+        ):
+            return False
+
         return (
-            self.estado == self.Estado.ACTIVO
-            and self.fecha_devolucion_prevista
+            self.fecha_devolucion_prevista
             < timezone.localdate()
         )
 
@@ -174,25 +214,42 @@ class Prestamo(models.Model):
         if not self.esta_vencido:
             return 0
 
-        diferencia = (
-            timezone.localdate()
-            - self.fecha_devolucion_prevista
+        return contar_dias_habiles(
+            self.fecha_devolucion_prevista,
+            timezone.localdate(),
         )
-
-        return diferencia.days
 
     def clean(self):
         super().clean()
 
-        tiene_alumno = self.alumno_id is not None
-        tiene_docente = self.docente_id is not None
+        tiene_alumno = (
+            self.alumno_id is not None
+        )
+
+        tiene_docente = (
+            self.docente_id is not None
+        )
 
         if tiene_alumno == tiene_docente:
             raise ValidationError(
                 (
-                    'El préstamo debe pertenecer solamente '
-                    'a un alumno o a un docente.'
+                    'El préstamo debe pertenecer '
+                    'solamente a un alumno o a '
+                    'un docente.'
                 )
+            )
+
+        if (
+            self.alumno_id
+            and not self.alumno.activo
+        ):
+            raise ValidationError(
+                {
+                    'alumno': (
+                        'El alumno está inactivo '
+                        'o es exalumno.'
+                    )
+                }
             )
 
         if (
@@ -203,8 +260,65 @@ class Prestamo(models.Model):
             raise ValidationError(
                 {
                     'fecha_devolucion_prevista': (
-                        'La devolución prevista no puede '
-                        'ser anterior al préstamo.'
+                        'La devolución prevista no '
+                        'puede ser anterior al préstamo.'
+                    )
+                }
+            )
+
+        if self.estado == self.Estado.ACTIVO:
+            prestamo_existente = (
+                type(self).objects.filter(
+                    ejemplar_id=self.ejemplar_id,
+                    estado=self.Estado.ACTIVO,
+                )
+                .exclude(pk=self.pk)
+                .exists()
+            )
+
+            if prestamo_existente:
+                raise ValidationError(
+                    {
+                        'ejemplar': (
+                            'Este ejemplar ya posee '
+                            'un préstamo activo.'
+                        )
+                    }
+                )
+
+            if (
+                self._state.adding
+                and self.ejemplar.estado
+                != Ejemplar.Estado.DISPONIBLE
+            ):
+                raise ValidationError(
+                    {
+                        'ejemplar': (
+                            'El ejemplar no está '
+                            'disponible para préstamo.'
+                        )
+                    }
+                )
+
+            if self.fecha_devolucion_real:
+                raise ValidationError(
+                    {
+                        'fecha_devolucion_real': (
+                            'Un préstamo activo no puede '
+                            'tener fecha real de devolución.'
+                        )
+                    }
+                )
+
+        if (
+            self.estado == self.Estado.DEVUELTO
+            and not self.fecha_devolucion_real
+        ):
+            raise ValidationError(
+                {
+                    'fecha_devolucion_real': (
+                        'Debe registrar la fecha '
+                        'de devolución.'
                     )
                 }
             )
@@ -219,5 +333,18 @@ class Prestamo(models.Model):
             )
 
         self.full_clean()
-
         super().save(*args, **kwargs)
+
+        if self.estado == self.Estado.ACTIVO:
+            Ejemplar.objects.filter(
+                pk=self.ejemplar_id,
+            ).update(
+                estado=Ejemplar.Estado.PRESTADO
+            )
+
+        elif self.estado == self.Estado.DEVUELTO:
+            Ejemplar.objects.filter(
+                pk=self.ejemplar_id,
+            ).update(
+                estado=Ejemplar.Estado.DISPONIBLE
+            )

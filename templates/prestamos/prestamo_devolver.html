@@ -1,0 +1,290 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Registrar devolución | Biblioteca Escolar
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecera-pagina">
+    <div>
+        <h2>Registrar devolución</h2>
+        <p>Confirme la devolución del ejemplar prestado.</p>
+    </div>
+
+    <a
+        href="{% url 'prestamos:lista' %}"
+        class="boton boton-secundario"
+    >
+        Volver
+    </a>
+</div>
+
+<div class="tarjeta tarjeta-formulario">
+
+    <div class="resumen-prestamo">
+
+        <h3>{{ prestamo.ejemplar.libro.titulo }}</h3>
+
+        <div class="datos-resumen">
+
+            <div>
+                <span>Número de inventario</span>
+                <strong>
+                    {{ prestamo.ejemplar.numero_inventario }}
+                </strong>
+            </div>
+
+            <div>
+                <span>Beneficiario</span>
+
+                <strong>
+                    {% if prestamo.alumno %}
+                        {{ prestamo.alumno.nombre_visible }}
+                    {% elif prestamo.docente %}
+                        {{ prestamo.docente }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </strong>
+            </div>
+
+            <div>
+                <span>Cédula</span>
+
+                <strong>
+                    {% if prestamo.alumno %}
+                        {{ prestamo.alumno.cedula }}
+                    {% elif prestamo.docente %}
+                        {{ prestamo.docente.cedula }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </strong>
+            </div>
+
+            <div>
+                <span>Fecha del préstamo</span>
+                <strong>
+                    {{ prestamo.fecha_prestamo|date:"d/m/Y" }}
+                </strong>
+            </div>
+
+            <div>
+                <span>Devolución prevista</span>
+                <strong>
+                    {{ prestamo.fecha_devolucion_prevista|date:"d/m/Y" }}
+                </strong>
+            </div>
+
+            <div>
+                <span>Ubicación</span>
+                <strong>
+                    {% if prestamo.ejemplar.estanteria %}
+                        Estantería {{ prestamo.ejemplar.estanteria }}
+                    {% else %}
+                        Sin estantería
+                    {% endif %}
+
+                    -
+
+                    {% if prestamo.ejemplar.balda %}
+                        Balda
+                        {{ prestamo.ejemplar.estanteria }}{{ prestamo.ejemplar.balda }}
+                    {% else %}
+                        Sin balda
+                    {% endif %}
+                </strong>
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="aviso-devolucion">
+        <strong>Antes de confirmar:</strong>
+        revise el estado físico del libro y seleccione su condición actual.
+    </div>
+
+    <form method="post" novalidate>
+
+        {% csrf_token %}
+
+        {% if formulario.non_field_errors %}
+            <div class="mensaje mensaje-error">
+                {% for error in formulario.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <div class="grupo-campo">
+            <label for="{{ formulario.fecha_devolucion_real.id_for_label }}">
+                {{ formulario.fecha_devolucion_real.label }}
+            </label>
+
+            {{ formulario.fecha_devolucion_real }}
+
+            {% for error in formulario.fecha_devolucion_real.errors %}
+                <div class="error-campo">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="grupo-campo">
+            <label for="{{ formulario.condicion.id_for_label }}">
+                {{ formulario.condicion.label }}
+            </label>
+
+            {{ formulario.condicion }}
+
+            {% for error in formulario.condicion.errors %}
+                <div class="error-campo">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="grupo-campo">
+            <label for="{{ formulario.observaciones.id_for_label }}">
+                {{ formulario.observaciones.label }}
+            </label>
+
+            {{ formulario.observaciones }}
+
+            <small>
+                Registre aquí daños, hojas faltantes u otra información importante.
+            </small>
+
+            {% for error in formulario.observaciones.errors %}
+                <div class="error-campo">{{ error }}</div>
+            {% endfor %}
+        </div>
+
+        <div class="grupo-botones formulario-acciones">
+
+            <button type="submit" class="boton boton-primario">
+                Confirmar devolución
+            </button>
+
+            <a
+                href="{% url 'prestamos:lista' %}"
+                class="boton boton-secundario"
+            >
+                Cancelar
+            </a>
+
+        </div>
+
+    </form>
+
+</div>
+
+<style>
+    .tarjeta-formulario {
+        max-width: 800px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .resumen-prestamo {
+        margin-bottom: 22px;
+        padding: 22px;
+        border-radius: 9px;
+        background: #f0f5f7;
+    }
+
+    .resumen-prestamo h3 {
+        margin-top: 0;
+        margin-bottom: 20px;
+        color: #1c435e;
+    }
+
+    .datos-resumen {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+    }
+
+    .datos-resumen span {
+        display: block;
+        margin-bottom: 5px;
+        color: #60727e;
+        font-size: 14px;
+    }
+
+    .datos-resumen strong {
+        display: block;
+        color: #1f3340;
+    }
+
+    .aviso-devolucion {
+        margin-bottom: 24px;
+        padding: 15px 18px;
+        border-left: 5px solid #df9414;
+        border-radius: 6px;
+        background: #fff2d4;
+        color: #5d430f;
+    }
+
+    .grupo-campo {
+        margin-bottom: 20px;
+    }
+
+    .grupo-campo label {
+        display: block;
+        margin-bottom: 7px;
+        color: #1f3340;
+        font-weight: bold;
+    }
+
+    .grupo-campo .campo {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 12px;
+        border: 1px solid #bdcbd3;
+        border-radius: 7px;
+        background: white;
+        font-size: 16px;
+    }
+
+    .grupo-campo textarea.campo {
+        resize: vertical;
+    }
+
+    .grupo-campo small {
+        display: block;
+        margin-top: 6px;
+        color: #60727e;
+    }
+
+    .error-campo {
+        margin-top: 7px;
+        color: #b3263b;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .formulario-acciones {
+        margin-top: 28px;
+        padding-top: 20px;
+        border-top: 1px solid #d6e0e5;
+    }
+
+    @media (max-width: 650px) {
+        .datos-resumen {
+            grid-template-columns: 1fr;
+        }
+
+        .formulario-acciones {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .formulario-acciones .boton {
+            width: 100%;
+            box-sizing: border-box;
+            text-align: center;
+        }
+    }
+</style>
+
+{% endblock %}

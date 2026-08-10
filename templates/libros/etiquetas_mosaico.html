@@ -155,6 +155,22 @@
 
 </div>
 
+{% if etiquetas_omitidas %}
+
+    <div class="mensaje mensaje-warning no-imprimir">
+
+        <strong>
+            {{ etiquetas_omitidas }} ejemplar(es) no se incluyeron.
+        </strong>
+
+        Complete su signatura topográfica, estantería y balda
+        antes de imprimir las etiquetas.
+
+    </div>
+
+{% endif %}
+
+
 {% if etiquetas %}
 
     <div class="barra-impresion no-imprimir">

@@ -599,3 +599,7 @@ body {
         grid-template-columns: 1fr;
     }
 }
+
+.tarjeta-etiquetas {
+    background-color: #2e607d;
+}

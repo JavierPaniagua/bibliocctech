@@ -60,4 +60,10 @@ urlpatterns = [
     views.etiquetas_mosaico,
     name="etiquetas_mosaico",
 ),
+    
+    path(
+    "reporte/inventario/",
+    views.reporte_inventario,
+    name="reporte_inventario",
+),
 ]

@@ -37,32 +37,35 @@
             BIBLIOTECA CCTL
         </div>
 
-        <div class="etiqueta-contenido">
+        <div class="etiqueta-cuerpo">
 
             <div class="numero-inventario">
                 {{ ejemplar.numero_inventario }}
             </div>
 
-            <div class="titulo-libro">
+            <div class="titulo-etiqueta">
                 {{ libro.titulo|truncatechars:48 }}
             </div>
 
-            <div class="signatura">
+            <div class="signatura-etiqueta">
+
                 {% if libro.signatura_topografica %}
                     {{ libro.signatura_topografica }}
                 {% else %}
                     SIN CLASIFICAR
                 {% endif %}
+
             </div>
 
-            <div class="ubicacion">
+            <div class="ubicacion-etiqueta">
+
                 {% if ejemplar.estanteria %}
                     Estantería {{ ejemplar.estanteria }}
                 {% else %}
                     Sin estantería
                 {% endif %}
 
-                <span>·</span>
+                <span class="separador">·</span>
 
                 {% if ejemplar.balda %}
                     Balda
@@ -70,12 +73,9 @@
                 {% else %}
                     Sin balda
                 {% endif %}
+
             </div>
 
-        </div>
-
-        <div class="etiqueta-pie">
-            N.º DE INVENTARIO
         </div>
 
     </div>
@@ -91,6 +91,7 @@
         </button>
 
         <form method="post">
+
             {% csrf_token %}
 
             <button
@@ -99,6 +100,7 @@
             >
                 Confirmar que fue impresa
             </button>
+
         </form>
 
         <a
@@ -111,14 +113,22 @@
     </div>
 
     {% if ejemplar.etiqueta_impresa %}
+
         <div class="estado-impresion no-imprimir">
+
             Esta etiqueta ya fue marcada como impresa.
 
             {% if ejemplar.fecha_impresion_etiqueta %}
+
+                <br>
+
                 Fecha:
                 {{ ejemplar.fecha_impresion_etiqueta|date:"d/m/Y H:i" }}
+
             {% endif %}
+
         </div>
+
     {% endif %}
 
 </div>
@@ -128,6 +138,7 @@
         padding: 28px;
         border-radius: 12px;
         background: white;
+        color: #263740;
         box-shadow: 0 5px 16px rgba(26, 57, 75, 0.1);
     }
 
@@ -137,6 +148,11 @@
         text-align: center;
     }
 
+    /*
+       Mismo diseño de la etiqueta en mosaico:
+       80 mm de ancho por 45 mm de alto.
+    */
+
     .etiqueta-libro {
         display: flex;
         flex-direction: column;
@@ -144,70 +160,85 @@
         height: 45mm;
         margin: 0 auto;
         overflow: hidden;
-        border: 1.2mm solid #111111;
-        background: white;
-        color: #111111;
+        border: 0.8mm solid #526875;
+        background: #f4f7f9;
+        color: #263740;
         font-family: Arial, Helvetica, sans-serif;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
     }
 
     .etiqueta-encabezado {
-        padding: 2mm;
-        background: #111111;
+        flex-shrink: 0;
+        padding: 1.7mm;
+        border-bottom: 0.5mm solid #526875;
+        background: #1c435e;
         color: white;
-        font-size: 11pt;
+        font-size: 10pt;
         font-weight: bold;
-        letter-spacing: 0.8mm;
+        letter-spacing: 0.7mm;
+        line-height: 1;
         text-align: center;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
     }
 
-    .etiqueta-contenido {
+    .etiqueta-cuerpo {
         display: flex;
         flex: 1;
         flex-direction: column;
+        align-items: center;
         justify-content: center;
-        padding: 1.5mm 3mm;
+        min-height: 0;
+        padding: 1mm 3mm 1.5mm;
         text-align: center;
     }
 
     .numero-inventario {
-        margin-bottom: 0.5mm;
-        font-size: 22pt;
+        width: 100%;
+        margin: 0 0 0.8mm;
+        color: #1c435e;
+        font-size: 32pt;
         font-weight: 900;
-        line-height: 1;
-    }
-
-    .titulo-libro {
-        max-height: 9mm;
-        overflow: hidden;
-        font-size: 8.5pt;
-        font-weight: bold;
-        line-height: 1.15;
-    }
-
-    .signatura {
-        margin-top: 1mm;
-        font-size: 11pt;
-        font-weight: 900;
-        line-height: 1;
-    }
-
-    .ubicacion {
-        margin-top: 1mm;
-        font-size: 8pt;
-        font-weight: bold;
-    }
-
-    .ubicacion span {
-        margin: 0 1.5mm;
-    }
-
-    .etiqueta-pie {
-        padding: 1mm;
-        border-top: 0.4mm solid #111111;
-        font-size: 6.5pt;
-        font-weight: bold;
         letter-spacing: 0.5mm;
+        line-height: 0.95;
         text-align: center;
+    }
+
+    .titulo-etiqueta {
+        width: 100%;
+        max-height: 8mm;
+        overflow: hidden;
+        margin-top: 0.3mm;
+        color: #263740;
+        font-size: 10pt;
+        font-weight: 800;
+        line-height: 1.05;
+    }
+
+    .signatura-etiqueta {
+        width: 100%;
+        margin-top: 0.9mm;
+        color: #2e607d;
+        font-size: 13.5pt;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    .ubicacion-etiqueta {
+        width: 100%;
+        margin-top: 1mm;
+        color: #374b57;
+        font-size: 9pt;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .separador {
+        margin: 0 1.5mm;
+        color: #2e607d;
+        font-size: 11pt;
+        font-weight: bold;
     }
 
     .acciones-etiqueta {
@@ -272,7 +303,18 @@
             width: 80mm;
             height: 45mm;
             margin: 0;
+            border-color: #526875;
             break-inside: avoid;
+            page-break-inside: avoid;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
+        }
+
+        .etiqueta-encabezado {
+            background: #1c435e !important;
+            color: white !important;
+            print-color-adjust: exact;
+            -webkit-print-color-adjust: exact;
         }
     }
 </style>

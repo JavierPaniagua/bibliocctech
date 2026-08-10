@@ -1,0 +1,123 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Reportes | Biblioteca CCTL
+{% endblock %}
+
+{% block content %}
+
+<div class="cabecera-pagina">
+
+    <div>
+        <h2>Reportes</h2>
+
+        <p>
+            Consulte e imprima información del sistema bibliotecario.
+        </p>
+    </div>
+
+    <a
+        href="{% url 'core:inicio' %}"
+        class="boton boton-secundario"
+    >
+        Volver al dashboard
+    </a>
+
+</div>
+
+<div class="opciones-reportes">
+
+    <a
+        href="{% url 'libros:reporte_inventario' %}"
+        class="reporte reporte-inventario"
+    >
+        <span class="icono-reporte">📚</span>
+
+        <div>
+            <h3>Reporte de inventario</h3>
+
+            <p>
+                Consultar títulos, ejemplares, clasificación,
+                ubicación, condición y disponibilidad.
+            </p>
+        </div>
+    </a>
+
+    <a
+        href="{% url 'prestamos:reporte' %}"
+        class="reporte reporte-prestamos"
+    >
+        <span class="icono-reporte">📋</span>
+
+        <div>
+            <h3>Reporte de préstamos</h3>
+
+            <p>
+                Consultar préstamos activos, devueltos,
+                vencidos y movimientos realizados.
+            </p>
+        </div>
+    </a>
+
+</div>
+
+<style>
+    .opciones-reportes {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 22px;
+    }
+
+    .reporte {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        min-height: 160px;
+        padding: 28px;
+        border-radius: 12px;
+        color: white;
+        text-decoration: none;
+        box-shadow: 0 5px 16px rgba(26, 57, 75, 0.13);
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+
+    .reporte:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 21px rgba(26, 57, 75, 0.2);
+    }
+
+    .reporte-inventario {
+        background: #23856d;
+    }
+
+    .reporte-prestamos {
+        background: #2e607d;
+    }
+
+    .icono-reporte {
+        font-size: 48px;
+    }
+
+    .reporte h3 {
+        margin: 0 0 8px;
+        color: white;
+        font-size: 22px;
+    }
+
+    .reporte p {
+        margin: 0;
+        color: rgba(255, 255, 255, 0.93);
+        font-size: 16px;
+        line-height: 1.5;
+    }
+
+    @media (max-width: 700px) {
+        .opciones-reportes {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+{% endblock %}

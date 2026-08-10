@@ -713,9 +713,41 @@ def etiqueta_individual(request, numero_inventario):
         numero_inventario=numero_inventario,
     )
 
+    datos_faltantes = []
+
+    if not ejemplar.libro.signatura_topografica:
+        datos_faltantes.append(
+            "clasificación o signatura topográfica"
+        )
+
+    if not ejemplar.estanteria:
+        datos_faltantes.append("estantería")
+
+    if not ejemplar.balda:
+        datos_faltantes.append("balda")
+
+    if datos_faltantes:
+        messages.warning(
+            request,
+            (
+                "No se puede imprimir la etiqueta del ejemplar "
+                f"{ejemplar.numero_inventario}. "
+                "Complete: "
+                + ", ".join(datos_faltantes)
+                + "."
+            ),
+        )
+
+        return redirect(
+            "libros:detalle",
+            libro_id=ejemplar.libro_id,
+        )
+
     if request.method == "POST":
         ejemplar.etiqueta_impresa = True
-        ejemplar.fecha_impresion_etiqueta = timezone.now()
+        ejemplar.fecha_impresion_etiqueta = (
+            timezone.now()
+        )
 
         ejemplar.save(
             update_fields=[
@@ -728,7 +760,8 @@ def etiqueta_individual(request, numero_inventario):
             request,
             (
                 "La etiqueta del ejemplar "
-                f"{ejemplar.numero_inventario} fue marcada como impresa."
+                f"{ejemplar.numero_inventario} "
+                "fue marcada como impresa."
             ),
         )
 
@@ -750,37 +783,61 @@ def etiqueta_individual(request, numero_inventario):
 
 def etiquetas_mosaico(request):
     etiquetas = []
+    etiquetas_omitidas = 0
     numero_desde = ""
     cantidad = 14
     solo_pendientes = True
 
+    filtro_incompleto = (
+        Q(libro__signatura_topografica="")
+        | Q(estanteria="")
+        | Q(balda="")
+    )
+
     if request.method == "POST":
-        accion = request.POST.get("accion", "preparar")
+        accion = request.POST.get(
+            "accion",
+            "preparar",
+        )
 
         try:
             numero_desde = int(
-                request.POST.get("numero_desde", 1)
+                request.POST.get(
+                    "numero_desde",
+                    1,
+                )
             )
         except (TypeError, ValueError):
             numero_desde = 1
 
         try:
             cantidad = int(
-                request.POST.get("cantidad", 14)
+                request.POST.get(
+                    "cantidad",
+                    14,
+                )
             )
         except (TypeError, ValueError):
-            cantidad = 27
+            cantidad = 14
 
-        cantidad = max(1, min(cantidad, 270))
-
-        solo_pendientes = (
-            request.POST.get("solo_pendientes") == "si"
+        cantidad = max(
+            1,
+            min(cantidad, 280),
         )
 
-        ejemplares = Ejemplar.objects.select_related(
-            "libro"
-        ).filter(
-            numero_inventario__gte=numero_desde
+        solo_pendientes = (
+            request.POST.get(
+                "solo_pendientes"
+            )
+            == "si"
+        )
+
+        ejemplares = (
+            Ejemplar.objects
+            .select_related("libro")
+            .filter(
+                numero_inventario__gte=numero_desde
+            )
         )
 
         if solo_pendientes:
@@ -788,55 +845,97 @@ def etiquetas_mosaico(request):
                 etiqueta_impresa=False
             )
 
+        etiquetas_omitidas = ejemplares.filter(
+            filtro_incompleto
+        ).count()
+
+        ejemplares_completos = ejemplares.exclude(
+            filtro_incompleto
+        )
+
         etiquetas = list(
-            ejemplares.order_by(
+            ejemplares_completos.order_by(
                 "numero_inventario"
             )[:cantidad]
         )
 
         if accion == "marcar_impresas":
-            numeros_seleccionados = request.POST.getlist(
-                "ejemplares_seleccionados"
+            numeros_seleccionados = (
+                request.POST.getlist(
+                    "ejemplares_seleccionados"
+                )
             )
 
+            cantidad_marcada = 0
+
             if numeros_seleccionados:
-                Ejemplar.objects.filter(
-                    numero_inventario__in=numeros_seleccionados
-                ).update(
-                    etiqueta_impresa=True,
-                    fecha_impresion_etiqueta=timezone.now(),
+                cantidad_marcada = (
+                    Ejemplar.objects
+                    .filter(
+                        numero_inventario__in=(
+                            numeros_seleccionados
+                        )
+                    )
+                    .exclude(
+                        filtro_incompleto
+                    )
+                    .update(
+                        etiqueta_impresa=True,
+                        fecha_impresion_etiqueta=(
+                            timezone.now()
+                        ),
+                    )
                 )
 
+            if cantidad_marcada:
                 messages.success(
                     request,
                     (
-                        f"{len(numeros_seleccionados)} "
-                        "etiquetas fueron marcadas como impresas."
+                        f"{cantidad_marcada} etiquetas "
+                        "fueron marcadas como impresas."
+                    ),
+                )
+            else:
+                messages.warning(
+                    request,
+                    (
+                        "No se marcaron etiquetas. "
+                        "Revise que los ejemplares tengan "
+                        "signatura, estantería y balda."
                     ),
                 )
 
-                return redirect("libros:etiquetas_mosaico")
+            return redirect(
+                "libros:etiquetas_mosaico"
+            )
 
-    primer_ejemplar = Ejemplar.objects.order_by(
-        "numero_inventario"
-    ).first()
+    primer_ejemplar = (
+        Ejemplar.objects
+        .order_by("numero_inventario")
+        .first()
+    )
 
-    primer_pendiente = Ejemplar.objects.filter(
-        etiqueta_impresa=False
-    ).order_by(
-        "numero_inventario"
-    ).first()
+    primer_pendiente = (
+        Ejemplar.objects
+        .filter(etiqueta_impresa=False)
+        .exclude(filtro_incompleto)
+        .order_by("numero_inventario")
+        .first()
+    )
 
     contexto = {
         "etiquetas": etiquetas,
+        "etiquetas_omitidas": etiquetas_omitidas,
         "numero_desde": numero_desde,
         "cantidad": cantidad,
         "solo_pendientes": solo_pendientes,
+
         "primer_inventario": (
             primer_ejemplar.numero_inventario
             if primer_ejemplar
             else None
         ),
+
         "primer_pendiente": (
             primer_pendiente.numero_inventario
             if primer_pendiente
@@ -847,5 +946,51 @@ def etiquetas_mosaico(request):
     return render(
         request,
         "libros/etiquetas_mosaico.html",
+        contexto,
+    )
+    
+def reporte_inventario(request):
+    ejemplares = (
+        Ejemplar.objects
+        .select_related("libro")
+        .order_by(
+            "libro__area",
+            "libro__clasificacion",
+            "numero_inventario",
+        )
+    )
+
+    filtro_incompleto = (
+        Q(libro__signatura_topografica="")
+        | Q(estanteria="")
+        | Q(balda="")
+    )
+
+    contexto = {
+        "ejemplares": ejemplares,
+        "fecha_actual": timezone.localdate(),
+
+        "total_titulos": Libro.objects.filter(
+            activo=True
+        ).count(),
+
+        "total_ejemplares": ejemplares.count(),
+
+        "total_disponibles": ejemplares.filter(
+            estado=Ejemplar.Estado.DISPONIBLE
+        ).count(),
+
+        "total_prestados": ejemplares.filter(
+            estado=Ejemplar.Estado.PRESTADO
+        ).count(),
+
+        "total_incompletos": ejemplares.filter(
+            filtro_incompleto
+        ).count(),
+    }
+
+    return render(
+        request,
+        "libros/reporte_inventario.html",
         contexto,
     )

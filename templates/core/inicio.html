@@ -78,7 +78,62 @@ Inicio | Biblioteca Escolar
         </div>
     </a>
 
-    <a href="{% url 'prestamos:reporte' %}" class="tarjeta tarjeta-morada">
+    <a
+    href="{% url 'core:reportes' %}"
+    class="tarjeta tarjeta-morada"
+>
+    <span class="icono">📊</span>
+
+    <div>
+        <h3>Reportes</h3>
+
+        <p>
+            Consultar préstamos, devoluciones y movimientos.
+        </p>
+
+    </div>
+
+    <a
+    href="{% url 'libros:etiquetas_mosaico' %}"
+    class="tarjeta tarjeta-etiquetas"
+>
+    <span class="icono">🏷️</span>
+
+    <div>
+        <h3>Imprimir etiquetas</h3>
+
+        <p>
+            Preparar etiquetas individuales o en mosaico.
+        </p>
+    </div>
+</a>
+
+<form
+    method="post"
+    action="{% url 'core:crear_respaldo' %}"
+    class="formulario-tarjeta"
+    onsubmit="return confirm('¿Desea crear una copia de seguridad de la base de datos?');"
+>
+    {% csrf_token %}
+
+    <button
+        type="submit"
+        class="tarjeta tarjeta-respaldo tarjeta-boton"
+    >
+        <span class="icono">💾</span>
+
+        <span>
+            <strong class="titulo-tarjeta">
+                Crear respaldo
+            </strong>
+
+            <span class="descripcion-tarjeta">
+                Guardar una copia de seguridad del sistema.
+            </span>
+        </span>
+    </button>
+</form>
+</a>
 
 </section>
 <section class="resumen">

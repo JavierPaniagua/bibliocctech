@@ -15,12 +15,13 @@ def limpiar_texto(valor):
     if isinstance(valor, float) and valor.is_integer():
         valor = int(valor)
 
-    return str(valor).strip()
+    return ' '.join(
+        str(valor).strip().split()
+    )
 
 
 def normalizar_texto(valor):
     texto = limpiar_texto(valor).lower()
-    texto = texto.strip('()[]{} ')
 
     texto = unicodedata.normalize(
         'NFD',
@@ -55,29 +56,47 @@ def normalizar_encabezado(valor):
 
 
 def obtener_numero_inventario(valor):
-    texto = limpiar_texto(valor)
-
-    if not texto:
+    if valor in (None, ''):
         return None
 
     if isinstance(valor, int):
         return valor if valor > 0 else None
 
-    if isinstance(valor, float) and valor.is_integer():
+    if (
+        isinstance(valor, float)
+        and valor.is_integer()
+    ):
         numero = int(valor)
+
         return numero if numero > 0 else None
 
-    encontrados = re.findall(
-        r'\d+',
-        texto,
-    )
+    texto = limpiar_texto(valor)
 
-    if not encontrados:
+    if not texto.isdigit():
         return None
 
-    numero = int(encontrados[-1])
+    numero = int(texto)
 
     return numero if numero > 0 else None
+
+
+def convertir_entero(valor):
+    if valor in (None, ''):
+        return None
+
+    if isinstance(valor, int):
+        return valor
+
+    if (
+        isinstance(valor, float)
+        and valor.is_integer()
+    ):
+        return int(valor)
+
+    try:
+        return int(limpiar_texto(valor))
+    except (TypeError, ValueError):
+        return None
 
 
 def convertir_fecha(valor):
@@ -92,16 +111,10 @@ def convertir_fecha(valor):
 
     texto = limpiar_texto(valor)
 
-    texto = texto.strip()
-    texto = texto.strip('()[]{} ')
-    texto = texto.replace('(', '')
-    texto = texto.replace(')', '')
-    texto = texto.strip()
-
     formatos = [
+        '%Y-%m-%d',
         '%d/%m/%Y',
         '%d-%m-%Y',
-        '%Y-%m-%d',
         '%d/%m/%y',
         '%d-%m-%y',
     ]
@@ -117,6 +130,119 @@ def convertir_fecha(valor):
 
     return None
 
+
+def limpiar_isbn(valor):
+    isbn = limpiar_texto(valor)
+
+    return (
+        isbn
+        .replace(' ', '')
+        .replace('-', '')
+    )
+
+
+def normalizar_area(valor):
+    texto = normalizar_texto(valor)
+
+    equivalencias = {
+        'generalidades': Libro.Area.GENERALIDADES,
+
+        'filosofia': Libro.Area.FILOSOFIA,
+        'filosofia y psicologia': (
+            Libro.Area.FILOSOFIA
+        ),
+
+        'religion': Libro.Area.RELIGION,
+
+        'ciencias sociales': (
+            Libro.Area.CIENCIAS_SOCIALES
+        ),
+
+        'lengua e idiomas': (
+            Libro.Area.LENGUA_IDIOMAS
+        ),
+        'lengua': Libro.Area.LENGUA_IDIOMAS,
+        'idiomas': Libro.Area.LENGUA_IDIOMAS,
+
+        'ciencias naturales': (
+            Libro.Area.CIENCIAS_NATURALES
+        ),
+        'ciencias': (
+            Libro.Area.CIENCIAS_NATURALES
+        ),
+
+        'matematica': Libro.Area.MATEMATICA,
+
+        'tecnologia': Libro.Area.TECNOLOGIA,
+
+        'electricidad': Libro.Area.ELECTRICIDAD,
+
+        'electronica': Libro.Area.ELECTRONICA,
+
+        'informatica': Libro.Area.INFORMATICA,
+
+        'artes': Libro.Area.ARTES,
+
+        'literatura': Libro.Area.LITERATURA,
+
+        'historia y geografia': (
+            Libro.Area.HISTORIA_GEOGRAFIA
+        ),
+        'historia': Libro.Area.HISTORIA_GEOGRAFIA,
+        'geografia': Libro.Area.HISTORIA_GEOGRAFIA,
+
+        'referencia': Libro.Area.REFERENCIA,
+
+        'otro': Libro.Area.OTRO,
+    }
+
+    return equivalencias.get(texto)
+
+
+def normalizar_condicion(valor):
+    texto = normalizar_texto(valor)
+
+    equivalencias = {
+        'nuevo': Ejemplar.Condicion.NUEVO,
+        'bueno': Ejemplar.Condicion.BUENO,
+        'regular': Ejemplar.Condicion.REGULAR,
+        'deteriorado': (
+            Ejemplar.Condicion.DETERIORADO
+        ),
+    }
+
+    return equivalencias.get(texto)
+
+
+def normalizar_estado(valor):
+    texto = normalizar_texto(valor)
+
+    if not texto:
+        return Ejemplar.Estado.DISPONIBLE
+
+    equivalencias = {
+        'disponible': Ejemplar.Estado.DISPONIBLE,
+        'prestado': Ejemplar.Estado.PRESTADO,
+
+        'en reparacion': (
+            Ejemplar.Estado.REPARACION
+        ),
+        'reparacion': Ejemplar.Estado.REPARACION,
+
+        'deteriorado': (
+            Ejemplar.Estado.DETERIORADO
+        ),
+
+        'perdido': Ejemplar.Estado.EXTRAVIADO,
+        'extraviado': Ejemplar.Estado.EXTRAVIADO,
+
+        'baja': Ejemplar.Estado.BAJA,
+        'dado de baja': Ejemplar.Estado.BAJA,
+    }
+
+    return equivalencias.get(texto)
+
+
 def normalizar_adquisicion(valor):
     texto = normalizar_texto(valor)
 
@@ -125,92 +251,148 @@ def normalizar_adquisicion(valor):
             Ejemplar.FormaAdquisicion.NO_ESPECIFICADA
         )
 
-    if 'compra' in texto:
-        return Ejemplar.FormaAdquisicion.COMPRA
+    equivalencias = {
+        'compra': Ejemplar.FormaAdquisicion.COMPRA,
+        'donacion': (
+            Ejemplar.FormaAdquisicion.DONACION
+        ),
+        'transferencia': (
+            Ejemplar.FormaAdquisicion.TRANSFERENCIA
+        ),
+        'otro': Ejemplar.FormaAdquisicion.OTRO,
+        'no especificada': (
+            Ejemplar.FormaAdquisicion.NO_ESPECIFICADA
+        ),
+    }
 
-    if 'donacion' in texto:
-        return Ejemplar.FormaAdquisicion.DONACION
-
-    if 'transferencia' in texto:
-        return Ejemplar.FormaAdquisicion.TRANSFERENCIA
-
-    return Ejemplar.FormaAdquisicion.OTRO
+    return equivalencias.get(texto)
 
 
-def separar_ubicacion(valor):
-    texto = limpiar_texto(valor).upper()
+def convertir_verificado(valor):
+    texto = normalizar_texto(valor)
 
-    if not texto:
-        return '', ''
-
-    texto = texto.replace('ESTANTERÍA', '')
-    texto = texto.replace('ESTANTERIA', '')
-    texto = texto.replace('ESTANTE', '')
-    texto = texto.replace('BALDA', '')
-    texto = texto.strip(' :-')
-
-    partes = [
-        parte.strip()
-        for parte in texto.split('-')
-        if parte.strip()
-    ]
-
-    if len(partes) >= 2:
-        return partes[0], partes[1]
-
-    # El Excel histórico normalmente contiene solamente
-    # el número de la balda.
-    return '', texto
+    return texto in {
+        'si',
+        's',
+        'true',
+        'verdadero',
+        '1',
+    }
 
 
 def buscar_encabezados(hoja):
     equivalencias = {
-        'codigo_acceso': {
-            'codigo acceso',
-            'codigo de acceso',
-            'nro acceso',
-            'numero acceso',
+        'numero_inventario': {
+            'numero de inventario',
+            'numero inventario',
+            'inventario',
         },
-        'fecha_acceso': {
-            'fecha acceso',
-            'fecha de acceso',
-            'fecha ingreso',
-            'fecha de ingreso',
+
+        'codigo_anterior': {
+            'codigo anterior',
         },
-        'autor': {
-            'autor',
-            'autores',
-        },
+
         'titulo': {
             'titulo',
-            'titulo del libro',
-            'descripcion del libro',
         },
-        'proveedor': {
-            'proveedor',
+
+        'autor': {
+            'autor',
         },
-        'procedencia': {
-            'procedencia',
-            'forma adquisicion',
-            'forma de adquisicion',
+
+        'area': {
+            'area',
         },
+
+        'clasificacion': {
+            'clasificacion',
+        },
+
+        'clave_autor': {
+            'clave autor',
+            'clave del autor',
+        },
+
+        'clave_titulo': {
+            'clave titulo',
+            'clave del titulo',
+        },
+
+        'editorial': {
+            'editorial',
+        },
+
+        'edicion': {
+            'edicion',
+        },
+
+        'anio_publicacion': {
+            'ano',
+            'ano de publicacion',
+        },
+
+        'isbn': {
+            'isbn',
+        },
+
+        'estanteria': {
+            'estanteria',
+        },
+
         'balda': {
             'balda',
-            'ubicacion',
-            'estante',
         },
-        'observacion': {
+
+        'proveedor': {
+            'proveedor procedencia',
+            'proveedor',
+            'procedencia',
+        },
+
+        'forma_adquisicion': {
+            'forma de adquisicion',
+            'forma adquisicion',
+            'adquisicion',
+        },
+
+        'fecha_adquisicion': {
+            'fecha de adquisicion',
+            'fecha adquisicion',
+        },
+
+        'condicion': {
+            'condicion',
+        },
+
+        'estado': {
+            'estado',
+        },
+
+        'observaciones': {
             'observacion',
             'observaciones',
+        },
+
+        'verificado': {
+            'verificado',
+            'verificado fisicamente',
+        },
+
+        'fecha_verificacion': {
+            'fecha de verificacion',
+            'fecha verificacion',
         },
     }
 
     maximo_filas = min(
         hoja.max_row,
-        40,
+        20,
     )
 
-    for numero_fila in range(1, maximo_filas + 1):
+    for numero_fila in range(
+        1,
+        maximo_filas + 1,
+    ):
         columnas = {}
 
         for numero_columna in range(
@@ -227,91 +409,75 @@ def buscar_encabezados(hoja):
             if not encabezado:
                 continue
 
-            if encabezado.startswith(
-                (
-                    'codigo acceso',
-                    'codigo de acceso',
-                    'nro acceso',
-                    'numero acceso',
-                )
+            for campo, opciones in (
+                equivalencias.items()
             ):
-                columnas['codigo_acceso'] = numero_columna
+                if encabezado in opciones:
+                    columnas[campo] = (
+                        numero_columna
+                    )
+                    break
 
-            elif encabezado.startswith(
-                (
-                    'fecha acceso',
-                    'fecha de acceso',
-                    'fecha ingreso',
-                    'fecha de ingreso',
-                )
-            ):
-                columnas['fecha_acceso'] = numero_columna
+        campos_obligatorios = {
+            'numero_inventario',
+            'titulo',
+            'area',
+            'clasificacion',
+            'verificado',
+        }
 
-            elif encabezado.startswith(
-                (
-                    'autor',
-                    'autores',
-                )
-            ):
-                columnas['autor'] = numero_columna
-
-            elif encabezado.startswith(
-                (
-                    'titulo',
-                    'descripcion del libro',
-                )
-            ):
-                columnas['titulo'] = numero_columna
-
-            elif encabezado.startswith('proveedor'):
-                columnas['proveedor'] = numero_columna
-
-            elif encabezado.startswith(
-                (
-                    'procedencia',
-                    'forma adquisicion',
-                    'forma de adquisicion',
-                )
-            ):
-                columnas['procedencia'] = numero_columna
-
-            elif encabezado.startswith(
-                (
-                    'balda',
-                    'ubicacion',
-                    'estante',
-                )
-            ):
-                columnas['balda'] = numero_columna
-
-            elif encabezado.startswith(
-                (
-                    'observacion',
-                    'observaciones',
-                )
-            ):
-                columnas['observacion'] = numero_columna
-
-        if (
-            'codigo_acceso' in columnas
-            and 'titulo' in columnas
-            and 'autor' in columnas
+        if campos_obligatorios.issubset(
+            columnas.keys()
         ):
             return numero_fila, columnas
 
     return None, {}
 
 
-def valor_columna(hoja, fila, columnas, campo):
+def valor_columna(
+    hoja,
+    numero_fila,
+    columnas,
+    campo,
+):
     numero_columna = columnas.get(campo)
 
-    if not numero_columna:
+    if numero_columna is None:
         return None
 
     return hoja.cell(
-        row=fila,
+        row=numero_fila,
         column=numero_columna,
     ).value
+
+
+def validar_estanteria(valor):
+    texto = limpiar_texto(valor)
+
+    if not texto:
+        return ''
+
+    if not texto.isdigit() or int(texto) < 1:
+        return None
+
+    return str(int(texto))
+
+
+def validar_balda(valor):
+    texto = limpiar_texto(
+        valor
+    ).upper()
+
+    if not texto:
+        return ''
+
+    if (
+        len(texto) != 1
+        or not texto.isalpha()
+    ):
+        return None
+
+    return texto
 
 
 def extraer_registros(ruta_archivo):
@@ -321,32 +487,68 @@ def extraer_registros(ruta_archivo):
         data_only=True,
     )
 
-    registros = []
-    errores = []
-    hojas_omitidas = []
+    try:
+        if 'Inventario' not in (
+            libro_excel.sheetnames
+        ):
+            raise ValueError(
+                'El Excel debe contener una hoja '
+                'llamada Inventario.'
+            )
 
-    for hoja in libro_excel.worksheets:
-        fila_encabezado, columnas = buscar_encabezados(
-            hoja
+        hoja = libro_excel['Inventario']
+
+        fila_encabezado, columnas = (
+            buscar_encabezados(hoja)
         )
 
         if fila_encabezado is None:
-            hojas_omitidas.append(hoja.title)
-            continue
+            raise ValueError(
+                'No se reconocieron las columnas '
+                'oficiales del inventario maestro.'
+            )
 
-        categoria = hoja.title.strip()
+        registros = []
+        errores = []
+        codigos_utilizados = set()
+
+        codigos_repetidos = 0
+        sin_codigo = 0
+        sin_ubicacion = 0
+        pendientes_verificacion = 0
 
         for numero_fila in range(
             fila_encabezado + 1,
             hoja.max_row + 1,
         ):
-            titulo = limpiar_texto(
-                valor_columna(
-                    hoja,
-                    numero_fila,
-                    columnas,
-                    'titulo',
+            numero_original = valor_columna(
+                hoja,
+                numero_fila,
+                columnas,
+                'numero_inventario',
+            )
+
+            titulo_original = valor_columna(
+                hoja,
+                numero_fila,
+                columnas,
+                'titulo',
+            )
+
+            if (
+                numero_original in (None, '')
+                and titulo_original in (None, '')
+            ):
+                continue
+
+            numero_inventario = (
+                obtener_numero_inventario(
+                    numero_original
                 )
+            )
+
+            titulo = limpiar_texto(
+                titulo_original
             )
 
             autor = limpiar_texto(
@@ -358,23 +560,108 @@ def extraer_registros(ruta_archivo):
                 )
             )
 
-            codigo_original = limpiar_texto(
+            area_original = valor_columna(
+                hoja,
+                numero_fila,
+                columnas,
+                'area',
+            )
+
+            area = normalizar_area(
+                area_original
+            )
+
+            clasificacion = limpiar_texto(
                 valor_columna(
                     hoja,
                     numero_fila,
                     columnas,
-                    'codigo_acceso',
+                    'clasificacion',
                 )
             )
 
-            if not titulo:
-                continue
+            clave_autor = limpiar_texto(
+                valor_columna(
+                    hoja,
+                    numero_fila,
+                    columnas,
+                    'clave_autor',
+                )
+            ).upper()
 
-            if normalizar_texto(titulo) in {
-                'descripcion del libro',
-                'titulo',
-            }:
-                continue
+            clave_titulo = limpiar_texto(
+                valor_columna(
+                    hoja,
+                    numero_fila,
+                    columnas,
+                    'clave_titulo',
+                )
+            ).lower()
+
+            editorial = limpiar_texto(
+                valor_columna(
+                    hoja,
+                    numero_fila,
+                    columnas,
+                    'editorial',
+                )
+            )
+
+            edicion = limpiar_texto(
+                valor_columna(
+                    hoja,
+                    numero_fila,
+                    columnas,
+                    'edicion',
+                )
+            )
+
+            anio_original = valor_columna(
+                hoja,
+                numero_fila,
+                columnas,
+                'anio_publicacion',
+            )
+
+            anio_publicacion = convertir_entero(
+                anio_original
+            )
+
+            isbn = limpiar_isbn(
+                valor_columna(
+                    hoja,
+                    numero_fila,
+                    columnas,
+                    'isbn',
+                )
+            )
+
+            codigo_anterior = limpiar_texto(
+                valor_columna(
+                    hoja,
+                    numero_fila,
+                    columnas,
+                    'codigo_anterior',
+                )
+            )
+
+            estanteria = validar_estanteria(
+                valor_columna(
+                    hoja,
+                    numero_fila,
+                    columnas,
+                    'estanteria',
+                )
+            )
+
+            balda = validar_balda(
+                valor_columna(
+                    hoja,
+                    numero_fila,
+                    columnas,
+                    'balda',
+                )
+            )
 
             proveedor = limpiar_texto(
                 valor_columna(
@@ -385,21 +672,41 @@ def extraer_registros(ruta_archivo):
                 )
             )
 
-            procedencia = limpiar_texto(
+            adquisicion = normalizar_adquisicion(
                 valor_columna(
                     hoja,
                     numero_fila,
                     columnas,
-                    'procedencia',
+                    'forma_adquisicion',
                 )
             )
 
-            balda_original = limpiar_texto(
+            fecha_original = valor_columna(
+                hoja,
+                numero_fila,
+                columnas,
+                'fecha_adquisicion',
+            )
+
+            fecha_adquisicion = convertir_fecha(
+                fecha_original
+            )
+
+            condicion = normalizar_condicion(
                 valor_columna(
                     hoja,
                     numero_fila,
                     columnas,
-                    'balda',
+                    'condicion',
+                )
+            )
+
+            estado = normalizar_estado(
+                valor_columna(
+                    hoja,
+                    numero_fila,
+                    columnas,
+                    'estado',
                 )
             )
 
@@ -408,152 +715,332 @@ def extraer_registros(ruta_archivo):
                     hoja,
                     numero_fila,
                     columnas,
-                    'observacion',
+                    'observaciones',
                 )
             )
 
-            fecha_original = valor_columna(
-                hoja,
-                numero_fila,
-                columnas,
-                'fecha_acceso',
+            verificado = convertir_verificado(
+                valor_columna(
+                    hoja,
+                    numero_fila,
+                    columnas,
+                    'verificado',
+                )
             )
 
-            fecha_adquisicion = convertir_fecha(
-                fecha_original
+            fecha_verificacion_original = (
+                valor_columna(
+                    hoja,
+                    numero_fila,
+                    columnas,
+                    'fecha_verificacion',
+                )
             )
+
+            fecha_verificacion = convertir_fecha(
+                fecha_verificacion_original
+            )
+
+            errores_fila = []
+
+            if numero_inventario is None:
+                sin_codigo += 1
+                errores_fila.append(
+                    'número de inventario incorrecto'
+                )
+
+            if not titulo:
+                errores_fila.append(
+                    'falta el título'
+                )
+
+            if area is None:
+                errores_fila.append(
+                    'área incorrecta'
+                )
+
+            if not clasificacion:
+                errores_fila.append(
+                    'falta la clasificación'
+                )
+
+            if numero_inventario is not None:
+                if numero_inventario in (
+                    codigos_utilizados
+                ):
+                    codigos_repetidos += 1
+                    errores_fila.append(
+                        (
+                            'número de inventario '
+                            'repetido'
+                        )
+                    )
+                else:
+                    codigos_utilizados.add(
+                        numero_inventario
+                    )
+
+            if estanteria is None:
+                errores_fila.append(
+                    'estantería incorrecta'
+                )
+
+            if balda is None:
+                errores_fila.append(
+                    'balda incorrecta'
+                )
+
+            if not estanteria or not balda:
+                sin_ubicacion += 1
+
+            if condicion is None:
+                errores_fila.append(
+                    'condición incorrecta'
+                )
+
+            if estado is None:
+                errores_fila.append(
+                    'estado incorrecto'
+                )
+
+            if adquisicion is None:
+                errores_fila.append(
+                    (
+                        'forma de adquisición '
+                        'incorrecta'
+                    )
+                )
+
+            if (
+                anio_original not in (None, '')
+                and (
+                    anio_publicacion is None
+                    or anio_publicacion < 1000
+                    or anio_publicacion > 2100
+                )
+            ):
+                errores_fila.append(
+                    (
+                        'año de publicación '
+                        'incorrecto'
+                    )
+                )
 
             if (
                 fecha_original not in (None, '')
                 and fecha_adquisicion is None
             ):
-                errores.append(
+                errores_fila.append(
                     (
-                        f'{hoja.title}, fila {numero_fila}: '
-                        'fecha no reconocida; se importará '
-                        'sin fecha.'
+                        'fecha de adquisición '
+                        'incorrecta'
                     )
                 )
 
-            estanteria, balda = separar_ubicacion(
-                balda_original
-            )
-
-            adquisicion = normalizar_adquisicion(
-                procedencia
-            )
+            if not verificado:
+                pendientes_verificacion += 1
+                errores_fila.append(
+                    'ejemplar no verificado'
+                )
 
             if (
-                procedencia
-                and adquisicion
-                == Ejemplar.FormaAdquisicion.OTRO
+                fecha_verificacion_original
+                not in (None, '')
+                and fecha_verificacion is None
             ):
-                texto_procedencia = (
-                    f'Procedencia original: {procedencia}'
+                errores_fila.append(
+                    (
+                        'fecha de verificación '
+                        'incorrecta'
+                    )
                 )
 
-                if observaciones:
-                    observaciones = (
-                        f'{observaciones}\n'
-                        f'{texto_procedencia}'
+            if errores_fila:
+                errores.append(
+                    (
+                        f'Fila {numero_fila}: '
+                        + ', '.join(errores_fila)
+                        + '.'
                     )
-                else:
-                    observaciones = texto_procedencia
+                )
+                continue
 
             registros.append(
                 {
-                    'hoja': hoja.title,
                     'fila': numero_fila,
-                    'categoria': categoria,
-                    'codigo_original': codigo_original,
-                    'numero_original': (
-                        obtener_numero_inventario(
-                            codigo_original
-                        )
+                    'numero_inventario': (
+                        numero_inventario
+                    ),
+                    'codigo_anterior': (
+                        codigo_anterior
+                    ),
+                    'titulo': titulo,
+                    'autor': autor,
+                    'area': area,
+                    'clasificacion': (
+                        clasificacion
+                    ),
+                    'clave_autor': clave_autor,
+                    'clave_titulo': clave_titulo,
+                    'editorial': editorial,
+                    'edicion': edicion,
+                    'anio_publicacion': (
+                        anio_publicacion
+                    ),
+                    'isbn': isbn,
+                    'estanteria': estanteria,
+                    'balda': balda,
+                    'proveedor': proveedor,
+                    'forma_adquisicion': (
+                        adquisicion
                     ),
                     'fecha_adquisicion': (
                         fecha_adquisicion
                     ),
-                    'autor': autor,
-                    'titulo': titulo,
-                    'proveedor': proveedor,
-                    'forma_adquisicion': adquisicion,
-                    'estanteria': estanteria,
-                    'balda': balda,
+                    'condicion': condicion,
+                    'estado': estado,
                     'observaciones': observaciones,
+                    'fecha_verificacion': (
+                        fecha_verificacion
+                    ),
                 }
             )
 
-    libro_excel.close()
+        estadisticas = {
+            'codigos_repetidos': (
+                codigos_repetidos
+            ),
+            'sin_codigo': sin_codigo,
+            'sin_ubicacion': sin_ubicacion,
+            'pendientes_verificacion': (
+                pendientes_verificacion
+            ),
+        }
 
-    return registros, errores, hojas_omitidas
+        return registros, errores, estadisticas
+
+    finally:
+        libro_excel.close()
+
+
+def clave_libro(registro):
+    if registro['isbn']:
+        return (
+            'isbn',
+            registro['isbn'].lower(),
+        )
+
+    return (
+        normalizar_texto(
+            registro['titulo']
+        ),
+        normalizar_texto(
+            registro['autor']
+        ),
+        normalizar_texto(
+            registro['edicion']
+        ),
+    )
 
 
 def analizar_archivo(ruta_archivo):
-    registros, errores, hojas_omitidas = (
+    registros, errores, estadisticas = (
         extraer_registros(ruta_archivo)
     )
 
-    codigos = [
-        registro['numero_original']
-        for registro in registros
-        if registro['numero_original'] is not None
-    ]
-
-    codigos_unicos = set(codigos)
-
-    codigos_repetidos = (
-        len(codigos) - len(codigos_unicos)
-    )
-
     titulos = {
-        (
-            normalizar_texto(registro['titulo']),
-            normalizar_texto(registro['autor']),
-        )
+        clave_libro(registro)
         for registro in registros
     }
 
-    sin_ubicacion = sum(
-        1
+    inventarios_planilla = {
+        registro['numero_inventario']
         for registro in registros
-        if not registro['estanteria']
-        and not registro['balda']
-    )
+    }
 
-    sin_codigo = sum(
-        1
-        for registro in registros
-        if registro['numero_original'] is None
+    no_incluidos = (
+        Ejemplar.objects.exclude(
+            numero_inventario__isnull=True,
+        )
+        .exclude(
+            numero_inventario__in=(
+                inventarios_planilla
+            ),
+        )
+        .count()
     )
 
     return {
         'registros': len(registros),
         'titulos_estimados': len(titulos),
         'ejemplares_estimados': len(registros),
-        'codigos_repetidos': codigos_repetidos,
-        'sin_codigo': sin_codigo,
-        'sin_ubicacion': sin_ubicacion,
+        'codigos_repetidos': estadisticas[
+            'codigos_repetidos'
+        ],
+        'sin_codigo': estadisticas[
+            'sin_codigo'
+        ],
+        'sin_ubicacion': estadisticas[
+            'sin_ubicacion'
+        ],
+        'pendientes_verificacion': (
+            estadisticas[
+                'pendientes_verificacion'
+            ]
+        ),
+        'registros_no_incluidos': no_incluidos,
         'errores': errores,
         'cantidad_errores': len(errores),
-        'hojas_omitidas': hojas_omitidas,
+        'hojas_omitidas': [],
     }
 
 
-def siguiente_numero_para_importacion(
-    numeros_bloqueados,
+def buscar_libro_existente(registro):
+    if registro['isbn']:
+        libro = Libro.objects.filter(
+            isbn__iexact=registro['isbn'],
+        ).first()
+
+        if libro is not None:
+            return libro
+
+    return Libro.objects.filter(
+        titulo__iexact=registro['titulo'],
+        autor__iexact=registro['autor'],
+        edicion__iexact=registro['edicion'],
+    ).first()
+
+
+def actualizar_datos_libro(
+    libro,
+    registro,
 ):
-    if not numeros_bloqueados:
-        return 1
+    libro.titulo = registro['titulo']
+    libro.autor = registro['autor']
+    libro.editorial = registro['editorial']
+    libro.area = registro['area']
 
-    menor = min(numeros_bloqueados)
-    mayor = max(numeros_bloqueados)
+    libro.clasificacion = (
+        registro['clasificacion']
+    )
 
-    for numero in range(menor, mayor + 1):
-        if numero not in numeros_bloqueados:
-            return numero
+    libro.clave_autor = (
+        registro['clave_autor']
+    )
 
-    return mayor + 1
+    libro.clave_titulo = (
+        registro['clave_titulo']
+    )
+
+    libro.isbn = registro['isbn']
+    libro.edicion = registro['edicion']
+
+    libro.anio_publicacion = (
+        registro['anio_publicacion']
+    )
+
+    libro.activo = True
+    libro.save()
 
 
 @transaction.atomic
@@ -569,151 +1056,179 @@ def importar_archivo(
             'Este archivo ya fue importado anteriormente.'
         )
 
-    registros, errores, hojas_omitidas = (
+    registros, errores, estadisticas = (
         extraer_registros(ruta_archivo)
     )
 
+    if errores:
+        primeros_errores = ' '.join(
+            errores[:5]
+        )
+
+        raise ValueError(
+            (
+                'No se puede importar porque existen '
+                f'{len(errores)} fila(s) para corregir. '
+                f'{primeros_errores}'
+            )
+        )
+
     if not registros:
         raise ValueError(
-            'No se encontraron registros válidos.'
+            'No se encontraron ejemplares listos para importar.'
         )
 
-    numeros_existentes = set(
-        Ejemplar.objects.exclude(
-            numero_inventario__isnull=True,
-        ).values_list(
-            'numero_inventario',
-            flat=True,
-        )
-    )
-
-    numeros_reservados = {
-        registro['numero_original']
+    inventarios_planilla = {
+        registro['numero_inventario']
         for registro in registros
-        if registro['numero_original'] is not None
     }
 
-    numeros_bloqueados = (
-        numeros_existentes | numeros_reservados
+    registros_no_incluidos = (
+        Ejemplar.objects.exclude(
+            numero_inventario__isnull=True,
+        )
+        .exclude(
+            numero_inventario__in=(
+                inventarios_planilla
+            ),
+        )
+        .count()
     )
 
-    numeros_asignados = set(numeros_existentes)
-    codigos_reasignados = 0
-    sin_ubicacion = 0
     titulos_creados = 0
+    titulos_actualizados = 0
     ejemplares_creados = 0
+    ejemplares_actualizados = 0
+    sin_ubicacion = 0
 
-    libros_existentes = {}
-
-    for libro in Libro.objects.all():
-        clave = (
-            normalizar_texto(libro.titulo),
-            normalizar_texto(libro.autor),
-        )
-
-        libros_existentes[clave] = libro
-
-    codigos_originales_utilizados = set()
+    libros_procesados = {}
+    libros_actualizados = set()
 
     for registro in registros:
-        clave_libro = (
-            normalizar_texto(registro['titulo']),
-            normalizar_texto(registro['autor']),
-        )
+        clave = clave_libro(registro)
 
-        libro = libros_existentes.get(clave_libro)
+        libro = libros_procesados.get(clave)
 
         if libro is None:
-            libro = Libro.objects.create(
-                titulo=registro['titulo'],
-                autor=registro['autor'],
-                categoria=registro['categoria'],
-                isbn='',
-                activo=True,
+            libro = buscar_libro_existente(
+                registro
             )
 
-            libros_existentes[clave_libro] = libro
-            titulos_creados += 1
+            if libro is None:
+                libro = Libro()
+                creado = True
+            else:
+                creado = False
 
-        numero_original = registro['numero_original']
-        numero_asignado = numero_original
+            actualizar_datos_libro(
+                libro,
+                registro,
+            )
 
-        codigo_repetido = (
-            numero_original
-            in codigos_originales_utilizados
-        )
+            libros_procesados[clave] = libro
 
-        codigo_ocupado = (
-            numero_original in numeros_existentes
-        )
+            if creado:
+                titulos_creados += 1
 
-        if (
-            numero_original is None
-            or codigo_repetido
-            or codigo_ocupado
-        ):
-            numero_asignado = (
-                siguiente_numero_para_importacion(
-                    numeros_bloqueados
-                    | numeros_asignados
+            elif libro.id not in libros_actualizados:
+                titulos_actualizados += 1
+                libros_actualizados.add(
+                    libro.id
                 )
+
+        ejemplar = Ejemplar.objects.filter(
+            numero_inventario=registro[
+                'numero_inventario'
+            ],
+        ).first()
+
+        if ejemplar is None:
+            ejemplar = Ejemplar(
+                numero_inventario=registro[
+                    'numero_inventario'
+                ],
             )
 
-            codigos_reasignados += 1
+            creado = True
+        else:
+            creado = False
 
-        if numero_original is not None:
-            codigos_originales_utilizados.add(
-                numero_original
-            )
+        ejemplar.libro = libro
 
-        numeros_asignados.add(numero_asignado)
-        numeros_bloqueados.add(numero_asignado)
+        ejemplar.codigo_anterior = registro[
+            'codigo_anterior'
+        ]
+
+        ejemplar.estanteria = registro[
+            'estanteria'
+        ]
+
+        ejemplar.balda = registro['balda']
+
+        ejemplar.proveedor = registro[
+            'proveedor'
+        ]
+
+        ejemplar.estado = registro['estado']
+
+        ejemplar.condicion = registro[
+            'condicion'
+        ]
+
+        ejemplar.forma_adquisicion = registro[
+            'forma_adquisicion'
+        ]
+
+        ejemplar.fecha_adquisicion = registro[
+            'fecha_adquisicion'
+        ]
+
+        ejemplar.observaciones = registro[
+            'observaciones'
+        ]
+
+        # La nueva clasificación y ubicación requieren
+        # imprimir nuevamente la etiqueta.
+        ejemplar.etiqueta_impresa = False
+        ejemplar.fecha_impresion_etiqueta = None
+
+        ejemplar.save()
+
+        if creado:
+            ejemplares_creados += 1
+        else:
+            ejemplares_actualizados += 1
 
         if (
-            not registro['estanteria']
-            and not registro['balda']
+            not ejemplar.estanteria
+            or not ejemplar.balda
         ):
             sin_ubicacion += 1
-
-        Ejemplar.objects.create(
-            libro=libro,
-            numero_inventario=numero_asignado,
-            codigo_anterior=registro[
-                'codigo_original'
-            ],
-            estanteria=registro['estanteria'],
-            balda=registro['balda'],
-            proveedor=registro['proveedor'],
-            estado=Ejemplar.Estado.DISPONIBLE,
-            condicion=Ejemplar.Condicion.BUENO,
-            forma_adquisicion=registro[
-                'forma_adquisicion'
-            ],
-            fecha_adquisicion=registro[
-                'fecha_adquisicion'
-            ],
-            observaciones=registro[
-                'observaciones'
-            ],
-        )
-
-        ejemplares_creados += 1
 
     importacion = ImportacionLibros.objects.create(
         nombre_archivo=nombre_archivo,
         huella_archivo=huella_archivo,
         titulos_creados=titulos_creados,
         ejemplares_creados=ejemplares_creados,
-        codigos_reasignados=codigos_reasignados,
+        codigos_reasignados=0,
         registros_sin_ubicacion=sin_ubicacion,
     )
 
     return {
         'importacion': importacion,
         'titulos_creados': titulos_creados,
+        'titulos_actualizados': (
+            titulos_actualizados
+        ),
         'ejemplares_creados': ejemplares_creados,
-        'codigos_reasignados': codigos_reasignados,
+        'ejemplares_actualizados': (
+            ejemplares_actualizados
+        ),
+        'codigos_reasignados': 0,
         'sin_ubicacion': sin_ubicacion,
-        'errores': errores,
-        'hojas_omitidas': hojas_omitidas,
+        'registros_no_incluidos': (
+            registros_no_incluidos
+        ),
+        'errores': [],
+        'hojas_omitidas': [],
     }

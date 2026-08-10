@@ -1,17 +1,18 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Importar libros | Biblioteca Escolar
+    Importar inventario | Biblioteca Escolar
 {% endblock %}
 
 {% block content %}
 
 <div class="cabecera-pagina">
     <div>
-        <h2>Importar libros desde Excel</h2>
+        <h2>Importar inventario maestro</h2>
 
         <p>
-            Importación del inventario histórico del CCTL.
+            Revisión e importación definitiva de los
+            ejemplares de la Biblioteca CCTL.
         </p>
     </div>
 
@@ -31,44 +32,55 @@
     {% endfor %}
 {% endif %}
 
+
 {% if not vista_previa and not resultados %}
 
 <div class="panel formulario-panel">
 
     <div class="aviso-importacion">
-        <h3>Información que se importará</h3>
+        <h3>Reglas de la importación</h3>
 
         <ul>
-            <li>Se revisarán todas las hojas del Excel.</li>
-
             <li>
-                Cada fila representará un ejemplar físico.
+                El archivo debe contener una hoja llamada
+                <strong>Inventario</strong>.
             </li>
 
             <li>
-                Los libros con el mismo título y autor se
-                agruparán.
+                Cada fila representa un ejemplar físico.
             </li>
 
             <li>
-                Se importarán código de acceso, fecha, autor,
-                título, proveedor, procedencia, balda y
-                observación.
+                El número de inventario identifica cada
+                ejemplar y no será modificado.
             </li>
 
             <li>
-                Los códigos repetidos recibirán otro número
-                disponible.
+                Los inventarios existentes serán actualizados.
             </li>
 
             <li>
-                Los ejemplares sin balda podrán actualizarse
-                posteriormente.
+                Los inventarios nuevos crearán ejemplares.
             </li>
 
             <li>
-                El ISBN permanecerá vacío cuando el Excel no
-                lo contenga.
+                Los ejemplares deben estar marcados como
+                <strong>Verificado = Sí</strong>.
+            </li>
+
+            <li>
+                Los códigos repetidos impedirán confirmar
+                la importación.
+            </li>
+
+            <li>
+                Los registros actuales que no estén en el
+                Excel se informarán, pero no serán eliminados.
+            </li>
+
+            <li>
+                La signatura se generará nuevamente desde
+                la clasificación y las claves.
             </li>
         </ul>
     </div>
@@ -131,8 +143,8 @@
             <h2>Vista previa</h2>
 
             <p>
-                Revise el resumen antes de guardar en la
-                base de datos.
+                Revise los resultados antes de guardar
+                en la base de datos.
             </p>
         </div>
     </div>
@@ -144,7 +156,7 @@
                 {{ vista_previa.titulos_estimados }}
             </strong>
 
-            <span>Títulos estimados</span>
+            <span>Títulos reconocidos</span>
         </div>
 
         <div class="resultado resultado-correcto">
@@ -152,7 +164,7 @@
                 {{ vista_previa.ejemplares_estimados }}
             </strong>
 
-            <span>Ejemplares encontrados</span>
+            <span>Ejemplares listos</span>
         </div>
 
         <div class="resultado resultado-duplicado">
@@ -160,7 +172,7 @@
                 {{ vista_previa.codigos_repetidos }}
             </strong>
 
-            <span>Códigos repetidos</span>
+            <span>Inventarios repetidos</span>
         </div>
 
         <div class="resultado resultado-duplicado">
@@ -168,7 +180,7 @@
                 {{ vista_previa.sin_codigo }}
             </strong>
 
-            <span>Ejemplares sin código</span>
+            <span>Sin inventario válido</span>
         </div>
 
         <div class="resultado resultado-duplicado">
@@ -176,7 +188,23 @@
                 {{ vista_previa.sin_ubicacion }}
             </strong>
 
-            <span>Sin ubicación</span>
+            <span>Sin ubicación completa</span>
+        </div>
+
+        <div class="resultado resultado-duplicado">
+            <strong>
+                {{ vista_previa.pendientes_verificacion }}
+            </strong>
+
+            <span>Sin verificación</span>
+        </div>
+
+        <div class="resultado resultado-duplicado">
+            <strong>
+                {{ vista_previa.registros_no_incluidos }}
+            </strong>
+
+            <span>Registros actuales no incluidos</span>
         </div>
 
         <div class="resultado resultado-error">
@@ -184,26 +212,30 @@
                 {{ vista_previa.cantidad_errores }}
             </strong>
 
-            <span>Datos para revisar</span>
+            <span>Filas para corregir</span>
         </div>
 
     </div>
 
-    {% if vista_previa.hojas_omitidas %}
-        <div class="lista-errores">
-            <h3>Hojas sin estructura reconocida</h3>
+    {% if vista_previa.registros_no_incluidos %}
+        <div class="aviso-importacion">
+            <strong>Atención:</strong>
 
-            <ul>
-                {% for hoja in vista_previa.hojas_omitidas %}
-                    <li>{{ hoja }}</li>
-                {% endfor %}
-            </ul>
+            existen
+            {{ vista_previa.registros_no_incluidos }}
+            ejemplares en la base actual que no aparecen
+            en el Excel. No serán eliminados ni modificados.
         </div>
     {% endif %}
 
     {% if vista_previa.errores %}
         <div class="lista-errores">
-            <h3>Observaciones del análisis</h3>
+            <h3>Correcciones necesarias</h3>
+
+            <p>
+                Corrija estas filas en el Excel y vuelva
+                a analizar el archivo.
+            </p>
 
             <ul>
                 {% for error in vista_previa.errores %}
@@ -213,31 +245,41 @@
         </div>
     {% endif %}
 
-    <div class="aviso-importacion">
-        <strong>Importante:</strong>
+    {% if not vista_previa.cantidad_errores %}
+        <div class="aviso-importacion">
+            <strong>Archivo listo:</strong>
 
-        confirmar guardará definitivamente los títulos y
-        ejemplares encontrados.
-    </div>
+            no se encontraron errores bloqueantes.
+            Al confirmar se crearán o actualizarán los
+            ejemplares por su número de inventario.
+        </div>
+    {% else %}
+        <div class="mensaje mensaje-error">
+            La importación no puede confirmarse mientras
+            existan filas para corregir.
+        </div>
+    {% endif %}
 
     <div class="acciones-formulario">
 
-        <form method="post">
-            {% csrf_token %}
+        {% if not vista_previa.cantidad_errores %}
+            <form method="post">
+                {% csrf_token %}
 
-            <input
-                type="hidden"
-                name="accion"
-                value="confirmar"
-            >
+                <input
+                    type="hidden"
+                    name="accion"
+                    value="confirmar"
+                >
 
-            <button
-                type="submit"
-                class="boton boton-primario"
-            >
-                Confirmar importación
-            </button>
-        </form>
+                <button
+                    type="submit"
+                    class="boton boton-primario"
+                >
+                    Confirmar importación
+                </button>
+            </form>
+        {% endif %}
 
         <form method="post">
             {% csrf_token %}
@@ -252,7 +294,7 @@
                 type="submit"
                 class="boton boton-secundario"
             >
-                Cancelar
+                Corregir o cancelar
             </button>
         </form>
 
@@ -272,8 +314,8 @@
             <h2>Importación terminada</h2>
 
             <p>
-                Los registros fueron guardados en la base
-                de datos.
+                El inventario maestro fue procesado
+                correctamente.
             </p>
         </div>
     </div>
@@ -285,7 +327,15 @@
                 {{ resultados.titulos_creados }}
             </strong>
 
-            <span>Títulos nuevos</span>
+            <span>Títulos creados</span>
+        </div>
+
+        <div class="resultado resultado-correcto">
+            <strong>
+                {{ resultados.titulos_actualizados }}
+            </strong>
+
+            <span>Títulos actualizados</span>
         </div>
 
         <div class="resultado resultado-correcto">
@@ -296,12 +346,12 @@
             <span>Ejemplares creados</span>
         </div>
 
-        <div class="resultado resultado-duplicado">
+        <div class="resultado resultado-correcto">
             <strong>
-                {{ resultados.codigos_reasignados }}
+                {{ resultados.ejemplares_actualizados }}
             </strong>
 
-            <span>Números reasignados</span>
+            <span>Ejemplares actualizados</span>
         </div>
 
         <div class="resultado resultado-duplicado">
@@ -312,26 +362,36 @@
             <span>Ubicaciones pendientes</span>
         </div>
 
+        <div class="resultado resultado-duplicado">
+            <strong>
+                {{ resultados.registros_no_incluidos }}
+            </strong>
+
+            <span>Registros anteriores no incluidos</span>
+        </div>
+
+        <div class="resultado resultado-correcto">
+            <strong>
+                {{ resultados.codigos_reasignados }}
+            </strong>
+
+            <span>Inventarios modificados</span>
+        </div>
+
     </div>
 
-    {% if resultados.errores %}
-        <div class="lista-errores">
-            <h3>Observaciones</h3>
-
-            <ul>
-                {% for error in resultados.errores %}
-                    <li>{{ error }}</li>
-                {% endfor %}
-            </ul>
-        </div>
-    {% endif %}
+    <div class="aviso-importacion">
+        Los inventarios históricos fueron respetados.
+        Las etiquetas quedaron pendientes de impresión
+        para incorporar la nueva signatura y ubicación.
+    </div>
 
     <div class="acciones-formulario">
         <a
             href="{% url 'libros:lista' %}"
             class="boton boton-primario"
         >
-            Ver libros registrados
+            Ver inventario
         </a>
     </div>
 

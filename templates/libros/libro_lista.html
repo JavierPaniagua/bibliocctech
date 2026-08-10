@@ -48,7 +48,7 @@
             name="buscar"
             value="{{ busqueda }}"
             class="campo campo-buscar"
-            placeholder="Título, autor, ISBN, inventario o ubicación"
+            placeholder="Título, autor, área, clasificación, signatura, inventario o ubicación"
         >
 
         <button
@@ -74,8 +74,9 @@
                 <tr>
                     <th>Título</th>
                     <th>Autor</th>
-                    <th>Categoría</th>
-                    <th>ISBN</th>
+                    <th>Área</th>
+                    <th>Clasificación</th>
+                    <th>Signatura</th>
                     <th>Total</th>
                     <th>Disponibles</th>
                     <th>Prestados</th>
@@ -97,11 +98,29 @@
                         </td>
 
                         <td>
-                            {{ libro.categoria|default:"-" }}
+                            {% if libro.area %}
+                                {{ libro.get_area_display }}
+                            {% else %}
+                                <span class="estado-pendiente">
+                                    Pendiente
+                                </span>
+                            {% endif %}
                         </td>
 
                         <td>
-                            {{ libro.isbn|default:"-" }}
+                            {{ libro.clasificacion|default:"-" }}
+                        </td>
+
+                        <td>
+                            {% if libro.signatura_topografica %}
+                                <strong>
+                                    {{ libro.signatura_topografica }}
+                                </strong>
+                            {% else %}
+                                <span class="estado-pendiente">
+                                    Pendiente
+                                </span>
+                            {% endif %}
                         </td>
 
                         <td>
@@ -128,7 +147,7 @@
                 {% empty %}
                     <tr>
                         <td
-                            colspan="8"
+                            colspan="9"
                             class="sin-registros"
                         >
                             No se encontraron libros.

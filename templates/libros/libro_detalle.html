@@ -11,7 +11,7 @@
         <h2>{{ libro.titulo }}</h2>
 
         <p>
-            Información del libro y sus ejemplares.
+            Información bibliográfica y ejemplares físicos.
         </p>
     </div>
 
@@ -61,8 +61,33 @@
         </p>
 
         <p>
-            <strong>Categoría:</strong>
-            {{ libro.categoria|default:"-" }}
+            <strong>Área:</strong>
+
+            {% if libro.area %}
+                {{ libro.get_area_display }}
+            {% else %}
+                Pendiente
+            {% endif %}
+        </p>
+
+        <p>
+            <strong>Clasificación:</strong>
+            {{ libro.clasificacion|default:"-" }}
+        </p>
+
+        <p>
+            <strong>Clave de autor:</strong>
+            {{ libro.clave_autor|default:"-" }}
+        </p>
+
+        <p>
+            <strong>Clave de título:</strong>
+            {{ libro.clave_titulo|default:"-" }}
+        </p>
+
+        <p>
+            <strong>Signatura:</strong>
+            {{ libro.signatura_topografica|default:"Pendiente" }}
         </p>
 
         <p>
@@ -111,6 +136,7 @@
             <thead>
                 <tr>
                     <th>Inventario</th>
+                    <th>Código anterior</th>
                     <th>Ubicación</th>
                     <th>Estado</th>
                     <th>Condición</th>
@@ -130,6 +156,10 @@
                             <strong>
                                 {{ ejemplar.numero_inventario }}
                             </strong>
+                        </td>
+
+                        <td>
+                            {{ ejemplar.codigo_anterior|default:"-" }}
                         </td>
 
                         <td>
@@ -159,7 +189,11 @@
                         </td>
 
                         <td>
-                            {{ ejemplar.fecha_adquisicion|default:"-" }}
+                            {% if ejemplar.fecha_adquisicion %}
+                                {{ ejemplar.fecha_adquisicion|date:"d/m/Y" }}
+                            {% else %}
+                                -
+                            {% endif %}
                         </td>
 
                         <td>
@@ -170,7 +204,9 @@
                             {% if ejemplar.etiqueta_impresa %}
                                 Impresa
                             {% else %}
-                                Pendiente
+                                <span class="estado-pendiente">
+                                    Pendiente
+                                </span>
                             {% endif %}
                         </td>
 
@@ -186,7 +222,7 @@
                 {% empty %}
                     <tr>
                         <td
-                            colspan="10"
+                            colspan="11"
                             class="sin-registros"
                         >
                             Este libro no posee ejemplares.

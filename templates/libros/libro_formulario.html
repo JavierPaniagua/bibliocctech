@@ -11,7 +11,7 @@
         <h2>Registrar libro</h2>
 
         <p>
-            Registre el título y la cantidad de ejemplares.
+            Registre el título, su clasificación y los ejemplares.
         </p>
     </div>
 
@@ -25,20 +25,41 @@
 
 <div class="panel formulario-panel">
 
+    <div class="aviso-importacion">
+        <strong>Generación automática:</strong>
+
+        si deja vacías las claves de autor y título,
+        el sistema intentará generarlas. También calculará
+        la signatura y asignará un inventario diferente
+        a cada ejemplar.
+    </div>
+
     <form method="post" novalidate>
         {% csrf_token %}
+
+        {% if formulario.non_field_errors %}
+            <div class="mensaje mensaje-error">
+                {% for error in formulario.non_field_errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
 
         <div class="formulario-grid">
 
             {% for campo in formulario %}
                 <div
-                    class="grupo-campo
-                    {% if campo.name == 'descripcion' %}
-                        campo-completo
-                    {% endif %}
-                    {% if campo.name == 'activo' %}
-                        grupo-casilla
-                    {% endif %}"
+                    class="
+                        grupo-campo
+
+                        {% if campo.name == 'descripcion' or campo.name == 'observaciones' %}
+                            campo-completo
+                        {% endif %}
+
+                        {% if campo.name == 'activo' %}
+                            grupo-casilla
+                        {% endif %}
+                    "
                 >
                     <label for="{{ campo.id_for_label }}">
                         {{ campo.label }}
@@ -49,6 +70,12 @@
                     </label>
 
                     {{ campo }}
+
+                    {% if campo.help_text %}
+                        <small>
+                            {{ campo.help_text }}
+                        </small>
+                    {% endif %}
 
                     {% for error in campo.errors %}
                         <span class="error-campo">
@@ -61,10 +88,22 @@
         </div>
 
         <div class="aviso-importacion">
-            El sistema generará automáticamente un número de
-            inventario diferente para cada ejemplar.
-            También podrá completar la estantería y la balda
-            posteriormente.
+            <strong>Ubicación:</strong>
+
+            escriba solamente el número de la estantería
+            y la letra de la balda.
+
+            Ejemplo:
+
+            <strong>
+                Estantería 1 - Balda A
+            </strong>
+
+            se mostrará como:
+
+            <strong>
+                Estantería 1 - Balda 1A
+            </strong>.
         </div>
 
         <div class="acciones-formulario">

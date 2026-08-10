@@ -1,6 +1,10 @@
 from django.contrib import admin
 
-from .models import Ejemplar, Libro
+from .models import (
+    Ejemplar,
+    ImportacionLibros,
+    Libro,
+)
 
 
 class EjemplarInline(admin.TabularInline):
@@ -9,20 +13,16 @@ class EjemplarInline(admin.TabularInline):
 
     fields = (
         'numero_inventario',
+        'codigo_anterior',
         'estanteria',
         'balda',
         'estado',
         'condicion',
         'forma_adquisicion',
-        'fecha_adquisicion',
-        'proveedor',
-        'observaciones',
         'etiqueta_impresa',
     )
 
-    readonly_fields = (
-        'numero_inventario',
-    )
+    show_change_link = True
 
 
 @admin.register(Libro)
@@ -30,8 +30,9 @@ class LibroAdmin(admin.ModelAdmin):
     list_display = (
         'titulo',
         'autor',
-        'categoria',
-        'isbn',
+        'mostrar_area',
+        'clasificacion',
+        'signatura_topografica',
         'cantidad_total',
         'cantidad_disponible',
         'cantidad_prestada',
@@ -42,23 +43,74 @@ class LibroAdmin(admin.ModelAdmin):
         'titulo',
         'autor',
         'editorial',
+        'clasificacion',
+        'signatura_topografica',
         'isbn',
         'ejemplares__numero_inventario',
+        'ejemplares__codigo_anterior',
     )
 
     list_filter = (
-        'categoria',
+        'area',
         'activo',
     )
 
-    ordering = (
-        'titulo',
-        'autor',
+    readonly_fields = (
+        'signatura_topografica',
+        'fecha_registro',
+    )
+
+    fieldsets = (
+        (
+            'Datos bibliográficos',
+            {
+                'fields': (
+                    'titulo',
+                    'autor',
+                    'editorial',
+                    'isbn',
+                    'edicion',
+                    'anio_publicacion',
+                ),
+            },
+        ),
+        (
+            'Clasificación',
+            {
+                'fields': (
+                    'area',
+                    'clasificacion',
+                    'clave_autor',
+                    'clave_titulo',
+                    'signatura_topografica',
+                ),
+            },
+        ),
+        (
+            'Información adicional',
+            {
+                'fields': (
+                    'descripcion',
+                    'activo',
+                    'fecha_registro',
+                ),
+            },
+        ),
     )
 
     inlines = [
         EjemplarInline,
     ]
+
+    @admin.display(
+        description='Área',
+        ordering='area',
+    )
+    def mostrar_area(self, libro):
+        if not libro.area:
+            return 'Pendiente'
+
+        return libro.get_area_display()
 
 
 @admin.register(Ejemplar)
@@ -66,11 +118,11 @@ class EjemplarAdmin(admin.ModelAdmin):
     list_display = (
         'numero_inventario',
         'libro',
-        'ubicacion_mostrada',
+        'mostrar_signatura',
+        'mostrar_ubicacion',
         'estado',
         'condicion',
         'forma_adquisicion',
-        'fecha_adquisicion',
         'etiqueta_impresa',
     )
 
@@ -80,24 +132,21 @@ class EjemplarAdmin(admin.ModelAdmin):
         'libro__titulo',
         'libro__autor',
         'libro__isbn',
-        'proveedor',
+        'libro__clasificacion',
+        'libro__signatura_topografica',
+        'estanteria',
+        'balda',
     )
 
     list_filter = (
         'estado',
         'condicion',
         'forma_adquisicion',
+        'libro__area',
         'etiqueta_impresa',
-        'estanteria',
-        'libro__categoria',
-    )
-
-    ordering = (
-        'numero_inventario',
     )
 
     readonly_fields = (
-        'numero_inventario',
         'fecha_registro',
         'fecha_impresion_etiqueta',
     )
@@ -110,7 +159,7 @@ class EjemplarAdmin(admin.ModelAdmin):
                     'libro',
                     'numero_inventario',
                     'codigo_anterior',
-                )
+                ),
             },
         ),
         (
@@ -119,7 +168,7 @@ class EjemplarAdmin(admin.ModelAdmin):
                 'fields': (
                     'estanteria',
                     'balda',
-                )
+                ),
             },
         ),
         (
@@ -128,7 +177,8 @@ class EjemplarAdmin(admin.ModelAdmin):
                 'fields': (
                     'estado',
                     'condicion',
-                )
+                    'observaciones',
+                ),
             },
         ),
         (
@@ -138,25 +188,70 @@ class EjemplarAdmin(admin.ModelAdmin):
                     'forma_adquisicion',
                     'fecha_adquisicion',
                     'proveedor',
-                )
+                ),
             },
         ),
         (
-            'Información adicional',
+            'Etiqueta',
             {
                 'fields': (
-                    'observaciones',
                     'etiqueta_impresa',
                     'fecha_impresion_etiqueta',
                     'fecha_registro',
-                )
+                ),
             },
         ),
     )
 
     @admin.display(
-        description='Ubicación',
-        ordering='estanteria',
+        description='Signatura',
+        ordering='libro__signatura_topografica',
     )
-    def ubicacion_mostrada(self, ejemplar):
+    def mostrar_signatura(self, ejemplar):
+        return (
+            ejemplar.libro.signatura_topografica
+            or 'Pendiente'
+        )
+
+    @admin.display(
+        description='Ubicación',
+    )
+    def mostrar_ubicacion(self, ejemplar):
         return ejemplar.ubicacion
+
+
+@admin.register(ImportacionLibros)
+class ImportacionLibrosAdmin(admin.ModelAdmin):
+    list_display = (
+        'nombre_archivo',
+        'titulos_creados',
+        'ejemplares_creados',
+        'codigos_reasignados',
+        'registros_sin_ubicacion',
+        'fecha_importacion',
+    )
+
+    search_fields = (
+        'nombre_archivo',
+        'huella_archivo',
+    )
+
+    readonly_fields = (
+        'nombre_archivo',
+        'huella_archivo',
+        'titulos_creados',
+        'ejemplares_creados',
+        'codigos_reasignados',
+        'registros_sin_ubicacion',
+        'fecha_importacion',
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(
+        self,
+        request,
+        obj=None,
+    ):
+        return False

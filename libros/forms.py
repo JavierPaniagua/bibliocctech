@@ -3,7 +3,108 @@ from django import forms
 from .models import Ejemplar, Libro
 
 
-class LibroCrearForm(forms.ModelForm):
+def normalizar_estanteria(valor):
+    valor = (valor or '').strip()
+
+    if not valor:
+        return ''
+
+    if not valor.isdigit() or int(valor) < 1:
+        raise forms.ValidationError(
+            'La estantería debe ser un número mayor que cero.'
+        )
+
+    return str(int(valor))
+
+
+def normalizar_balda(valor):
+    valor = (valor or '').strip().upper()
+
+    if not valor:
+        return ''
+
+    if len(valor) != 1 or not valor.isalpha():
+        raise forms.ValidationError(
+            'La balda debe ser una sola letra. Ejemplo: A.'
+        )
+
+    return valor
+
+
+class LibroNormalizacionMixin:
+    def clean_isbn(self):
+        isbn = self.cleaned_data.get(
+            'isbn',
+            '',
+        ).strip()
+
+        return (
+            isbn
+            .replace(' ', '')
+            .replace('-', '')
+        )
+
+    def clean_clasificacion(self):
+        return self.cleaned_data.get(
+            'clasificacion',
+            '',
+        ).strip()
+
+    def clean_clave_autor(self):
+        return self.cleaned_data.get(
+            'clave_autor',
+            '',
+        ).strip().upper()
+
+    def clean_clave_titulo(self):
+        return self.cleaned_data.get(
+            'clave_titulo',
+            '',
+        ).strip().lower()
+
+    def clean_anio_publicacion(self):
+        anio = self.cleaned_data.get(
+            'anio_publicacion'
+        )
+
+        if anio and (
+            anio < 1000
+            or anio > 2100
+        ):
+            raise forms.ValidationError(
+                'Ingrese un año válido entre 1000 y 2100.'
+            )
+
+        return anio
+
+    def clean(self):
+        datos = super().clean()
+
+        area = datos.get('area')
+        clasificacion = datos.get(
+            'clasificacion',
+            '',
+        ).strip()
+
+        if not area:
+            self.add_error(
+                'area',
+                'Seleccione el área del libro.',
+            )
+
+        if not clasificacion:
+            self.add_error(
+                'clasificacion',
+                'Ingrese el código de clasificación.',
+            )
+
+        return datos
+
+
+class LibroCrearForm(
+    LibroNormalizacionMixin,
+    forms.ModelForm,
+):
     cantidad_ejemplares = forms.IntegerField(
         label='Cantidad de ejemplares',
         min_value=1,
@@ -25,7 +126,7 @@ class LibroCrearForm(forms.ModelForm):
         widget=forms.TextInput(
             attrs={
                 'class': 'campo',
-                'placeholder': 'Ejemplo: A',
+                'placeholder': 'Ejemplo: 1',
             }
         ),
     )
@@ -33,11 +134,12 @@ class LibroCrearForm(forms.ModelForm):
     balda = forms.CharField(
         label='Balda',
         required=False,
-        max_length=20,
+        max_length=1,
         widget=forms.TextInput(
             attrs={
                 'class': 'campo',
-                'placeholder': 'Ejemplo: 03',
+                'placeholder': 'Ejemplo: A',
+                'maxlength': 1,
             }
         ),
     )
@@ -56,7 +158,9 @@ class LibroCrearForm(forms.ModelForm):
     forma_adquisicion = forms.ChoiceField(
         label='Forma de adquisición',
         choices=Ejemplar.FormaAdquisicion.choices,
-        initial=Ejemplar.FormaAdquisicion.NO_ESPECIFICADA,
+        initial=(
+            Ejemplar.FormaAdquisicion.NO_ESPECIFICADA
+        ),
         widget=forms.Select(
             attrs={
                 'class': 'campo',
@@ -76,13 +180,15 @@ class LibroCrearForm(forms.ModelForm):
     )
 
     proveedor = forms.CharField(
-        label='Proveedor',
+        label='Proveedor o procedencia',
         required=False,
         max_length=200,
         widget=forms.TextInput(
             attrs={
                 'class': 'campo',
-                'placeholder': 'Proveedor o institución',
+                'placeholder': (
+                    'Proveedor, institución o donante'
+                ),
             }
         ),
     )
@@ -106,7 +212,10 @@ class LibroCrearForm(forms.ModelForm):
             'titulo',
             'autor',
             'editorial',
-            'categoria',
+            'area',
+            'clasificacion',
+            'clave_autor',
+            'clave_titulo',
             'isbn',
             'edicion',
             'anio_publicacion',
@@ -137,10 +246,34 @@ class LibroCrearForm(forms.ModelForm):
                 }
             ),
 
-            'categoria': forms.TextInput(
+            'area': forms.Select(
                 attrs={
                     'class': 'campo',
-                    'placeholder': 'Ejemplo: Electricidad',
+                }
+            ),
+
+            'clasificacion': forms.TextInput(
+                attrs={
+                    'class': 'campo',
+                    'placeholder': 'Ejemplo: 516.3',
+                }
+            ),
+
+            'clave_autor': forms.TextInput(
+                attrs={
+                    'class': 'campo',
+                    'placeholder': (
+                        'Vacío para generar automáticamente'
+                    ),
+                }
+            ),
+
+            'clave_titulo': forms.TextInput(
+                attrs={
+                    'class': 'campo',
+                    'placeholder': (
+                        'Vacío para generar automáticamente'
+                    ),
                 }
             ),
 
@@ -182,27 +315,25 @@ class LibroCrearForm(forms.ModelForm):
             ),
         }
 
-    def clean_isbn(self):
-        isbn = self.cleaned_data.get('isbn', '').strip()
-
-        return (
-            isbn
-            .replace(' ', '')
-            .replace('-', '')
+    def clean_estanteria(self):
+        return normalizar_estanteria(
+            self.cleaned_data.get(
+                'estanteria'
+            )
         )
 
-    def clean_anio_publicacion(self):
-        anio = self.cleaned_data.get('anio_publicacion')
-
-        if anio and (anio < 1000 or anio > 2100):
-            raise forms.ValidationError(
-                'Ingrese un año válido entre 1000 y 2100.'
+    def clean_balda(self):
+        return normalizar_balda(
+            self.cleaned_data.get(
+                'balda'
             )
+        )
 
-        return anio
 
-
-class LibroEditarForm(forms.ModelForm):
+class LibroEditarForm(
+    LibroNormalizacionMixin,
+    forms.ModelForm,
+):
     class Meta:
         model = Libro
 
@@ -210,7 +341,10 @@ class LibroEditarForm(forms.ModelForm):
             'titulo',
             'autor',
             'editorial',
-            'categoria',
+            'area',
+            'clasificacion',
+            'clave_autor',
+            'clave_titulo',
             'isbn',
             'edicion',
             'anio_publicacion',
@@ -231,8 +365,33 @@ class LibroEditarForm(forms.ModelForm):
                 attrs={'class': 'campo'}
             ),
 
-            'categoria': forms.TextInput(
+            'area': forms.Select(
                 attrs={'class': 'campo'}
+            ),
+
+            'clasificacion': forms.TextInput(
+                attrs={
+                    'class': 'campo',
+                    'placeholder': 'Ejemplo: 516.3',
+                }
+            ),
+
+            'clave_autor': forms.TextInput(
+                attrs={
+                    'class': 'campo',
+                    'placeholder': (
+                        'Ejemplo: BAL'
+                    ),
+                }
+            ),
+
+            'clave_titulo': forms.TextInput(
+                attrs={
+                    'class': 'campo',
+                    'placeholder': (
+                        'Ejemplo: geo'
+                    ),
+                }
             ),
 
             'isbn': forms.TextInput(
@@ -266,15 +425,6 @@ class LibroEditarForm(forms.ModelForm):
             ),
         }
 
-    def clean_isbn(self):
-        isbn = self.cleaned_data.get('isbn', '').strip()
-
-        return (
-            isbn
-            .replace(' ', '')
-            .replace('-', '')
-        )
-
 
 class EjemplarForm(forms.ModelForm):
     class Meta:
@@ -282,6 +432,7 @@ class EjemplarForm(forms.ModelForm):
 
         fields = [
             'numero_inventario',
+            'codigo_anterior',
             'estanteria',
             'balda',
             'proveedor',
@@ -303,22 +454,37 @@ class EjemplarForm(forms.ModelForm):
                 }
             ),
 
+            'codigo_anterior': forms.TextInput(
+                attrs={
+                    'class': 'campo',
+                    'placeholder': (
+                        'Código histórico opcional'
+                    ),
+                }
+            ),
+
             'estanteria': forms.TextInput(
                 attrs={
                     'class': 'campo',
-                    'placeholder': 'Ejemplo: A',
+                    'placeholder': 'Ejemplo: 1',
                 }
             ),
 
             'balda': forms.TextInput(
                 attrs={
                     'class': 'campo',
-                    'placeholder': 'Ejemplo: 03',
+                    'placeholder': 'Ejemplo: A',
+                    'maxlength': 1,
                 }
             ),
 
             'proveedor': forms.TextInput(
-                attrs={'class': 'campo'}
+                attrs={
+                    'class': 'campo',
+                    'placeholder': (
+                        'Proveedor, institución o donante'
+                    ),
+                }
             ),
 
             'estado': forms.Select(
@@ -348,10 +514,24 @@ class EjemplarForm(forms.ModelForm):
             ),
         }
 
+    def clean_estanteria(self):
+        return normalizar_estanteria(
+            self.cleaned_data.get(
+                'estanteria'
+            )
+        )
+
+    def clean_balda(self):
+        return normalizar_balda(
+            self.cleaned_data.get(
+                'balda'
+            )
+        )
+
 
 class ImportarLibrosForm(forms.Form):
     archivo = forms.FileField(
-        label='Planilla Excel',
+        label='Inventario maestro Excel',
         widget=forms.ClearableFileInput(
             attrs={
                 'class': 'campo',
@@ -363,9 +543,11 @@ class ImportarLibrosForm(forms.Form):
     def clean_archivo(self):
         archivo = self.cleaned_data['archivo']
 
-        if not archivo.name.lower().endswith('.xlsx'):
+        if not archivo.name.lower().endswith(
+            '.xlsx'
+        ):
             raise forms.ValidationError(
-                'Seleccione un archivo Excel con extensión .xlsx.'
+                'Seleccione un archivo Excel .xlsx.'
             )
 
         if archivo.size > 10 * 1024 * 1024:

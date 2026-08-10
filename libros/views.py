@@ -2,17 +2,14 @@ import hashlib
 from pathlib import Path
 from tempfile import gettempdir
 
-
-
-
-from datetime import date, datetime
-
 from django.contrib import messages
 from django.db import transaction
 from django.db.models import Q
-from django.shortcuts import get_object_or_404, redirect, render
-from django.utils.dateparse import parse_date
-from openpyxl import load_workbook
+from django.shortcuts import (
+    get_object_or_404,
+    redirect,
+    render,
+)
 
 from .forms import (
     EjemplarForm,
@@ -20,15 +17,18 @@ from .forms import (
     LibroCrearForm,
     LibroEditarForm,
 )
-
 from .importador_historico import (
     analizar_archivo,
     importar_archivo,
 )
 from .models import Ejemplar, Libro
 
+
 def libro_lista(request):
-    busqueda = request.GET.get('buscar', '').strip()
+    busqueda = request.GET.get(
+        'buscar',
+        '',
+    ).strip()
 
     libros = Libro.objects.prefetch_related(
         'ejemplares',
@@ -39,11 +39,34 @@ def libro_lista(request):
             Q(titulo__icontains=busqueda)
             | Q(autor__icontains=busqueda)
             | Q(editorial__icontains=busqueda)
-            | Q(categoria__icontains=busqueda)
+            | Q(area__icontains=busqueda)
+            | Q(clasificacion__icontains=busqueda)
+            | Q(
+                signatura_topografica__icontains=(
+                    busqueda
+                )
+            )
             | Q(isbn__icontains=busqueda)
-            | Q(ejemplares__numero_inventario__icontains=busqueda)
-            | Q(ejemplares__estanteria__icontains=busqueda)
-            | Q(ejemplares__balda__icontains=busqueda)
+            | Q(
+                ejemplares__numero_inventario__icontains=(
+                    busqueda
+                )
+            )
+            | Q(
+                ejemplares__codigo_anterior__icontains=(
+                    busqueda
+                )
+            )
+            | Q(
+                ejemplares__estanteria__icontains=(
+                    busqueda
+                )
+            )
+            | Q(
+                ejemplares__balda__icontains=(
+                    busqueda
+                )
+            )
         ).distinct()
 
     contexto = {
@@ -61,7 +84,9 @@ def libro_lista(request):
 @transaction.atomic
 def libro_crear(request):
     if request.method == 'POST':
-        formulario = LibroCrearForm(request.POST)
+        formulario = LibroCrearForm(
+            request.POST
+        )
 
         if formulario.is_valid():
             libro = formulario.save()
@@ -74,13 +99,17 @@ def libro_crear(request):
                 'condicion_inicial'
             ]
 
-            forma_adquisicion = formulario.cleaned_data[
-                'forma_adquisicion'
-            ]
+            forma_adquisicion = (
+                formulario.cleaned_data[
+                    'forma_adquisicion'
+                ]
+            )
 
-            fecha_adquisicion = formulario.cleaned_data[
-                'fecha_adquisicion'
-            ]
+            fecha_adquisicion = (
+                formulario.cleaned_data[
+                    'fecha_adquisicion'
+                ]
+            )
 
             estanteria = formulario.cleaned_data[
                 'estanteria'
@@ -94,27 +123,53 @@ def libro_crear(request):
                 'proveedor'
             ]
 
-            observaciones = formulario.cleaned_data[
-                'observaciones'
-            ]
+            observaciones = (
+                formulario.cleaned_data[
+                    'observaciones'
+                ]
+            )
+
+            numeros_generados = []
 
             for _ in range(cantidad):
-                Ejemplar.objects.create(
+                ejemplar = Ejemplar.objects.create(
                     libro=libro,
                     estanteria=estanteria,
                     balda=balda,
                     proveedor=proveedor,
                     condicion=condicion,
-                    forma_adquisicion=forma_adquisicion,
-                    fecha_adquisicion=fecha_adquisicion,
+                    forma_adquisicion=(
+                        forma_adquisicion
+                    ),
+                    fecha_adquisicion=(
+                        fecha_adquisicion
+                    ),
                     observaciones=observaciones,
+                )
+
+                numeros_generados.append(
+                    ejemplar.numero_inventario
+                )
+
+            if len(numeros_generados) == 1:
+                detalle_inventario = (
+                    'Número de inventario: '
+                    f'{numeros_generados[0]}.'
+                )
+            else:
+                detalle_inventario = (
+                    'Inventarios generados: '
+                    f'{numeros_generados[0]} al '
+                    f'{numeros_generados[-1]}.'
                 )
 
             messages.success(
                 request,
                 (
-                    f'El libro {libro.titulo} fue registrado '
-                    f'con {cantidad} ejemplar(es).'
+                    f'El libro {libro.titulo} fue '
+                    f'registrado con {cantidad} '
+                    f'ejemplar(es). '
+                    f'{detalle_inventario}'
                 ),
             )
 
@@ -134,16 +189,21 @@ def libro_crear(request):
         'libros/libro_formulario.html',
         contexto,
     )
-    
+
+
 def libro_detalle(request, libro_id):
     libro = get_object_or_404(
-        Libro.objects.prefetch_related('ejemplares'),
+        Libro.objects.prefetch_related(
+            'ejemplares'
+        ),
         id=libro_id,
     )
 
     contexto = {
         'libro': libro,
-        'ejemplares': libro.ejemplares.all(),
+        'ejemplares': (
+            libro.ejemplares.all()
+        ),
     }
 
     return render(
@@ -153,6 +213,7 @@ def libro_detalle(request, libro_id):
     )
 
 
+@transaction.atomic
 def libro_editar(request, libro_id):
     libro = get_object_or_404(
         Libro,
@@ -160,17 +221,33 @@ def libro_editar(request, libro_id):
     )
 
     if request.method == 'POST':
+        signatura_anterior = (
+            libro.signatura_topografica
+        )
+
         formulario = LibroEditarForm(
             request.POST,
             instance=libro,
         )
 
         if formulario.is_valid():
-            formulario.save()
+            libro = formulario.save()
+
+            if (
+                signatura_anterior
+                != libro.signatura_topografica
+            ):
+                libro.ejemplares.update(
+                    etiqueta_impresa=False,
+                    fecha_impresion_etiqueta=None,
+                )
 
             messages.success(
                 request,
-                'Los datos del libro fueron actualizados.',
+                (
+                    'Los datos del libro fueron '
+                    'actualizados.'
+                ),
             )
 
             return redirect(
@@ -178,7 +255,9 @@ def libro_editar(request, libro_id):
                 libro_id=libro.id,
             )
     else:
-        formulario = LibroEditarForm(instance=libro)
+        formulario = LibroEditarForm(
+            instance=libro
+        )
 
     contexto = {
         'formulario': formulario,
@@ -191,6 +270,7 @@ def libro_editar(request, libro_id):
         contexto,
     )
 
+
 @transaction.atomic
 def ejemplar_crear(request, libro_id):
     libro = get_object_or_404(
@@ -199,11 +279,13 @@ def ejemplar_crear(request, libro_id):
     )
 
     if request.method == 'POST':
-        formulario = EjemplarForm(request.POST)
+        formulario = EjemplarForm(
+            request.POST
+        )
 
         if formulario.is_valid():
             ejemplar = formulario.save(
-                commit=False,
+                commit=False
             )
 
             ejemplar.libro = libro
@@ -212,7 +294,8 @@ def ejemplar_crear(request, libro_id):
             messages.success(
                 request,
                 (
-                    'El ejemplar fue registrado con el número '
+                    'El ejemplar fue registrado '
+                    'con el número de inventario '
                     f'{ejemplar.numero_inventario}.'
                 ),
             )
@@ -227,7 +310,9 @@ def ejemplar_crear(request, libro_id):
     contexto = {
         'formulario': formulario,
         'libro': libro,
-        'titulo_pagina': 'Agregar ejemplar',
+        'titulo_pagina': (
+            'Agregar ejemplar'
+        ),
     }
 
     return render(
@@ -238,24 +323,59 @@ def ejemplar_crear(request, libro_id):
 
 
 @transaction.atomic
-def ejemplar_editar(request, ejemplar_id):
+def ejemplar_editar(
+    request,
+    ejemplar_id,
+):
     ejemplar = get_object_or_404(
-        Ejemplar.objects.select_related('libro'),
+        Ejemplar.objects.select_related(
+            'libro'
+        ),
         id=ejemplar_id,
     )
 
     if request.method == 'POST':
+        numero_anterior = (
+            ejemplar.numero_inventario
+        )
+
+        estanteria_anterior = (
+            ejemplar.estanteria
+        )
+
+        balda_anterior = ejemplar.balda
+
         formulario = EjemplarForm(
             request.POST,
             instance=ejemplar,
         )
 
         if formulario.is_valid():
-            formulario.save()
+            ejemplar = formulario.save(
+                commit=False
+            )
+
+            cambio_etiqueta = (
+                numero_anterior
+                != ejemplar.numero_inventario
+                or estanteria_anterior
+                != ejemplar.estanteria
+                or balda_anterior
+                != ejemplar.balda
+            )
+
+            if cambio_etiqueta:
+                ejemplar.etiqueta_impresa = False
+                ejemplar.fecha_impresion_etiqueta = None
+
+            ejemplar.save()
 
             messages.success(
                 request,
-                'Los datos del ejemplar fueron actualizados.',
+                (
+                    'Los datos del ejemplar fueron '
+                    'actualizados.'
+                ),
             )
 
             return redirect(
@@ -264,14 +384,16 @@ def ejemplar_editar(request, ejemplar_id):
             )
     else:
         formulario = EjemplarForm(
-            instance=ejemplar,
+            instance=ejemplar
         )
 
     contexto = {
         'formulario': formulario,
         'ejemplar': ejemplar,
         'libro': ejemplar.libro,
-        'titulo_pagina': 'Editar ejemplar',
+        'titulo_pagina': (
+            'Editar ejemplar'
+        ),
     }
 
     return render(
@@ -279,7 +401,6 @@ def ejemplar_editar(request, ejemplar_id):
         'libros/ejemplar_formulario.html',
         contexto,
     )
-
 
 
 def guardar_archivo_temporal(archivo):
@@ -295,14 +416,13 @@ def guardar_archivo_temporal(archivo):
 
     huella = hashlib.sha256()
 
-    nombre_temporal = (
-        f'importacion_{archivo.size}_'
-        f'{archivo.name}'
-    )
+    nombre_seguro = Path(
+        archivo.name
+    ).name
 
     ruta_temporal = (
         carpeta_temporal
-        / nombre_temporal
+        / f'importacion_{nombre_seguro}'
     )
 
     contador = 1
@@ -312,13 +432,16 @@ def guardar_archivo_temporal(archivo):
             carpeta_temporal
             / (
                 f'importacion_{contador}_'
-                f'{archivo.name}'
+                f'{nombre_seguro}'
             )
         )
 
         contador += 1
 
-    with open(ruta_temporal, 'wb') as destino:
+    with open(
+        ruta_temporal,
+        'wb',
+    ) as destino:
         for bloque in archivo.chunks():
             destino.write(bloque)
             huella.update(bloque)
@@ -338,11 +461,14 @@ def eliminar_archivo_temporal(ruta):
 
         if archivo.exists():
             archivo.unlink()
+
     except OSError:
         pass
 
 
-def limpiar_importacion_temporal(request):
+def limpiar_importacion_temporal(
+    request,
+):
     ruta = request.session.pop(
         'importacion_libros_ruta',
         None,
@@ -372,7 +498,9 @@ def libro_importar(request):
         )
 
         if accion == 'analizar':
-            limpiar_importacion_temporal(request)
+            limpiar_importacion_temporal(
+                request
+            )
 
             formulario = ImportarLibrosForm(
                 request.POST,
@@ -380,9 +508,11 @@ def libro_importar(request):
             )
 
             if formulario.is_valid():
-                archivo = formulario.cleaned_data[
-                    'archivo'
-                ]
+                archivo = (
+                    formulario.cleaned_data[
+                        'archivo'
+                    ]
+                )
 
                 ruta_temporal = None
 
@@ -394,11 +524,16 @@ def libro_importar(request):
                         archivo
                     )
 
-                    vista_previa = analizar_archivo(
-                        ruta_temporal
+                    vista_previa = (
+                        analizar_archivo(
+                            ruta_temporal
+                        )
                     )
 
-                    if vista_previa['registros'] == 0:
+                    if (
+                        vista_previa['registros']
+                        == 0
+                    ):
                         eliminar_archivo_temporal(
                             ruta_temporal
                         )
@@ -406,10 +541,12 @@ def libro_importar(request):
                         formulario.add_error(
                             'archivo',
                             (
-                                'No se encontraron registros '
-                                'válidos en el archivo.'
+                                'No se encontraron '
+                                'ejemplares listos '
+                                'para importar.'
                             ),
                         )
+
                     else:
                         request.session[
                             'importacion_libros_ruta'
@@ -431,59 +568,81 @@ def libro_importar(request):
                     formulario.add_error(
                         'archivo',
                         (
-                            'No se pudo analizar el archivo. '
+                            'No se pudo analizar '
+                            'el archivo. '
                             f'Detalle: {error}'
                         ),
                     )
 
         elif accion == 'confirmar':
-            formulario = ImportarLibrosForm()
-
-            ruta_temporal = request.session.get(
-                'importacion_libros_ruta'
+            formulario = (
+                ImportarLibrosForm()
             )
 
-            nombre_archivo = request.session.get(
-                'importacion_libros_nombre'
+            ruta_temporal = (
+                request.session.get(
+                    'importacion_libros_ruta'
+                )
             )
 
-            huella_archivo = request.session.get(
-                'importacion_libros_huella'
+            nombre_archivo = (
+                request.session.get(
+                    'importacion_libros_nombre'
+                )
+            )
+
+            huella_archivo = (
+                request.session.get(
+                    'importacion_libros_huella'
+                )
             )
 
             if (
                 not ruta_temporal
-                or not Path(ruta_temporal).exists()
+                or not Path(
+                    ruta_temporal
+                ).exists()
                 or not nombre_archivo
                 or not huella_archivo
             ):
                 messages.error(
                     request,
                     (
-                        'La vista previa venció. Seleccione '
-                        'nuevamente el archivo Excel.'
+                        'La vista previa venció. '
+                        'Seleccione nuevamente '
+                        'el archivo Excel.'
                     ),
                 )
 
-                limpiar_importacion_temporal(request)
+                limpiar_importacion_temporal(
+                    request
+                )
 
             else:
                 try:
                     resultados = importar_archivo(
-                        ruta_archivo=ruta_temporal,
-                        nombre_archivo=nombre_archivo,
-                        huella_archivo=huella_archivo,
+                        ruta_archivo=(
+                            ruta_temporal
+                        ),
+                        nombre_archivo=(
+                            nombre_archivo
+                        ),
+                        huella_archivo=(
+                            huella_archivo
+                        ),
                     )
 
                     messages.success(
                         request,
                         (
-                            'La importación se realizó '
-                            'correctamente.'
+                            'El inventario maestro '
+                            'se importó correctamente.'
                         ),
                     )
 
-                    limpiar_importacion_temporal(request)
+                    limpiar_importacion_temporal(
+                        request
+                    )
 
                 except ValueError as error:
                     messages.error(
@@ -491,22 +650,32 @@ def libro_importar(request):
                         str(error),
                     )
 
-                    limpiar_importacion_temporal(request)
+                    limpiar_importacion_temporal(
+                        request
+                    )
 
                 except Exception as error:
                     messages.error(
                         request,
                         (
-                            'No se pudo completar la '
-                            f'importación. Detalle: {error}'
+                            'No se pudo completar '
+                            'la importación. '
+                            f'Detalle: {error}'
                         ),
                     )
 
-                    limpiar_importacion_temporal(request)
+                    limpiar_importacion_temporal(
+                        request
+                    )
 
         elif accion == 'cancelar':
-            formulario = ImportarLibrosForm()
-            limpiar_importacion_temporal(request)
+            formulario = (
+                ImportarLibrosForm()
+            )
+
+            limpiar_importacion_temporal(
+                request
+            )
 
             messages.info(
                 request,
@@ -514,11 +683,16 @@ def libro_importar(request):
             )
 
         else:
-            formulario = ImportarLibrosForm()
+            formulario = (
+                ImportarLibrosForm()
+            )
 
     else:
         formulario = ImportarLibrosForm()
-        limpiar_importacion_temporal(request)
+
+        limpiar_importacion_temporal(
+            request
+        )
 
     contexto = {
         'formulario': formulario,
@@ -531,310 +705,3 @@ def libro_importar(request):
         'libros/libro_importar.html',
         contexto,
     )
-
-
-def limpiar_isbn(valor):
-    if valor is None:
-        return ''
-
-    if isinstance(valor, float) and valor.is_integer():
-        valor = int(valor)
-
-    isbn = str(valor).strip()
-
-    return (
-        isbn
-        .replace(' ', '')
-        .replace('-', '')
-    )
-
-
-def convertir_entero(valor):
-    if valor is None or valor == '':
-        return None
-
-    if isinstance(valor, float):
-        if not valor.is_integer():
-            return None
-
-        return int(valor)
-
-    try:
-        return int(str(valor).strip())
-    except (TypeError, ValueError):
-        return None
-
-
-def convertir_fecha(valor):
-    if valor in (None, ''):
-        return None
-
-    if isinstance(valor, datetime):
-        return valor.date()
-
-    if isinstance(valor, date):
-        return valor
-
-    texto = str(valor).strip()
-
-    fecha = parse_date(texto)
-
-    if fecha:
-        return fecha
-
-    formatos = [
-        '%d/%m/%Y',
-        '%d-%m-%Y',
-    ]
-
-    for formato in formatos:
-        try:
-            return datetime.strptime(
-                texto,
-                formato,
-            ).date()
-        except ValueError:
-            continue
-
-    return None
-
-
-def convertir_activo(valor):
-    texto = limpiar_texto(valor).upper()
-
-    return texto in {
-        'SI',
-        'SÍ',
-        'TRUE',
-        'VERDADERO',
-        '1',
-        'ACTIVO',
-    }
-
-
-def normalizar_adquisicion(valor):
-    texto = limpiar_texto(valor).upper()
-
-    equivalencias = {
-        'COMPRA': Ejemplar.FormaAdquisicion.COMPRA,
-        'DONACION': Ejemplar.FormaAdquisicion.DONACION,
-        'DONACIÓN': Ejemplar.FormaAdquisicion.DONACION,
-        'TRANSFERENCIA': (
-            Ejemplar.FormaAdquisicion.TRANSFERENCIA
-        ),
-        'OTRO': Ejemplar.FormaAdquisicion.OTRO,
-        'NO ESPECIFICADA': (
-            Ejemplar.FormaAdquisicion.NO_ESPECIFICADA
-        ),
-        'NO_ESPECIFICADA': (
-            Ejemplar.FormaAdquisicion.NO_ESPECIFICADA
-        ),
-    }
-
-    return equivalencias.get(texto)
-
-
-
-def procesar_libros_excel(hoja):
-    condiciones_validas = {
-        opcion[0]
-        for opcion in Ejemplar.Condicion.choices
-    }
-
-    importados = 0
-    ejemplares_creados = 0
-    duplicados = 0
-    errores = []
-    registros_planilla = set()
-
-    for numero_fila, fila in enumerate(
-        hoja.iter_rows(
-            min_row=5,
-            max_col=14,
-            values_only=True,
-        ),
-        start=5,
-    ):
-        if all(valor is None for valor in fila):
-            continue
-
-        (
-            titulo,
-            autor,
-            editorial,
-            categoria,
-            isbn,
-            edicion,
-            anio_publicacion,
-            ubicacion,
-            cantidad,
-            condicion,
-            forma_adquisicion,
-            fecha_adquisicion,
-            activo,
-            descripcion,
-        ) = fila
-
-        titulo = limpiar_texto(titulo)
-        autor = limpiar_texto(autor)
-        editorial = limpiar_texto(editorial)
-        categoria = limpiar_texto(categoria)
-        isbn = limpiar_isbn(isbn)
-        edicion = limpiar_texto(edicion)
-        ubicacion = limpiar_texto(ubicacion)
-        descripcion = limpiar_texto(descripcion)
-
-        anio_publicacion = convertir_entero(
-            anio_publicacion
-        )
-
-        cantidad = convertir_entero(cantidad)
-
-        condicion = limpiar_texto(
-            condicion
-        ).upper()
-
-        adquisicion = normalizar_adquisicion(
-            forma_adquisicion
-        )
-
-        fecha_original = fecha_adquisicion
-
-        fecha_adquisicion = convertir_fecha(
-            fecha_adquisicion
-        )
-
-        if not titulo or not categoria:
-            errores.append(
-                f'Fila {numero_fila}: faltan el título '
-                f'o la categoría.'
-            )
-            continue
-
-        if cantidad is None or cantidad < 1 or cantidad > 500:
-            errores.append(
-                f'Fila {numero_fila}: la cantidad debe ser '
-                f'un número entre 1 y 500.'
-            )
-            continue
-
-        if (
-            anio_publicacion is not None
-            and (
-                anio_publicacion < 1000
-                or anio_publicacion > 2100
-            )
-        ):
-            errores.append(
-                f'Fila {numero_fila}: año de publicación '
-                f'incorrecto.'
-            )
-            continue
-
-        if condicion not in condiciones_validas:
-            errores.append(
-                f'Fila {numero_fila}: condición incorrecta.'
-            )
-            continue
-
-        if adquisicion is None:
-            errores.append(
-                f'Fila {numero_fila}: forma de adquisición '
-                f'incorrecta.'
-            )
-            continue
-
-        if (
-            fecha_original not in (None, '')
-            and fecha_adquisicion is None
-        ):
-            errores.append(
-                f'Fila {numero_fila}: fecha de adquisición '
-                f'incorrecta.'
-            )
-            continue
-
-        if isbn:
-            clave_planilla = (
-                'ISBN',
-                isbn.lower(),
-            )
-        else:
-            clave_planilla = (
-                titulo.lower(),
-                autor.lower(),
-                edicion.lower(),
-            )
-
-        if clave_planilla in registros_planilla:
-            duplicados += 1
-
-            errores.append(
-                f'Fila {numero_fila}: el libro está repetido '
-                f'en la planilla.'
-            )
-
-            continue
-
-        registros_planilla.add(clave_planilla)
-
-        if isbn:
-            libro_existente = Libro.objects.filter(
-                isbn__iexact=isbn,
-            ).exists()
-        else:
-            libro_existente = Libro.objects.filter(
-                titulo__iexact=titulo,
-                autor__iexact=autor,
-                edicion__iexact=edicion,
-            ).exists()
-
-        if libro_existente:
-            duplicados += 1
-
-            errores.append(
-                f'Fila {numero_fila}: {titulo} ya está '
-                f'registrado.'
-            )
-
-            continue
-
-        try:
-            with transaction.atomic():
-                libro = Libro.objects.create(
-                    titulo=titulo,
-                    autor=autor,
-                    editorial=editorial,
-                    categoria=categoria,
-                    isbn=isbn,
-                    edicion=edicion,
-                    anio_publicacion=anio_publicacion,
-                    ubicacion=ubicacion,
-                    descripcion=descripcion,
-                    activo=convertir_activo(activo),
-                )
-
-                for _ in range(cantidad):
-                    Ejemplar.objects.create(
-                        libro=libro,
-                        condicion=condicion,
-                        forma_adquisicion=adquisicion,
-                        fecha_adquisicion=fecha_adquisicion,
-                    )
-
-            importados += 1
-            ejemplares_creados += cantidad
-
-        except Exception:
-            errores.append(
-                f'Fila {numero_fila}: no se pudo registrar '
-                f'el libro {titulo}.'
-            )
-
-    return {
-        'importados': importados,
-        'ejemplares_creados': ejemplares_creados,
-        'duplicados': duplicados,
-        'errores': errores,
-        'cantidad_errores': len(errores),
-    }

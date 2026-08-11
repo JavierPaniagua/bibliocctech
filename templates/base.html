@@ -1,8 +1,6 @@
 {% load static %}
-
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
 
@@ -13,7 +11,7 @@
 
     <title>
         {% block title %}
-            Biblioteca Escolar CCTL
+            BIBLIOTECH | Biblioteca Escolar CCTL
         {% endblock %}
     </title>
 
@@ -22,489 +20,51 @@
         href="{% static 'css/estilos.css' %}"
     >
 
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        html {
-            min-height: 100%;
-        }
-
-        body {
-            min-height: 100vh;
-            margin: 0;
-            background: #f3f6f8;
-            color: #1f303a;
-            font-family: Arial, Helvetica, sans-serif;
-        }
-
-        a {
-            color: inherit;
-        }
-
-        /* Encabezado */
-
-        .encabezado {
-            background: #1c435e;
-            color: white;
-            box-shadow: 0 2px 7px rgba(0, 0, 0, 0.15);
-        }
-
-        .encabezado-contenido {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 25px;
-            width: min(1180px, calc(100% - 40px));
-            min-height: 74px;
-            margin: 0 auto;
-        }
-
-        .marca {
-            display: flex;
-            flex-direction: column;
-            text-decoration: none;
-        }
-
-        .marca-titulo {
-            color: white;
-            font-size: 24px;
-            font-weight: bold;
-            line-height: 1.2;
-        }
-
-        .marca-subtitulo {
-            margin-top: 4px;
-            color: #dceaf0;
-            font-size: 14px;
-        }
-
-        /* Navegación */
-
-        .navegacion {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .nav-enlace {
-            display: inline-block;
-            padding: 10px 13px;
-            border-radius: 7px;
-            color: white;
-            font-size: 15px;
-            font-weight: bold;
-            text-decoration: none;
-            transition:
-                background-color 0.2s ease,
-                color 0.2s ease;
-        }
-
-        .nav-enlace:hover {
-            background: rgba(255, 255, 255, 0.14);
-        }
-
-        .nav-enlace.activo {
-            background: #1388a2;
-        }
-
-        .nav-destacado {
-            background: #1388a2;
-        }
-
-        .nav-destacado:hover {
-            background: #0e748b;
-        }
-
-        /* Menú móvil */
-
-        .boton-menu {
-            display: none;
-            padding: 9px 12px;
-            border: 1px solid rgba(255, 255, 255, 0.4);
-            border-radius: 7px;
-            background: transparent;
-            color: white;
-            cursor: pointer;
-            font-size: 20px;
-        }
-
-        /* Contenido */
-
-        .contenido-principal {
-            width: min(1180px, calc(100% - 40px));
-            margin: 32px auto;
-        }
-
-        .cabecera-pagina {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 20px;
-            margin-bottom: 24px;
-        }
-
-        .cabecera-pagina h1,
-        .cabecera-pagina h2 {
-            margin: 0 0 5px;
-            color: #173c57;
-        }
-
-        .cabecera-pagina p {
-            margin: 0;
-            color: #60727e;
-        }
-
-        /* Tarjetas */
-
-.tarjeta {
-    padding: 25px;
-    border-radius: 12px;
-    background: white;
-    color: #1f303a;
-    box-shadow: 0 5px 16px rgba(26, 57, 75, 0.1);
-}
-/* Tarjetas del panel principal */
-
-.tarjetas .tarjeta {
-    color: white;
-}
-
-.tarjetas .tarjeta h3 {
-    color: white;
-}
-
-.tarjetas .tarjeta p {
-    color: rgba(255, 255, 255, 0.92);
-}
-
-.tarjetas .tarjeta-azul {
-    background: #2563a6;
-}
-
-.tarjetas .tarjeta-docentes {
-    background: #7651a8;
-}
-
-.tarjetas .tarjeta-verde {
-    background: #23856d;
-}
-
-.tarjetas .tarjeta-naranja {
-    background: #dc7318;
-}
-
-.tarjetas .tarjeta-celeste {
-    background: #147d92;
-}
-
-.tarjetas .tarjeta-roja {
-    background: #bd3b47;
-}
-
-.tarjetas .tarjeta-morada {
-    background: #7651a8;
-}
-        /* Botones */
-
-        .grupo-botones {
-            display: flex;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .boton {
-            display: inline-block;
-            padding: 11px 17px;
-            border: none;
-            border-radius: 7px;
-            cursor: pointer;
-            font-family: inherit;
-            font-size: 15px;
-            font-weight: bold;
-            line-height: 1.2;
-            text-align: center;
-            text-decoration: none;
-        }
-
-        .boton-primario {
-            background: #1388a2;
-            color: white;
-        }
-
-        .boton-primario:hover {
-            background: #0e748b;
-        }
-
-        .boton-secundario {
-            background: #e5edf1;
-            color: #1f303a;
-        }
-
-        .boton-secundario:hover {
-            background: #d5e1e7;
-        }
-
-        .boton-excel {
-            background: #218767;
-            color: white;
-        }
-
-        .boton-excel:hover {
-            background: #176b52;
-        }
-
-        .boton-peligro {
-            background: #bd3548;
-            color: white;
-        }
-
-        .boton-peligro:hover {
-            background: #9d293a;
-        }
-
-        /* Mensajes */
-
-        .mensaje {
-            margin-bottom: 20px;
-            padding: 14px 17px;
-            border: 1px solid transparent;
-            border-radius: 7px;
-        }
-
-        .mensaje p {
-            margin: 0;
-        }
-
-        .mensaje-success,
-        .mensaje-exito {
-            border-color: #9fd9c6;
-            background: #e3f5ee;
-            color: #07644f;
-        }
-
-        .mensaje-error,
-        .mensaje-danger {
-            border-color: #efb3bc;
-            background: #fde7ea;
-            color: #9f2436;
-        }
-
-        .mensaje-warning {
-            border-color: #eccd82;
-            background: #fff3d5;
-            color: #745410;
-        }
-
-        .mensaje-info {
-            border-color: #9ed4e0;
-            background: #e4f4f7;
-            color: #155c6d;
-        }
-
-        /* Formularios generales */
-
-        .campo {
-            display: block;
-            width: 100%;
-            padding: 11px 12px;
-            border: 1px solid #bdcbd3;
-            border-radius: 7px;
-            background: white;
-            color: #1f303a;
-            font-family: inherit;
-            font-size: 16px;
-        }
-
-        .campo:focus {
-            border-color: #1388a2;
-            outline: 3px solid rgba(19, 136, 162, 0.14);
-        }
-
-        /* Tablas generales */
-
-        .tabla-responsive {
-            overflow-x: auto;
-        }
-
-        .tabla {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .tabla th {
-            padding: 12px 10px;
-            background: #1c435e;
-            color: white;
-            text-align: left;
-            white-space: nowrap;
-        }
-
-        .tabla td {
-            padding: 12px 10px;
-            border-bottom: 1px solid #d6e0e5;
-            vertical-align: middle;
-        }
-
-        .tabla tbody tr:hover {
-            background: #f5f9fa;
-        }
-
-        /* Pie de página */
-
-        .pie-pagina {
-            margin-top: 45px;
-            padding: 22px 20px;
-            color: #60727e;
-            text-align: center;
-            font-size: 14px;
-        }
-
-        /* Diseño adaptable */
-
-        @media (max-width: 950px) {
-            .encabezado-contenido {
-                position: relative;
-                flex-wrap: wrap;
-                padding: 15px 0;
-            }
-
-            .boton-menu {
-                display: block;
-            }
-
-            .navegacion {
-                display: none;
-                flex-basis: 100%;
-                flex-direction: column;
-                align-items: stretch;
-                padding-top: 10px;
-            }
-
-            .navegacion.mostrar {
-                display: flex;
-            }
-
-            .nav-enlace {
-                padding: 12px 14px;
-            }
-        }
-
-        @media (max-width: 650px) {
-            .encabezado-contenido,
-            .contenido-principal {
-                width: min(100% - 24px, 1180px);
-            }
-
-            .contenido-principal {
-                margin-top: 22px;
-            }
-
-            .marca-titulo {
-                font-size: 20px;
-            }
-
-            .cabecera-pagina {
-                align-items: stretch;
-                flex-direction: column;
-            }
-
-            .cabecera-pagina > .boton,
-            .cabecera-pagina > .grupo-botones {
-                width: 100%;
-            }
-
-            .cabecera-pagina > .boton {
-                text-align: center;
-            }
-
-            .cabecera-pagina .grupo-botones {
-                flex-direction: column;
-            }
-
-            .cabecera-pagina .grupo-botones .boton {
-                width: 100%;
-            }
-
-            .tarjeta {
-                padding: 18px;
-            }
-        }
-
-        .tarjetas .tarjeta-etiquetas {
-    background: #2e607d;
-}
-
-.formulario-tarjeta {
-    margin: 0;
-}
-
-.tarjeta-boton {
-    width: 100%;
-    border: none;
-    cursor: pointer;
-    font-family: inherit;
-    text-align: left;
-}
-
-.tarjetas .tarjeta-respaldo {
-    background: #526875;
-    color: white;
-}
-
-.titulo-tarjeta {
-    display: block;
-    margin-bottom: 7px;
-    color: white;
-    font-size: 19px;
-}
-
-.descripcion-tarjeta {
-    display: block;
-    color: rgba(255, 255, 255, 0.92);
-    font-size: 16px;
-    line-height: 1.4;
-}
-    </style>
-
-    {% block extra_css %}
-    {% endblock %}
+    {% block extra_css %}{% endblock %}
 </head>
 
 <body>
 
+    <!-- ENCABEZADO -->
     <header class="encabezado">
-
         <div class="encabezado-contenido">
 
+            <!-- MARCA DEL SISTEMA -->
             <a href="/" class="marca">
                 <span class="marca-titulo">
-                    Biblioteca Escolar CCTL
+                    BIBLIOTECH
                 </span>
 
                 <span class="marca-subtitulo">
-                    Sistema de gestión bibliotecaria
+                    Biblioteca Escolar CCTL
                 </span>
             </a>
 
+            <!-- BOTÓN PARA CELULARES -->
             <button
                 type="button"
                 class="boton-menu"
                 id="boton-menu"
-                aria-label="Abrir menú"
+                aria-label="Abrir menú de navegación"
+                aria-controls="navegacion"
                 aria-expanded="false"
             >
                 ☰
             </button>
 
-            <nav class="navegacion" id="navegacion">
+            <!-- MENÚ PRINCIPAL -->
+            <nav
+                class="navegacion"
+                id="navegacion"
+                aria-label="Navegación principal"
+            >
 
                 <a
                     href="/"
                     class="nav-enlace
-                    {% if request.path == '/' %}activo{% endif %}"
+                    {% if request.path == '/' %}
+                        activo
+                    {% endif %}"
                 >
                     Inicio
                 </a>
@@ -557,50 +117,60 @@
                 </a>
 
             </nav>
-
         </div>
-
     </header>
 
+    <!-- CONTENIDO PRINCIPAL -->
     <main class="contenido-principal">
 
+        <!-- MENSAJES DEL SISTEMA -->
         {% if messages %}
-            {% for message in messages %}
-                <div class="mensaje mensaje-{{ message.tags }}">
-                    {{ message }}
-                </div>
-            {% endfor %}
+            <div
+                class="contenedor-mensajes"
+                aria-live="polite"
+            >
+                {% for message in messages %}
+                    <div class="mensaje mensaje-{{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
         {% endif %}
 
-        {% block content %}
-        {% endblock %}
+        <!-- CONTENIDO DE CADA PÁGINA -->
+        {% block content %}{% endblock %}
 
     </main>
 
+    <!-- PIE DE PÁGINA -->
     <footer class="pie-pagina">
-        Biblioteca Escolar CCTL · Sistema de gestión bibliotecaria
+        BIBLIOTECH · Biblioteca Escolar CCTL
     </footer>
 
+    <!-- MENÚ RESPONSIVO -->
     <script>
-        const botonMenu = document.getElementById("boton-menu");
-        const navegacion = document.getElementById("navegacion");
+        document.addEventListener("DOMContentLoaded", function () {
+            const botonMenu =
+                document.getElementById("boton-menu");
 
-        if (botonMenu && navegacion) {
-            botonMenu.addEventListener("click", function () {
-                const estaAbierto =
-                    navegacion.classList.toggle("mostrar");
+            const navegacion =
+                document.getElementById("navegacion");
 
-                botonMenu.setAttribute(
-                    "aria-expanded",
-                    estaAbierto ? "true" : "false"
-                );
-            });
-        }
+            if (botonMenu && navegacion) {
+                botonMenu.addEventListener("click", function () {
+                    const estaAbierto =
+                        navegacion.classList.toggle("mostrar");
+
+                    botonMenu.setAttribute(
+                        "aria-expanded",
+                        estaAbierto ? "true" : "false"
+                    );
+                });
+            }
+        });
     </script>
 
-    {% block extra_js %}
-    {% endblock %}
+    {% block extra_js %}{% endblock %}
 
 </body>
-
 </html>

@@ -445,15 +445,25 @@ class Ejemplar(models.Model):
 
     etiqueta_impresa = models.BooleanField(
         default=False,
-        verbose_name='Etiqueta impresa',
+        verbose_name="Etiqueta interior impresa",
     )
-
+   
     fecha_impresion_etiqueta = models.DateTimeField(
         null=True,
         blank=True,
-        verbose_name='Fecha de impresión de etiqueta',
+        verbose_name="Fecha de impresión de etiqueta interior",
     )
 
+    etiqueta_lomo_impresa = models.BooleanField(
+        default=False,
+        verbose_name="Etiqueta de lomo impresa",
+    )
+
+    fecha_impresion_etiqueta_lomo = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Fecha de impresión de etiqueta de lomo",
+    )
     etiqueta_lomo_impresa = models.BooleanField(
         default=False,
         verbose_name="Etiqueta de lomo impresa",

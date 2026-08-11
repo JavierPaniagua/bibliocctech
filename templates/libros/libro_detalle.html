@@ -31,6 +31,15 @@
         >
             Editar libro
         </a>
+{% if ejemplar.numero_inventario %}
+    <a
+        href="{% url 'libros:etiqueta_lomo_individual' ejemplar.numero_inventario %}"
+        class="btn-accion btn-lomo"
+    >
+        Etiqueta de lomo
+    </a>
+{% endif %}
+
 
         <a
             href="{% url 'libros:lista' %}"

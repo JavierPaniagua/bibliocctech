@@ -50,6 +50,18 @@ urlpatterns = [
     ),
 
     path(
+        "ejemplares/<int:numero_inventario>/etiqueta-lomo/",
+        views.etiqueta_lomo_individual,
+        name="etiqueta_lomo_individual",
+    ),
+
+    path(
+        "etiquetas/lomos/mosaico/",
+        views.etiquetas_lomo_mosaico,
+        name="etiquetas_lomo_mosaico",
+    ),
+
+    path(
         "<int:libro_id>/",
         views.libro_detalle,
         name="detalle",

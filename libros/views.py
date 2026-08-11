@@ -994,3 +994,142 @@ def reporte_inventario(request):
         "libros/reporte_inventario.html",
         contexto,
     )
+    
+def etiqueta_lomo_individual(request, numero_inventario):
+    ejemplar = get_object_or_404(
+        Ejemplar.objects.select_related("libro"),
+        numero_inventario=numero_inventario,
+    )
+
+    if not ejemplar.libro.signatura_topografica:
+        messages.warning(
+            request,
+            (
+                "No se puede imprimir la etiqueta de lomo "
+                f"del ejemplar {ejemplar.numero_inventario}. "
+                "Complete primero la clasificación y la "
+                "signatura topográfica."
+            ),
+        )
+        return redirect(
+            "libros:detalle",
+            libro_id=ejemplar.libro_id,
+        )
+
+    if request.method == "POST":
+        ejemplar.etiqueta_lomo_impresa = True
+        ejemplar.fecha_impresion_etiqueta_lomo = timezone.now()
+        ejemplar.save(
+            update_fields=[
+                "etiqueta_lomo_impresa",
+                "fecha_impresion_etiqueta_lomo",
+            ]
+        )
+
+        messages.success(
+            request,
+            "La etiqueta de lomo fue marcada como impresa.",
+        )
+        return redirect(
+            "libros:detalle",
+            libro_id=ejemplar.libro_id,
+        )
+
+    return render(
+        request,
+        "libros/etiqueta_lomo_individual.html",
+        {
+            "ejemplar": ejemplar,
+            "libro_id": ejemplar.libro_id,
+        },
+    )
+
+def etiquetas_lomo_mosaico(request):
+    if request.method == "POST":
+        numero_inicio_texto = request.POST.get("numero_inicio", "").strip()
+        cantidad_texto = request.POST.get("cantidad", "48").strip()
+        accion = request.POST.get("accion", "")
+    else:
+        numero_inicio_texto = request.GET.get("numero_inicio", "").strip()
+        cantidad_texto = request.GET.get("cantidad", "48").strip()
+        accion = ""
+
+    try:
+        cantidad = int(cantidad_texto)
+    except (TypeError, ValueError):
+        cantidad = 48
+
+    cantidad = max(1, min(cantidad, 48))
+
+    numero_inicio = None
+
+    if numero_inicio_texto:
+        try:
+            numero_inicio = int(numero_inicio_texto)
+        except (TypeError, ValueError):
+            messages.warning(
+                request,
+                "El número de inventario inicial debe ser numérico.",
+            )
+
+    consulta = (
+        Ejemplar.objects
+        .select_related("libro")
+        .filter(
+            numero_inventario__isnull=False,
+            etiqueta_lomo_impresa=False,
+        )
+        .exclude(libro__signatura_topografica="")
+        .order_by("numero_inventario")
+    )
+
+    if numero_inicio is not None:
+        consulta = consulta.filter(
+            numero_inventario__gte=numero_inicio
+        )
+
+    ejemplares = list(consulta[:cantidad])
+
+    if request.method == "POST" and accion == "confirmar":
+        ids_ejemplares = [
+            ejemplar.pk
+            for ejemplar in ejemplares
+        ]
+
+        if ids_ejemplares:
+            total_actualizados = (
+                Ejemplar.objects
+                .filter(pk__in=ids_ejemplares)
+                .update(
+                    etiqueta_lomo_impresa=True,
+                    fecha_impresion_etiqueta_lomo=timezone.now(),
+                )
+            )
+
+            messages.success(
+                request,
+                (
+                    f"Se marcaron {total_actualizados} "
+                    "etiquetas de lomo como impresas."
+                ),
+            )
+        else:
+            messages.warning(
+                request,
+                "No se encontraron etiquetas para confirmar.",
+            )
+
+        return redirect("libros:etiquetas_lomo_mosaico")
+
+    contexto = {
+        "ejemplares": ejemplares,
+        "numero_inicio": numero_inicio_texto,
+        "cantidad": cantidad,
+        "total_etiquetas": len(ejemplares),
+    }
+
+    return render(
+        request,
+        "libros/etiquetas_lomo_mosaico.html",
+        contexto,
+    )

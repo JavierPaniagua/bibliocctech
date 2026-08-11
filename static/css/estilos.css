@@ -603,3 +603,26 @@ body {
 .tarjeta-etiquetas {
     background-color: #2e607d;
 }
+
+.btn-accion {
+    display: inline-block;
+    margin: 2px 0;
+    padding: 7px 10px;
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.btn-lomo {
+    background: #526875;
+}
+
+.btn-lomo:hover {
+    background: #1c435e;
+    color: #ffffff;
+    text-decoration: none;
+}

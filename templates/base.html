@@ -15,12 +15,27 @@
         {% endblock %}
     </title>
 
+<!-- Bootstrap descargado localmente -->
+<link
+    rel="stylesheet"
+    href="{% static 'bootstrap/css/bootstrap.min.css' %}"
+>
+
+<!-- Diseño institucional de BIBLIOTECH -->
+<link
+    rel="stylesheet"
+    href="{% static 'css/estilos.css' %}"
+>
+
+
     <link
         rel="stylesheet"
         href="{% static 'css/estilos.css' %}"
     >
 
     {% block extra_css %}{% endblock %}
+
+
 </head>
 
 <body>
@@ -138,6 +153,9 @@
         {% endif %}
 
         <!-- CONTENIDO DE CADA PÁGINA -->
+
+
+        
         {% block content %}{% endblock %}
 
     </main>

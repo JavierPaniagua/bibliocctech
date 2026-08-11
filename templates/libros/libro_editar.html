@@ -1,22 +1,22 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Editar libro | Biblioteca Escolar
+    Registrar libro | Biblioteca Escolar
 {% endblock %}
 
 {% block content %}
 
 <div class="cabecera-pagina">
     <div>
-        <h2>Editar libro</h2>
+        <h2>Registrar libro</h2>
 
         <p>
-            {{ libro.titulo }}
+            Registre el título, su clasificación y los ejemplares.
         </p>
     </div>
 
     <a
-        href="{% url 'libros:detalle' libro.id %}"
+        href="{% url 'libros:lista' %}"
         class="boton boton-secundario"
     >
         Volver
@@ -26,15 +26,12 @@
 <div class="panel formulario-panel">
 
     <div class="aviso-importacion">
-        <strong>Signatura actual:</strong>
+        <strong>Generación automática:</strong>
 
-        {{ libro.signatura_topografica|default:"Pendiente" }}
-
-        <br>
-
-        Si cambia la clasificación o las claves,
-        el sistema generará nuevamente la signatura
-        y marcará las etiquetas para reimpresión.
+        si deja vacías las claves de autor y título,
+        el sistema intentará generarlas. También calculará
+        la signatura y asignará un inventario diferente
+        a cada ejemplar.
     </div>
 
     <form method="post" novalidate>
@@ -55,7 +52,7 @@
                     class="
                         grupo-campo
 
-                        {% if campo.name == 'descripcion' %}
+                        {% if campo.name == 'tema_sugerido' or campo.name == 'descripcion' or campo.name == 'observaciones' %}
                             campo-completo
                         {% endif %}
 
@@ -90,16 +87,35 @@
 
         </div>
 
+        <div class="aviso-importacion">
+            <strong>Ubicación:</strong>
+
+            escriba solamente el número de la estantería
+            y la letra de la balda.
+
+            Ejemplo:
+
+            <strong>
+                Estantería 1 - Balda A
+            </strong>
+
+            se mostrará como:
+
+            <strong>
+                Estantería 1 - Balda 1A
+            </strong>.
+        </div>
+
         <div class="acciones-formulario">
             <button
                 type="submit"
                 class="boton boton-primario"
             >
-                Actualizar libro
+                Guardar libro y generar ejemplares
             </button>
 
             <a
-                href="{% url 'libros:detalle' libro.id %}"
+                href="{% url 'libros:lista' %}"
                 class="boton boton-secundario"
             >
                 Cancelar
@@ -108,5 +124,23 @@
     </form>
 
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tema = document.getElementById("id_tema_sugerido");
+        const clasificacion = document.getElementById("id_clasificacion");
+
+        if (!tema || !clasificacion) {
+            return;
+        }
+
+        tema.addEventListener("change", function () {
+            if (tema.value) {
+                clasificacion.value = tema.value;
+                clasificacion.focus();
+            }
+        });
+    });
+</script>
 
 {% endblock %}

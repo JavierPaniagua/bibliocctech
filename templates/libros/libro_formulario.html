@@ -52,7 +52,7 @@
                     class="
                         grupo-campo
 
-                        {% if campo.name == 'descripcion' or campo.name == 'observaciones' %}
+                        {% if campo.name == 'tema_sugerido' or campo.name == 'descripcion' or campo.name == 'observaciones' %}
                             campo-completo
                         {% endif %}
 
@@ -124,5 +124,23 @@
     </form>
 
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const tema = document.getElementById("id_tema_sugerido");
+        const clasificacion = document.getElementById("id_clasificacion");
+
+        if (!tema || !clasificacion) {
+            return;
+        }
+
+        tema.addEventListener("change", function () {
+            if (tema.value) {
+                clasificacion.value = tema.value;
+                clasificacion.focus();
+            }
+        });
+    });
+</script>
 
 {% endblock %}

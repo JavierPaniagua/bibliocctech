@@ -3,6 +3,32 @@ from django import forms
 from .models import Ejemplar, Libro
 
 
+CLASIFICACIONES_SUGERIDAS = [
+    ('', 'Seleccione un tema para recibir una sugerencia'),
+    ('510', '510 — Matemática general'),
+    ('512', '512 — Álgebra'),
+    ('513', '513 — Aritmética'),
+    ('515', '515 — Cálculo y análisis'),
+    ('516', '516 — Geometría general'),
+    ('516.2', '516.2 — Geometría euclidiana'),
+    ('516.22', '516.22 — Geometría plana'),
+    ('516.23', '516.23 — Geometría del espacio'),
+    ('516.24', '516.24 — Trigonometría'),
+    ('516.3', '516.3 — Geometría analítica'),
+    ('516.9', '516.9 — Geometrías no euclidianas'),
+    ('519', '519 — Probabilidad y matemática aplicada'),
+    ('500', '500 — Ciencias naturales'),
+    ('520', '520 — Astronomía'),
+    ('530', '530 — Física'),
+    ('540', '540 — Química'),
+    ('550', '550 — Ciencias de la Tierra'),
+    ('570', '570 — Biología'),
+    ('600', '600 — Tecnología'),
+    ('620', '620 — Ingeniería'),
+    ('621.3', '621.3 — Electricidad y electrónica'),
+]
+
+
 def normalizar_estanteria(valor):
     valor = (valor or '').strip()
 
@@ -81,10 +107,19 @@ class LibroNormalizacionMixin:
         datos = super().clean()
 
         area = datos.get('area')
-        clasificacion = datos.get(
-            'clasificacion',
+        tema_sugerido = datos.get(
+            'tema_sugerido',
             '',
+        )
+
+        clasificacion = (
+            datos.get('clasificacion', '')
+            or ''
         ).strip()
+
+        if tema_sugerido:
+            clasificacion = tema_sugerido
+            datos['clasificacion'] = tema_sugerido
 
         if not area:
             self.add_error(
@@ -95,7 +130,10 @@ class LibroNormalizacionMixin:
         if not clasificacion:
             self.add_error(
                 'clasificacion',
-                'Ingrese el código de clasificación.',
+                (
+                    'Seleccione un tema sugerido o ingrese '
+                    'el código de clasificación.'
+                ),
             )
 
         return datos
@@ -105,6 +143,21 @@ class LibroCrearForm(
     LibroNormalizacionMixin,
     forms.ModelForm,
 ):
+    tema_sugerido = forms.ChoiceField(
+        label='Ayuda para elegir la clasificación',
+        required=False,
+        choices=CLASIFICACIONES_SUGERIDAS,
+        widget=forms.Select(
+            attrs={
+                'class': 'campo',
+            }
+        ),
+        help_text=(
+            'Seleccione el tema principal. '
+            'El código sugerido reemplazará la clasificación escrita.'
+        ),
+    )
+
     cantidad_ejemplares = forms.IntegerField(
         label='Cantidad de ejemplares',
         min_value=1,
@@ -204,6 +257,30 @@ class LibroCrearForm(
             }
         ),
     )
+
+    field_order = [
+        'titulo',
+        'autor',
+        'editorial',
+        'area',
+        'tema_sugerido',
+        'clasificacion',
+        'clave_autor',
+        'clave_titulo',
+        'isbn',
+        'edicion',
+        'anio_publicacion',
+        'descripcion',
+        'cantidad_ejemplares',
+        'estanteria',
+        'balda',
+        'condicion_inicial',
+        'forma_adquisicion',
+        'fecha_adquisicion',
+        'proveedor',
+        'observaciones',
+        'activo',
+    ]
 
     class Meta:
         model = Libro
@@ -334,6 +411,37 @@ class LibroEditarForm(
     LibroNormalizacionMixin,
     forms.ModelForm,
 ):
+    tema_sugerido = forms.ChoiceField(
+        label='Ayuda para elegir la clasificación',
+        required=False,
+        choices=CLASIFICACIONES_SUGERIDAS,
+        widget=forms.Select(
+            attrs={
+                'class': 'campo',
+            }
+        ),
+        help_text=(
+            'Es opcional. Déjelo vacío para conservar '
+            'la clasificación actual.'
+        ),
+    )
+
+    field_order = [
+        'titulo',
+        'autor',
+        'editorial',
+        'area',
+        'tema_sugerido',
+        'clasificacion',
+        'clave_autor',
+        'clave_titulo',
+        'isbn',
+        'edicion',
+        'anio_publicacion',
+        'descripcion',
+        'activo',
+    ]
+
     class Meta:
         model = Libro
 

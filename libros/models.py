@@ -464,16 +464,7 @@ class Ejemplar(models.Model):
         blank=True,
         verbose_name="Fecha de impresión de etiqueta de lomo",
     )
-    etiqueta_lomo_impresa = models.BooleanField(
-        default=False,
-        verbose_name="Etiqueta de lomo impresa",
-    )
 
-    fecha_impresion_etiqueta_lomo = models.DateTimeField(
-        null=True,
-        blank=True,
-        verbose_name="Fecha de impresión de etiqueta de lomo",
-    )
     fecha_registro = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Fecha de registro',

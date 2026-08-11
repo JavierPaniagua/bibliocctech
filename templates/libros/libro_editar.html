@@ -1,22 +1,22 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Registrar libro | Biblioteca Escolar
+    Editar libro | Biblioteca Escolar
 {% endblock %}
 
 {% block content %}
 
 <div class="cabecera-pagina">
     <div>
-        <h2>Registrar libro</h2>
+        <h2>Editar libro</h2>
 
         <p>
-            Registre el título, su clasificación y los ejemplares.
+            {{ libro.titulo }}
         </p>
     </div>
 
     <a
-        href="{% url 'libros:lista' %}"
+        href="{% url 'libros:detalle' libro.id %}"
         class="boton boton-secundario"
     >
         Volver
@@ -26,12 +26,15 @@
 <div class="panel formulario-panel">
 
     <div class="aviso-importacion">
-        <strong>Generación automática:</strong>
+        <strong>Signatura actual:</strong>
 
-        si deja vacías las claves de autor y título,
-        el sistema intentará generarlas. También calculará
-        la signatura y asignará un inventario diferente
-        a cada ejemplar.
+        {{ libro.signatura_topografica|default:"Pendiente" }}
+
+        <br>
+
+        Si cambia la clasificación o las claves,
+        el sistema generará nuevamente la signatura
+        y marcará las etiquetas para reimpresión.
     </div>
 
     <form method="post" novalidate>
@@ -52,7 +55,7 @@
                     class="
                         grupo-campo
 
-                        {% if campo.name == 'tema_sugerido' or campo.name == 'descripcion' or campo.name == 'observaciones' %}
+                        {% if campo.name == 'tema_sugerido' or campo.name == 'descripcion' %}
                             campo-completo
                         {% endif %}
 
@@ -87,35 +90,16 @@
 
         </div>
 
-        <div class="aviso-importacion">
-            <strong>Ubicación:</strong>
-
-            escriba solamente el número de la estantería
-            y la letra de la balda.
-
-            Ejemplo:
-
-            <strong>
-                Estantería 1 - Balda A
-            </strong>
-
-            se mostrará como:
-
-            <strong>
-                Estantería 1 - Balda 1A
-            </strong>.
-        </div>
-
         <div class="acciones-formulario">
             <button
                 type="submit"
                 class="boton boton-primario"
             >
-                Guardar libro y generar ejemplares
+                Actualizar libro
             </button>
 
             <a
-                href="{% url 'libros:lista' %}"
+                href="{% url 'libros:detalle' libro.id %}"
                 class="boton boton-secundario"
             >
                 Cancelar

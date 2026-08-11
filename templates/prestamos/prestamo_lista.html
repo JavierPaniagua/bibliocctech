@@ -12,12 +12,7 @@
         <p>Registro y seguimiento de préstamos y devoluciones.</p>
     </div>
 
-    <a
-        href="{% url 'prestamos:crear' %}"
-        class="boton boton-primario"
-    >
-        + Registrar préstamo
-    </a>
+   
 </div>
 
 {% if messages %}
@@ -28,7 +23,7 @@
     {% endfor %}
 {% endif %}
 
-<div class="tarjeta">
+<div class="tarjeta prestamos-tarjeta">
 
     <form method="get" class="formulario-busqueda">
 
@@ -224,9 +219,17 @@
 </div>
 
 <style>
+    .prestamos-tarjeta {
+        display: block !important;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
     .formulario-busqueda {
         display: flex;
+        width: 100%;
         flex-wrap: wrap;
+        align-items: center;
         gap: 10px;
         margin-bottom: 22px;
     }
@@ -250,6 +253,8 @@
     }
 
     .tabla-responsive {
+        display: block;
+        width: 100%;
         overflow-x: auto;
     }
 

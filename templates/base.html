@@ -9,33 +9,30 @@
         content="width=device-width, initial-scale=1.0"
     >
 
+    <meta
+        name="description"
+        content="Sistema de gestión de la Biblioteca Escolar CCTL"
+    >
+
     <title>
         {% block title %}
             BIBLIOTECH | Biblioteca Escolar CCTL
         {% endblock %}
     </title>
 
-<!-- Bootstrap descargado localmente -->
-<link
-    rel="stylesheet"
-    href="{% static 'bootstrap/css/bootstrap.min.css' %}"
->
+    <!-- Bootstrap instalado localmente -->
+    <link
+        rel="stylesheet"
+        href="{% static 'bootstrap/css/bootstrap.min.css' %}"
+    >
 
-<!-- Diseño institucional de BIBLIOTECH -->
-<link
-    rel="stylesheet"
-    href="{% static 'css/estilos.css' %}"
->
-
-
+    <!-- Diseño institucional de BIBLIOTECH -->
     <link
         rel="stylesheet"
         href="{% static 'css/estilos.css' %}"
     >
 
     {% block extra_css %}{% endblock %}
-
-
 </head>
 
 <body>
@@ -55,7 +52,7 @@
                 </span>
             </a>
 
-            <!-- BOTÓN PARA CELULARES -->
+            <!-- BOTÓN DEL MENÚ PARA CELULARES -->
             <button
                 type="button"
                 class="boton-menu"
@@ -67,7 +64,7 @@
                 ☰
             </button>
 
-            <!-- MENÚ PRINCIPAL -->
+            <!-- NAVEGACIÓN PRINCIPAL -->
             <nav
                 class="navegacion"
                 id="navegacion"
@@ -138,24 +135,47 @@
     <!-- CONTENIDO PRINCIPAL -->
     <main class="contenido-principal">
 
-        <!-- MENSAJES DEL SISTEMA -->
+        <!-- MENSAJES GENERADOS POR DJANGO -->
         {% if messages %}
             <div
                 class="contenedor-mensajes"
                 aria-live="polite"
             >
                 {% for message in messages %}
-                    <div class="mensaje mensaje-{{ message.tags }}">
+                    <div
+                        class="
+                            mensaje
+                            mensaje-{{ message.tags }}
+                            alert
+                            {% if message.tags == 'success' %}
+                                alert-success
+                            {% elif message.tags == 'error' %}
+                                alert-danger
+                            {% elif message.tags == 'warning' %}
+                                alert-warning
+                            {% else %}
+                                alert-info
+                            {% endif %}
+                            alert-dismissible
+                            fade
+                            show
+                        "
+                        role="alert"
+                    >
                         {{ message }}
+
+                        <button
+                            type="button"
+                            class="btn-close"
+                            data-bs-dismiss="alert"
+                            aria-label="Cerrar"
+                        ></button>
                     </div>
                 {% endfor %}
             </div>
         {% endif %}
 
         <!-- CONTENIDO DE CADA PÁGINA -->
-
-
-        
         {% block content %}{% endblock %}
 
     </main>
@@ -165,7 +185,12 @@
         BIBLIOTECH · Biblioteca Escolar CCTL
     </footer>
 
-    <!-- MENÚ RESPONSIVO -->
+    <!-- Bootstrap JavaScript instalado localmente -->
+    <script
+        src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"
+    ></script>
+
+    <!-- MENÚ RESPONSIVO DE BIBLIOTECH -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const botonMenu =
@@ -184,10 +209,25 @@
                         estaAbierto ? "true" : "false"
                     );
                 });
+
+                const enlaces =
+                    navegacion.querySelectorAll(".nav-enlace");
+
+                enlaces.forEach(function (enlace) {
+                    enlace.addEventListener("click", function () {
+                        navegacion.classList.remove("mostrar");
+
+                        botonMenu.setAttribute(
+                            "aria-expanded",
+                            "false"
+                        );
+                    });
+                });
             }
         });
     </script>
 
+    <!-- JAVASCRIPT PROPIO DE CADA PÁGINA -->
     {% block extra_js %}{% endblock %}
 
 </body>

@@ -199,6 +199,87 @@ def normalizar_area(valor):
     return equivalencias.get(texto)
 
 
+def sugerir_area_por_clasificacion(clasificacion):
+    valor = limpiar_texto(
+        clasificacion
+    ).replace(',', '.')
+
+    if not valor:
+        return None
+
+    if valor.startswith(('004', '005')):
+        return Libro.Area.INFORMATICA
+
+    if valor.startswith(('020', '030')):
+        return Libro.Area.REFERENCIA
+
+    parte_principal = valor.split('.', 1)[0]
+
+    if not parte_principal.isdigit():
+        return None
+
+    numero = int(parte_principal)
+
+    if 0 <= numero <= 99:
+        return Libro.Area.GENERALIDADES
+
+    if 100 <= numero <= 199:
+        return Libro.Area.FILOSOFIA
+
+    if 200 <= numero <= 299:
+        return Libro.Area.RELIGION
+
+    if 300 <= numero <= 399:
+        return Libro.Area.CIENCIAS_SOCIALES
+
+    if 400 <= numero <= 499:
+        return Libro.Area.LENGUA_IDIOMAS
+
+    if 510 <= numero <= 519:
+        return Libro.Area.MATEMATICA
+
+    if 500 <= numero <= 599:
+        return Libro.Area.CIENCIAS_NATURALES
+
+    if 600 <= numero <= 699:
+        return Libro.Area.TECNOLOGIA
+
+    if 700 <= numero <= 799:
+        return Libro.Area.ARTES
+
+    if 800 <= numero <= 899:
+        return Libro.Area.LITERATURA
+
+    if 900 <= numero <= 999:
+        return Libro.Area.HISTORIA_GEOGRAFIA
+
+    return None
+
+
+def areas_compatibles_con_clasificacion(
+    clasificacion,
+):
+    valor = limpiar_texto(
+        clasificacion
+    ).replace(',', '.')
+
+    if valor.startswith('621.3'):
+        return {
+            Libro.Area.TECNOLOGIA,
+            Libro.Area.ELECTRICIDAD,
+            Libro.Area.ELECTRONICA,
+        }
+
+    area_sugerida = (
+        sugerir_area_por_clasificacion(valor)
+    )
+
+    if area_sugerida is None:
+        return set()
+
+    return {area_sugerida}
+
+
 def normalizar_condicion(valor):
     texto = normalizar_texto(valor)
 
@@ -567,10 +648,6 @@ def extraer_registros(ruta_archivo):
                 'area',
             )
 
-            area = normalizar_area(
-                area_original
-            )
-
             clasificacion = limpiar_texto(
                 valor_columna(
                     hoja,
@@ -578,6 +655,32 @@ def extraer_registros(ruta_archivo):
                     columnas,
                     'clasificacion',
                 )
+            ).replace(',', '.')
+
+            area = normalizar_area(
+                area_original
+            )
+
+            if (
+                not normalizar_texto(area_original)
+                and clasificacion
+            ):
+                area = (
+                    sugerir_area_por_clasificacion(
+                        clasificacion
+                    )
+                )
+
+            areas_compatibles = (
+                areas_compatibles_con_clasificacion(
+                    clasificacion
+                )
+            )
+
+            area_incompatible = (
+                area is not None
+                and bool(areas_compatibles)
+                and area not in areas_compatibles
             )
 
             clave_autor = limpiar_texto(
@@ -757,6 +860,26 @@ def extraer_registros(ruta_archivo):
             if area is None:
                 errores_fila.append(
                     'área incorrecta'
+                )
+
+            if area_incompatible:
+                nombres_areas = dict(
+                    Libro.Area.choices
+                )
+
+                sugerencias = ', '.join(
+                    nombres_areas[valor]
+                    for valor in sorted(
+                        areas_compatibles
+                    )
+                )
+
+                errores_fila.append(
+                    (
+                        'el área no coincide con la '
+                        'clasificación; use '
+                        f'{sugerencias}'
+                    )
                 )
 
             if not clasificacion:

@@ -327,7 +327,7 @@
                                 </td>
 
                                 <td>
-                                    {{ libro.area|default:"Pendiente" }}
+                                    {{ libro.get_area_display|default:"Pendiente" }}
                                 </td>
 
                                 <td>
@@ -339,15 +339,15 @@
                                 </td>
 
                                 <td class="columna-numero">
-                                    {{ libro.total|default:0 }}
+                                    {{ libro.cantidad_total }}
                                 </td>
 
                                 <td class="columna-numero">
-                                    {{ libro.disponibles|default:0 }}
+                                    {{ libro.cantidad_disponible }}
                                 </td>
 
                                 <td class="columna-numero">
-                                    {{ libro.prestados|default:0 }}
+                                    {{ libro.cantidad_prestada }}
                                 </td>
 
                                 <td>

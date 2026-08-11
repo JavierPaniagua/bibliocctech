@@ -6,6 +6,26 @@
 
 {% block content %}
 
+<style>
+    .boton-peligro {
+        margin-left: auto;
+        background: #c43d4b;
+        color: #ffffff;
+    }
+
+    .boton-peligro:hover {
+        background: #a92f3c;
+        color: #ffffff;
+        text-decoration: none;
+    }
+
+    @media (max-width: 650px) {
+        .boton-peligro {
+            margin-left: 0;
+        }
+    }
+</style>
+
 <div class="cabecera-pagina">
     <div>
         <h2>{{ titulo }}</h2>
@@ -81,6 +101,15 @@
             >
                 Cancelar
             </a>
+
+            {% if alumno %}
+                <a
+                    href="{% url 'alumnos:eliminar' alumno.id %}"
+                    class="boton boton-peligro"
+                >
+                    Eliminar alumno
+                </a>
+            {% endif %}
         </div>
     </form>
 

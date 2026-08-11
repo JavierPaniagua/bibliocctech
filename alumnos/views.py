@@ -109,6 +109,82 @@ def alumno_editar(request, alumno_id):
     )
 
 
+def alumno_eliminar(request, alumno_id):
+    alumno = get_object_or_404(
+        Alumno,
+        id=alumno_id,
+    )
+
+    tiene_prestamos = alumno.prestamos.exists()
+
+    if request.method == 'POST':
+        accion = request.POST.get('accion', '')
+
+        if accion == 'desactivar':
+            alumno.activo = False
+            alumno.save(update_fields=['activo'])
+
+            messages.success(
+                request,
+                (
+                    f'El alumno {alumno.nombre_visible} '
+                    'fue marcado como inactivo.'
+                ),
+            )
+
+            return redirect('alumnos:lista')
+
+        if tiene_prestamos:
+            messages.error(
+                request,
+                (
+                    'El alumno no puede eliminarse porque '
+                    'tiene préstamos registrados. Puede '
+                    'marcarlo como inactivo.'
+                ),
+            )
+
+            return redirect(
+                'alumnos:eliminar',
+                alumno_id=alumno.id,
+            )
+
+        if accion != 'eliminar':
+            messages.error(
+                request,
+                'No se reconoció la operación solicitada.',
+            )
+
+            return redirect(
+                'alumnos:eliminar',
+                alumno_id=alumno.id,
+            )
+
+        nombre_alumno = alumno.nombre_visible
+        alumno.delete()
+
+        messages.success(
+            request,
+            (
+                f'El alumno {nombre_alumno} '
+                'fue eliminado correctamente.'
+            ),
+        )
+
+        return redirect('alumnos:lista')
+
+    contexto = {
+        'alumno': alumno,
+        'tiene_prestamos': tiene_prestamos,
+    }
+
+    return render(
+        request,
+        'alumnos/alumno_confirmar_eliminar.html',
+        contexto,
+    )
+
+
 def limpiar_texto(valor):
     if valor is None:
         return ''

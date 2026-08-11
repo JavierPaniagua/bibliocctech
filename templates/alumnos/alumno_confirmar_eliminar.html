@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    Eliminar alumno | Biblioteca Escolar
+{% endblock %}
+
+{% block content %}
+<style>
+    .confirmacion-eliminar {
+        max-width: 700px;
+        margin: 0 auto;
+    }
+
+    .confirmacion-eliminar h2 {
+        margin: 0 0 6px;
+        color: #163b56;
+    }
+
+    .confirmacion-eliminar > p {
+        margin: 0 0 22px;
+        color: #526875;
+    }
+
+    .panel-confirmacion {
+        padding: 26px;
+        background: #ffffff;
+        border-radius: 14px;
+        box-shadow: 0 6px 18px rgba(28, 67, 94, 0.10);
+    }
+
+    .datos-alumno {
+        margin-bottom: 20px;
+        padding: 18px;
+        border-left: 5px solid #526875;
+        border-radius: 7px;
+        background: #f4f7f9;
+    }
+
+    .datos-alumno p {
+        margin: 5px 0;
+        color: #17384f;
+    }
+
+    .aviso-peligro,
+    .aviso-historial {
+        margin-bottom: 22px;
+        padding: 16px;
+        border-radius: 7px;
+        line-height: 1.5;
+    }
+
+    .aviso-peligro {
+        border: 1px solid #e59aa1;
+        background: #fff1f2;
+        color: #8d202a;
+    }
+
+    .aviso-historial {
+        border: 1px solid #e0ba62;
+        background: #fff8e5;
+        color: #674b0b;
+    }
+
+    .acciones-confirmacion {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+
+    .boton-confirmacion {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 10px 18px;
+        border: 0;
+        border-radius: 7px;
+        box-sizing: border-box;
+        font: inherit;
+        font-weight: 700;
+        text-decoration: none;
+        cursor: pointer;
+    }
+
+    .boton-eliminar {
+        background: #c43d4b;
+        color: #ffffff;
+    }
+
+    .boton-desactivar {
+        background: #d28a16;
+        color: #ffffff;
+    }
+
+    .boton-cancelar {
+        background: #e5edf1;
+        color: #17384f;
+    }
+</style>
+
+<div class="confirmacion-eliminar">
+    <h2>Eliminar alumno</h2>
+    <p>Revise los datos antes de continuar.</p>
+
+    <section class="panel-confirmacion">
+        <div class="datos-alumno">
+            <p>
+                <strong>Alumno:</strong>
+                {{ alumno.nombre_visible }}
+            </p>
+
+            <p>
+                <strong>Cédula:</strong>
+                {{ alumno.cedula }}
+            </p>
+
+            <p>
+                <strong>Curso:</strong>
+                {{ alumno.curso }}
+                {% if alumno.seccion %}
+                    — Sección {{ alumno.seccion }}
+                {% endif %}
+            </p>
+        </div>
+
+        {% if tiene_prestamos %}
+            <div class="aviso-historial">
+                <strong>No se puede eliminar este alumno.</strong>
+                Tiene préstamos registrados y su historial debe conservarse.
+                Puede marcarlo como inactivo para impedir nuevos préstamos.
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="acciones-confirmacion">
+                    <button
+                        type="submit"
+                        name="accion"
+                        value="desactivar"
+                        class="boton-confirmacion boton-desactivar"
+                    >
+                        Marcar como inactivo
+                    </button>
+
+                    <a
+                        href="{% url 'alumnos:editar' alumno.id %}"
+                        class="boton-confirmacion boton-cancelar"
+                    >
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        {% else %}
+            <div class="aviso-peligro">
+                <strong>Esta acción es permanente.</strong>
+                El alumno será eliminado de la base de datos y no podrá
+                recuperarse, excepto restaurando una copia de seguridad.
+            </div>
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="acciones-confirmacion">
+                    <button
+                        type="submit"
+                        name="accion"
+                        value="eliminar"
+                        class="boton-confirmacion boton-eliminar"
+                    >
+                        Sí, eliminar alumno
+                    </button>
+
+                    <a
+                        href="{% url 'alumnos:editar' alumno.id %}"
+                        class="boton-confirmacion boton-cancelar"
+                    >
+                        Cancelar
+                    </a>
+                </div>
+            </form>
+        {% endif %}
+    </section>
+</div>
+{% endblock %}

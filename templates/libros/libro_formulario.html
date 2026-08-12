@@ -1,145 +1,285 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Registrar libro | Biblioteca Escolar
+    Registrar libro | BIBLIOTECH
 {% endblock %}
 
 {% block content %}
 
-<div class="cabecera-pagina">
-    <div>
-        <h2>Registrar libro</h2>
+<div class="container-fluid px-0">
 
-        <p>
-            Registre el título, su clasificación y los ejemplares.
-        </p>
-    </div>
-
-    <a
-        href="{% url 'libros:lista' %}"
-        class="boton boton-secundario"
+    <!-- Encabezado -->
+    <div
+        class="
+            d-flex
+            flex-column
+            flex-md-row
+            justify-content-between
+            align-items-md-start
+            gap-3
+            mb-4
+        "
     >
-        Volver
-    </a>
-</div>
+        <div>
+            <h1 class="h2 mb-2">
+                Registrar libro
+            </h1>
 
-<div class="panel formulario-panel">
+            <p class="text-secondary mb-0">
+                Registre el título, su clasificación y
+                la cantidad de ejemplares físicos.
+            </p>
+        </div>
 
-    <div class="aviso-importacion">
-        <strong>Generación automática:</strong>
-
-        si deja vacías las claves de autor y título,
-        el sistema intentará generarlas. También calculará
-        la signatura y asignará un inventario diferente
-        a cada ejemplar.
+        <a
+            href="{% url 'libros:lista' %}"
+            class="btn btn-light"
+        >
+            Volver
+        </a>
     </div>
 
-    <form method="post" novalidate>
-        {% csrf_token %}
+    <!-- Panel del formulario -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
 
-        {% if formulario.non_field_errors %}
-            <div class="mensaje mensaje-error">
-                {% for error in formulario.non_field_errors %}
-                    <p>{{ error }}</p>
-                {% endfor %}
+            <!-- Información automática -->
+            <div
+                class="
+                    alert
+                    alert-primary
+                    border-0
+                    border-start
+                    border-4
+                    mb-4
+                "
+                role="alert"
+            >
+                <h2 class="h5 alert-heading">
+                    Generación automática
+                </h2>
+
+                <p class="mb-0">
+                    Si deja vacías las claves de autor y título,
+                    el sistema intentará generarlas.
+
+                    También calculará la signatura topográfica y
+                    asignará un número de inventario diferente a
+                    cada ejemplar físico.
+                </p>
             </div>
-        {% endif %}
 
-        <div class="formulario-grid">
+            <form method="post" novalidate>
+                {% csrf_token %}
 
-            {% for campo in formulario %}
-                <div
-                    class="
-                        grupo-campo
+                <!-- Errores generales -->
+                {% if formulario.non_field_errors %}
+                    <div
+                        class="alert alert-danger"
+                        role="alert"
+                    >
+                        <h3 class="h6">
+                            No se pudo registrar el libro
+                        </h3>
 
-                        {% if campo.name == 'tema_sugerido' or campo.name == 'descripcion' or campo.name == 'observaciones' %}
-                            campo-completo
-                        {% endif %}
+                        {% for error in formulario.non_field_errors %}
+                            <p class="mb-1">
+                                {{ error }}
+                            </p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <!-- Campos del formulario -->
+                <div class="row g-3">
+
+                    {% for campo in formulario %}
 
                         {% if campo.name == 'activo' %}
-                            grupo-casilla
+
+                            <div class="col-12">
+                                <div class="form-check mt-2">
+                                    {{ campo }}
+
+                                    <label
+                                        for="{{ campo.id_for_label }}"
+                                        class="form-check-label fw-semibold"
+                                    >
+                                        {{ campo.label }}
+                                    </label>
+                                </div>
+
+                                {% for error in campo.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+
+                        {% else %}
+
+                            <div
+                                class="
+                                    {% if campo.name == 'tema_sugerido' or campo.name == 'descripcion' or campo.name == 'observaciones' %}
+                                        col-12
+                                    {% else %}
+                                        col-12 col-md-6
+                                    {% endif %}
+                                "
+                            >
+                                <label
+                                    for="{{ campo.id_for_label }}"
+                                    class="form-label fw-semibold"
+                                >
+                                    {{ campo.label }}
+
+                                    {% if campo.field.required %}
+                                        <span class="text-danger">*</span>
+                                    {% endif %}
+                                </label>
+
+                                {{ campo }}
+
+                                {% if campo.help_text %}
+                                    <div class="form-text">
+                                        {{ campo.help_text }}
+                                    </div>
+                                {% endif %}
+
+                                {% for error in campo.errors %}
+                                    <div class="text-danger small mt-1">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            </div>
+
                         {% endif %}
+
+                    {% endfor %}
+
+                </div>
+
+                <!-- Información de ubicación -->
+                <div
+                    class="
+                        alert
+                        alert-light
+                        border
+                        mt-4
+                        mb-0
+                    "
+                    role="alert"
+                >
+                    <h2 class="h6">
+                        Ubicación del ejemplar
+                    </h2>
+
+                    <p class="mb-0">
+                        Escriba solamente el número de la
+                        estantería y la letra de la balda.
+
+                        Por ejemplo,
+                        <strong>Estantería 1 — Balda A</strong>
+                        se mostrará como
+                        <strong>Estantería 1 — Balda 1A</strong>.
+                    </p>
+                </div>
+
+                <!-- Botones -->
+                <div
+                    class="
+                        d-flex
+                        flex-wrap
+                        gap-2
+                        pt-4
+                        mt-4
+                        border-top
                     "
                 >
-                    <label for="{{ campo.id_for_label }}">
-                        {{ campo.label }}
+                    <button
+                        type="submit"
+                        class="btn btn-primary px-4"
+                    >
+                        Guardar libro y generar ejemplares
+                    </button>
 
-                        {% if campo.field.required %}
-                            <span class="obligatorio">*</span>
-                        {% endif %}
-                    </label>
-
-                    {{ campo }}
-
-                    {% if campo.help_text %}
-                        <small>
-                            {{ campo.help_text }}
-                        </small>
-                    {% endif %}
-
-                    {% for error in campo.errors %}
-                        <span class="error-campo">
-                            {{ error }}
-                        </span>
-                    {% endfor %}
+                    <a
+                        href="{% url 'libros:lista' %}"
+                        class="btn btn-light px-4"
+                    >
+                        Cancelar
+                    </a>
                 </div>
-            {% endfor %}
 
+            </form>
         </div>
-
-        <div class="aviso-importacion">
-            <strong>Ubicación:</strong>
-
-            escriba solamente el número de la estantería
-            y la letra de la balda.
-
-            Ejemplo:
-
-            <strong>
-                Estantería 1 - Balda A
-            </strong>
-
-            se mostrará como:
-
-            <strong>
-                Estantería 1 - Balda 1A
-            </strong>.
-        </div>
-
-        <div class="acciones-formulario">
-            <button
-                type="submit"
-                class="boton boton-primario"
-            >
-                Guardar libro y generar ejemplares
-            </button>
-
-            <a
-                href="{% url 'libros:lista' %}"
-                class="boton boton-secundario"
-            >
-                Cancelar
-            </a>
-        </div>
-    </form>
+    </div>
 
 </div>
+
+{% endblock %}
+
+
+{% block extra_js %}
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const tema = document.getElementById("id_tema_sugerido");
-        const clasificacion = document.getElementById("id_clasificacion");
+        const formulario = document.querySelector("form");
 
-        if (!tema || !clasificacion) {
-            return;
+        if (formulario) {
+            const campos = formulario.querySelectorAll(
+                "input:not([type='hidden']):not([type='checkbox']), " +
+                "select, textarea"
+            );
+
+            campos.forEach(function (campo) {
+                if (campo.tagName === "SELECT") {
+                    campo.classList.add("form-select");
+                } else {
+                    campo.classList.add("form-control");
+                }
+
+                const contenedor = campo.closest(".col-12");
+
+                if (
+                    contenedor &&
+                    contenedor.querySelector(".text-danger")
+                ) {
+                    campo.classList.add("is-invalid");
+                }
+            });
+
+            const casillas = formulario.querySelectorAll(
+                "input[type='checkbox']"
+            );
+
+            casillas.forEach(function (casilla) {
+                casilla.classList.add("form-check-input");
+            });
         }
 
-        tema.addEventListener("change", function () {
-            if (tema.value) {
-                clasificacion.value = tema.value;
-                clasificacion.focus();
-            }
-        });
+        const tema = document.getElementById(
+            "id_tema_sugerido"
+        );
+
+        const clasificacion = document.getElementById(
+            "id_clasificacion"
+        );
+
+        if (tema && clasificacion) {
+            tema.addEventListener("change", function () {
+                if (tema.value) {
+                    clasificacion.value = tema.value;
+                    clasificacion.focus();
+                }
+            });
+        }
+
+        const titulo = document.getElementById("id_titulo");
+
+        if (titulo) {
+            titulo.focus();
+        }
     });
 </script>
 

@@ -306,14 +306,20 @@ def ejemplar_crear(request, libro_id):
                 libro_id=libro.id,
             )
     else:
-        formulario = EjemplarForm()
+        siguiente_numero = (
+            Ejemplar.siguiente_numero_disponible()
+        )
+
+        formulario = EjemplarForm(
+            initial={
+                'numero_inventario': siguiente_numero,
+            }
+        )
 
     contexto = {
         'formulario': formulario,
         'libro': libro,
-        'titulo_pagina': (
-            'Agregar ejemplar'
-        ),
+        'titulo_pagina': 'Agregar ejemplar',
     }
 
     return render(

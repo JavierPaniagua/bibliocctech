@@ -1,383 +1,166 @@
 {% extends "base.html" %}
 
-{% block title %}Libros{% endblock %}
+{% block title %}Libros | BIBLIOTECH{% endblock %}
 
 {% block content %}
-<style>
-    .pagina-libros {
-        max-width: 1180px;
-        margin: 0 auto;
-    }
 
-    .encabezado-libros {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 24px;
-        margin-bottom: 24px;
-    }
-
-    .titulo-libros h1 {
-        margin: 0 0 5px;
-        color: #163b56;
-        font-size: 27px;
-    }
-
-    .titulo-libros p {
-        margin: 0;
-        color: #526875;
-        line-height: 1.4;
-    }
-
-    .acciones-superiores {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
-    }
-
-    .btn-superior {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 42px;
-        padding: 10px 16px;
-        border: 0;
-        border-radius: 7px;
-        box-sizing: border-box;
-        color: #ffffff;
-        font-weight: 700;
-        text-align: center;
-        text-decoration: none;
-    }
-
-    .btn-nuevo {
-        background: #1689a4;
-    }
-
-    .btn-importar {
-        background: #238b6c;
-    }
-
-    .btn-etiquetas-lomo {
-        background: #526875;
-    }
-
-    .btn-superior:hover {
-        color: #ffffff;
-        filter: brightness(0.94);
-        text-decoration: none;
-    }
-
-    .tarjeta-listado {
-        padding: 24px;
-        background: #ffffff;
-        border-radius: 14px;
-        box-shadow: 0 6px 18px rgba(28, 67, 94, 0.10);
-    }
-
-    .formulario-busqueda {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        margin-bottom: 22px;
-    }
-
-    .formulario-busqueda input {
-        flex: 1;
-        min-width: 0;
-        min-height: 43px;
-        padding: 10px 13px;
-        border: 1px solid #aebdc7;
-        border-radius: 7px;
-        box-sizing: border-box;
-        color: #17384f;
-        font: inherit;
-        outline: none;
-    }
-
-    .formulario-busqueda input:focus {
-        border-color: #1689a4;
-        box-shadow: 0 0 0 3px rgba(22, 137, 164, 0.12);
-    }
-
-    .btn-buscar {
-        min-height: 43px;
-        padding: 10px 20px;
-        border: 0;
-        border-radius: 7px;
-        background: #1689a4;
-        color: #ffffff;
-        font: inherit;
-        font-weight: 700;
-        cursor: pointer;
-    }
-
-    .btn-limpiar {
-        display: inline-flex;
-        align-items: center;
-        min-height: 43px;
-        padding: 10px 15px;
-        border-radius: 7px;
-        box-sizing: border-box;
-        background: #e5edf1;
-        color: #17384f;
-        font-weight: 700;
-        text-decoration: none;
-    }
-
-    .contenedor-tabla {
-        width: 100%;
-        overflow-x: auto;
-    }
-
-    .tabla-libros {
-        width: 100%;
-        border-collapse: collapse;
-    }
-
-    .tabla-libros th {
-        padding: 12px 10px;
-        background: #1c435e;
-        color: #ffffff;
-        font-size: 15px;
-        text-align: left;
-        white-space: nowrap;
-    }
-
-    .tabla-libros td {
-        padding: 12px 10px;
-        border-bottom: 1px solid #d6e0e6;
-        color: #17384f;
-        vertical-align: middle;
-    }
-
-    .tabla-libros tbody tr:hover {
-        background: #f4f7f9;
-    }
-
-    .columna-numero {
-        text-align: center !important;
-    }
-
-    .titulo-libro {
-        min-width: 190px;
-        color: #112f44;
-        font-weight: 700;
-    }
-
-    .autor-libro {
-        min-width: 160px;
-    }
-
-    .signatura {
-        color: #163b56;
-        font-weight: 800;
-        white-space: normal;
-    }
-
-    .enlace-ejemplares {
-        display: inline-block;
-        color: #087f9a;
-        font-weight: 800;
-        line-height: 1.2;
-        text-decoration: none;
-    }
-
-    .enlace-ejemplares:hover {
-        color: #1c435e;
-        text-decoration: underline;
-    }
-
-    .resumen-listado {
-        margin: 17px 0 0;
-        color: #526875;
-    }
-
-    .sin-libros {
-        padding: 35px 20px;
-        color: #526875;
-        text-align: center;
-    }
-
-    .sin-libros strong {
-        display: block;
-        margin-bottom: 7px;
-        color: #163b56;
-        font-size: 18px;
-    }
-
-    @media (max-width: 900px) {
-        .encabezado-libros {
-            flex-direction: column;
-        }
-
-        .acciones-superiores {
-            justify-content: flex-start;
-        }
-    }
-
-    @media (max-width: 650px) {
-        .formulario-busqueda {
-            align-items: stretch;
-            flex-direction: column;
-        }
-
-        .btn-buscar,
-        .btn-limpiar {
-            justify-content: center;
-            width: 100%;
-        }
-
-        .acciones-superiores {
-            align-items: stretch;
-            flex-direction: column;
-            width: 100%;
-        }
-
-        .btn-superior {
-            width: 100%;
-        }
-
-        .tarjeta-listado {
-            padding: 16px;
-        }
-    }
-</style>
-
-<div class="pagina-libros">
-    <header class="encabezado-libros">
-        <div class="titulo-libros">
-            <h1>Libros</h1>
-            <p>Inventario de títulos y ejemplares físicos.</p>
+<div class="container-fluid px-0">
+    <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-start gap-3 mb-4">
+        <div>
+            <h1 class="h2 mb-2">Libros</h1>
+            <p class="text-secondary mb-0">Inventario de títulos y ejemplares físicos.</p>
         </div>
 
-        <div class="acciones-superiores">
-            <a
-                href="{% url 'libros:crear' %}"
-                class="btn-superior btn-nuevo"
-            >
+        <div class="d-flex flex-wrap gap-2">
+            <a href="{% url 'libros:crear' %}" class="btn btn-primary">
                 + Registrar libro
             </a>
 
-            <a
-                href="{% url 'libros:importar' %}"
-                class="btn-superior btn-importar"
-            >
+            <a href="{% url 'libros:importar' %}" class="btn btn-success">
                 Importar desde Excel
             </a>
 
-            <a
-                href="{% url 'libros:etiquetas_lomo_mosaico' %}"
-                class="btn-superior btn-etiquetas-lomo"
-            >
+            <a href="{% url 'libros:etiquetas_lomo_mosaico' %}" class="btn btn-secondary">
                 Imprimir etiquetas de lomo
             </a>
         </div>
-    </header>
+    </div>
 
-    <section class="tarjeta-listado">
-        <form method="get" class="formulario-busqueda">
-            <input
-                type="search"
-                name="q"
-                value="{{ request.GET.q|default:'' }}"
-                placeholder="Título, autor, área, clasificación, signatura, inventario o ubicación"
-                aria-label="Buscar libros"
-            >
+    <section class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <form method="get" class="row g-2 align-items-center mb-4" role="search">
+                <div class="col-12 col-md">
+                    <label for="buscar-libros" class="visually-hidden">Buscar libros</label>
+                    <input
+                        type="search"
+                        id="buscar-libros"
+                        name="buscar"
+                        value="{{ busqueda }}"
+                        class="form-control"
+                        placeholder="Título, autor, área, clasificación, signatura, inventario o ubicación"
+                    >
+                </div>
 
-            <button type="submit" class="btn-buscar">
-                Buscar
-            </button>
+                <div class="col-12 col-md-auto d-grid">
+                    <button type="submit" class="btn btn-primary px-4">Buscar</button>
+                </div>
 
-            {% if request.GET.q %}
-                <a href="{% url 'libros:lista' %}" class="btn-limpiar">
-                    Limpiar
-                </a>
-            {% endif %}
-        </form>
-
-        {% if libros %}
-            <div class="contenedor-tabla">
-                <table class="tabla-libros">
-                    <thead>
-                        <tr>
-                            <th>Título</th>
-                            <th>Autor</th>
-                            <th>Área</th>
-                            <th>Clasificación</th>
-                            <th>Signatura</th>
-                            <th class="columna-numero">Total</th>
-                            <th class="columna-numero">Disponibles</th>
-                            <th class="columna-numero">Prestados</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {% for libro in libros %}
-                            <tr>
-                                <td class="titulo-libro">
-                                    {{ libro.titulo }}
-                                </td>
-
-                                <td class="autor-libro">
-                                    {{ libro.autor|default:"-" }}
-                                </td>
-
-                                <td>
-                                    {{ libro.get_area_display|default:"Pendiente" }}
-                                </td>
-
-                                <td>
-                                    {{ libro.clasificacion|default:"-" }}
-                                </td>
-
-                                <td class="signatura">
-                                    {{ libro.signatura_topografica|default:"Pendiente" }}
-                                </td>
-
-                                <td class="columna-numero">
-                                    {{ libro.cantidad_total }}
-                                </td>
-
-                                <td class="columna-numero">
-                                    {{ libro.cantidad_disponible }}
-                                </td>
-
-                                <td class="columna-numero">
-                                    {{ libro.cantidad_prestada }}
-                                </td>
-
-                                <td>
-                                    <a
-                                        href="{% url 'libros:detalle' libro.pk %}"
-                                        class="enlace-ejemplares"
-                                    >
-                                        Ver<br>ejemplares
-                                    </a>
-                                </td>
-                            </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-
-            <p class="resumen-listado">
-                Total de títulos: <strong>{{ libros|length }}</strong>
-            </p>
-        {% else %}
-            <div class="sin-libros">
-                <strong>No se encontraron libros.</strong>
-
-                {% if request.GET.q %}
-                    Pruebe con otro término de búsqueda.
-                {% else %}
-                    Registre un libro o importe la planilla Excel.
+                {% if busqueda %}
+                    <div class="col-12 col-md-auto d-grid">
+                        <a href="{% url 'libros:lista' %}" class="btn btn-light px-4">Limpiar</a>
+                    </div>
                 {% endif %}
-            </div>
-        {% endif %}
+            </form>
+
+            {% if busqueda %}
+                <div class="alert alert-light border py-2" role="status">
+                    Resultados para: <strong>{{ busqueda }}</strong>
+                </div>
+            {% endif %}
+
+            {% if libros %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 tabla-inventario">
+                        <thead>
+                            <tr>
+                                <th scope="col">Título</th>
+                                <th scope="col">Autor</th>
+                                <th scope="col">Área</th>
+                                <th scope="col">Clasificación</th>
+                                <th scope="col">Signatura</th>
+                                <th scope="col" class="text-center">Total</th>
+                                <th scope="col" class="text-center">Disponibles</th>
+                                <th scope="col" class="text-center">Prestados</th>
+                                <th scope="col">Acciones</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for libro in libros %}
+                                <tr>
+                                    <td class="fw-bold titulo-columna">{{ libro.titulo }}</td>
+                                    <td>{{ libro.autor|default:"-" }}</td>
+                                    <td>{{ libro.get_area_display|default:"Pendiente" }}</td>
+                                    <td>{{ libro.clasificacion|default:"-" }}</td>
+                                    <td class="fw-bold text-primary">{{ libro.signatura_topografica|default:"Pendiente" }}</td>
+                                    <td class="text-center">
+                                        <span class="badge text-bg-secondary">{{ libro.cantidad_total }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        <span class="badge text-bg-success">{{ libro.cantidad_disponible }}</span>
+                                    </td>
+                                    <td class="text-center">
+                                        {% if libro.cantidad_prestada %}
+                                            <span class="badge text-bg-warning">{{ libro.cantidad_prestada }}</span>
+                                        {% else %}
+                                            <span class="badge text-bg-light">0</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'libros:detalle' libro.pk %}" class="btn btn-sm btn-outline-primary">
+                                            Ver ejemplares
+                                        </a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="d-flex flex-column flex-sm-row justify-content-between gap-2 pt-3 mt-3 border-top">
+                    <span class="text-secondary">
+                        Total mostrado: <strong>{{ libros|length }}</strong> título{{ libros|length|pluralize }}
+                    </span>
+
+                    {% if busqueda %}
+                        <a href="{% url 'libros:lista' %}" class="link-primary">Mostrar todo el inventario</a>
+                    {% endif %}
+                </div>
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="fs-1 mb-3" aria-hidden="true">📚</div>
+                    <h2 class="h5">No se encontraron libros</h2>
+
+                    {% if busqueda %}
+                        <p class="text-secondary">Pruebe con otro término de búsqueda.</p>
+                        <a href="{% url 'libros:lista' %}" class="btn btn-light">Limpiar búsqueda</a>
+                    {% else %}
+                        <p class="text-secondary">Registre un libro o importe la planilla Excel.</p>
+                        <a href="{% url 'libros:crear' %}" class="btn btn-primary">Registrar el primer libro</a>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
     </section>
 </div>
+
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tabla-inventario thead th {
+        background: #1c357e;
+        color: #ffffff;
+        border-color: #1c357e;
+        white-space: nowrap;
+    }
+
+    .tabla-inventario .titulo-columna {
+        min-width: 190px;
+    }
+
+    .tabla-inventario td {
+        color: #243447;
+    }
+
+    .tabla-inventario tbody tr:hover td {
+        background-color: #f2f6fc;
+    }
+
+    @media (max-width: 767.98px) {
+        .card-body {
+            padding: 1rem !important;
+        }
+    }
+</style>
 {% endblock %}

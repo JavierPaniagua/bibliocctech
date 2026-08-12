@@ -153,18 +153,50 @@
 
         <div class="resultado resultado-correcto">
             <strong>
-                {{ vista_previa.titulos_estimados }}
+                {{ vista_previa.titulos_nuevos }}
             </strong>
 
-            <span>Títulos reconocidos</span>
+            <span>Títulos nuevos</span>
         </div>
 
         <div class="resultado resultado-correcto">
             <strong>
-                {{ vista_previa.ejemplares_estimados }}
+                {{ vista_previa.titulos_actualizables }}
             </strong>
 
-            <span>Ejemplares listos</span>
+            <span>Títulos para actualizar</span>
+        </div>
+
+        <div class="resultado resultado-correcto">
+            <strong>
+                {{ vista_previa.titulos_sin_cambios }}
+            </strong>
+
+            <span>Títulos sin cambios</span>
+        </div>
+
+        <div class="resultado resultado-correcto">
+            <strong>
+                {{ vista_previa.ejemplares_nuevos }}
+            </strong>
+
+            <span>Ejemplares nuevos</span>
+        </div>
+
+        <div class="resultado resultado-correcto">
+            <strong>
+                {{ vista_previa.ejemplares_actualizables }}
+            </strong>
+
+            <span>Ejemplares para actualizar</span>
+        </div>
+
+        <div class="resultado resultado-correcto">
+            <strong>
+                {{ vista_previa.ejemplares_sin_cambios }}
+            </strong>
+
+            <span>Ejemplares sin cambios</span>
         </div>
 
         <div class="resultado resultado-duplicado">
@@ -340,6 +372,14 @@
 
         <div class="resultado resultado-correcto">
             <strong>
+                {{ resultados.titulos_sin_cambios }}
+            </strong>
+
+            <span>Títulos sin cambios</span>
+        </div>
+
+        <div class="resultado resultado-correcto">
+            <strong>
                 {{ resultados.ejemplares_creados }}
             </strong>
 
@@ -352,6 +392,14 @@
             </strong>
 
             <span>Ejemplares actualizados</span>
+        </div>
+
+        <div class="resultado resultado-correcto">
+            <strong>
+                {{ resultados.ejemplares_sin_cambios }}
+            </strong>
+
+            <span>Ejemplares sin cambios</span>
         </div>
 
         <div class="resultado resultado-duplicado">

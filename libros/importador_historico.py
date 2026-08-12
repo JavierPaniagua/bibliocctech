@@ -1066,6 +1066,70 @@ def clave_libro(registro):
     )
 
 
+def valor_comparable(valor):
+    """Normaliza valores para detectar cambios reales."""
+    if valor is None:
+        return ''
+
+    if isinstance(valor, datetime):
+        return valor.date()
+
+    if isinstance(valor, date):
+        return valor
+
+    return limpiar_texto(valor)
+
+
+def libro_tiene_cambios(libro, registro):
+    if libro is None:
+        return True
+
+    campos = (
+        ('titulo', 'titulo'),
+        ('autor', 'autor'),
+        ('editorial', 'editorial'),
+        ('area', 'area'),
+        ('clasificacion', 'clasificacion'),
+        ('clave_autor', 'clave_autor'),
+        ('clave_titulo', 'clave_titulo'),
+        ('isbn', 'isbn'),
+        ('edicion', 'edicion'),
+        ('anio_publicacion', 'anio_publicacion'),
+    )
+
+    return any(
+        valor_comparable(getattr(libro, campo_modelo))
+        != valor_comparable(registro[campo_registro])
+        for campo_modelo, campo_registro in campos
+    ) or not libro.activo
+
+
+def ejemplar_tiene_cambios(ejemplar, registro, libro=None):
+    if ejemplar is None:
+        return True
+
+    campos = (
+        ('codigo_anterior', 'codigo_anterior'),
+        ('estanteria', 'estanteria'),
+        ('balda', 'balda'),
+        ('proveedor', 'proveedor'),
+        ('estado', 'estado'),
+        ('condicion', 'condicion'),
+        ('forma_adquisicion', 'forma_adquisicion'),
+        ('fecha_adquisicion', 'fecha_adquisicion'),
+        ('observaciones', 'observaciones'),
+    )
+
+    if libro is not None and ejemplar.libro_id != libro.id:
+        return True
+
+    return any(
+        valor_comparable(getattr(ejemplar, campo_modelo))
+        != valor_comparable(registro[campo_registro])
+        for campo_modelo, campo_registro in campos
+    )
+
+
 def analizar_archivo(ruta_archivo):
     registros, errores, estadisticas = (
         extraer_registros(ruta_archivo)
@@ -1093,10 +1157,65 @@ def analizar_archivo(ruta_archivo):
         .count()
     )
 
+    ejemplares_actuales = {
+        ejemplar.numero_inventario: ejemplar
+        for ejemplar in Ejemplar.objects.filter(
+            numero_inventario__in=inventarios_planilla,
+        ).select_related('libro')
+    }
+
+    ejemplares_nuevos = 0
+    ejemplares_actualizables = 0
+    ejemplares_sin_cambios = 0
+
+    for registro in registros:
+        ejemplar = ejemplares_actuales.get(
+            registro['numero_inventario']
+        )
+
+        if ejemplar is None:
+            ejemplares_nuevos += 1
+            continue
+
+        if (
+            libro_tiene_cambios(ejemplar.libro, registro)
+            or ejemplar_tiene_cambios(ejemplar, registro)
+        ):
+            ejemplares_actualizables += 1
+        else:
+            ejemplares_sin_cambios += 1
+
+    titulos_nuevos = 0
+    titulos_actualizables = 0
+    titulos_sin_cambios = 0
+
+    registros_por_titulo = {}
+    for registro in registros:
+        registros_por_titulo.setdefault(
+            clave_libro(registro),
+            registro,
+        )
+
+    for registro in registros_por_titulo.values():
+        libro = buscar_libro_existente(registro)
+
+        if libro is None:
+            titulos_nuevos += 1
+        elif libro_tiene_cambios(libro, registro):
+            titulos_actualizables += 1
+        else:
+            titulos_sin_cambios += 1
+
     return {
         'registros': len(registros),
         'titulos_estimados': len(titulos),
         'ejemplares_estimados': len(registros),
+        'titulos_nuevos': titulos_nuevos,
+        'titulos_actualizables': titulos_actualizables,
+        'titulos_sin_cambios': titulos_sin_cambios,
+        'ejemplares_nuevos': ejemplares_nuevos,
+        'ejemplares_actualizables': ejemplares_actualizables,
+        'ejemplares_sin_cambios': ejemplares_sin_cambios,
         'codigos_repetidos': estadisticas[
             'codigos_repetidos'
         ],
@@ -1222,10 +1341,13 @@ def importar_archivo(
     titulos_actualizados = 0
     ejemplares_creados = 0
     ejemplares_actualizados = 0
+    ejemplares_sin_cambios = 0
     sin_ubicacion = 0
 
     libros_procesados = {}
     libros_actualizados = set()
+    libros_sin_cambios = set()
+    claves_libro_modificadas = set()
 
     for registro in registros:
         clave = clave_libro(registro)
@@ -1240,24 +1362,38 @@ def importar_archivo(
             if libro is None:
                 libro = Libro()
                 creado = True
+                cambio_libro = True
             else:
                 creado = False
+                cambio_libro = libro_tiene_cambios(
+                    libro,
+                    registro,
+                )
 
-            actualizar_datos_libro(
-                libro,
-                registro,
-            )
+            if creado or cambio_libro:
+                actualizar_datos_libro(
+                    libro,
+                    registro,
+                )
 
             libros_procesados[clave] = libro
 
             if creado:
                 titulos_creados += 1
+                claves_libro_modificadas.add(clave)
 
-            elif libro.id not in libros_actualizados:
+            elif (
+                cambio_libro
+                and libro.id not in libros_actualizados
+            ):
                 titulos_actualizados += 1
                 libros_actualizados.add(
                     libro.id
                 )
+                claves_libro_modificadas.add(clave)
+
+            elif libro.id not in libros_sin_cambios:
+                libros_sin_cambios.add(libro.id)
 
         ejemplar = Ejemplar.objects.filter(
             numero_inventario=registro[
@@ -1275,6 +1411,27 @@ def importar_archivo(
             creado = True
         else:
             creado = False
+
+        cambio_ejemplar = (
+            creado
+            or ejemplar_tiene_cambios(
+                ejemplar,
+                registro,
+                libro,
+            )
+            or clave in claves_libro_modificadas
+        )
+
+        if not cambio_ejemplar:
+            ejemplares_sin_cambios += 1
+
+            if (
+                not ejemplar.estanteria
+                or not ejemplar.balda
+            ):
+                sin_ubicacion += 1
+
+            continue
 
         ejemplar.libro = libro
 
@@ -1343,9 +1500,15 @@ def importar_archivo(
         'titulos_actualizados': (
             titulos_actualizados
         ),
+        'titulos_sin_cambios': len(
+            libros_sin_cambios
+        ),
         'ejemplares_creados': ejemplares_creados,
         'ejemplares_actualizados': (
             ejemplares_actualizados
+        ),
+        'ejemplares_sin_cambios': (
+            ejemplares_sin_cambios
         ),
         'codigos_reasignados': 0,
         'sin_ubicacion': sin_ubicacion,

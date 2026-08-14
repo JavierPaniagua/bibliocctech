@@ -1051,87 +1051,90 @@ def etiqueta_lomo_individual(request, numero_inventario):
     )
 
 def etiquetas_lomo_mosaico(request):
-    if request.method == "POST":
-        numero_inicio_texto = request.POST.get("numero_inicio", "").strip()
-        cantidad_texto = request.POST.get("cantidad", "48").strip()
-        accion = request.POST.get("accion", "")
-    else:
-        numero_inicio_texto = request.GET.get("numero_inicio", "").strip()
-        cantidad_texto = request.GET.get("cantidad", "48").strip()
-        accion = ""
+    """Prepara, imprime y confirma etiquetas de lomo en hoja oficio."""
+    datos = request.POST if request.method == "POST" else request.GET
+
+    numero_inicio_texto = datos.get("numero_inicio", "").strip()
+    cantidad_texto = datos.get("cantidad", "48").strip()
+    incluir_impresas = datos.get("incluir_impresas") == "si"
+    accion = datos.get("accion", "")
 
     try:
         cantidad = int(cantidad_texto)
     except (TypeError, ValueError):
         cantidad = 48
-
     cantidad = max(1, min(cantidad, 48))
 
     numero_inicio = None
-
     if numero_inicio_texto:
         try:
             numero_inicio = int(numero_inicio_texto)
+            if numero_inicio < 1:
+                raise ValueError
         except (TypeError, ValueError):
+            numero_inicio = None
+            numero_inicio_texto = ""
             messages.warning(
                 request,
-                "El número de inventario inicial debe ser numérico.",
+                "El número de inventario inicial debe ser un número mayor que cero.",
             )
 
-    consulta = (
-        Ejemplar.objects
-        .select_related("libro")
-        .filter(
-            numero_inventario__isnull=False,
-            etiqueta_lomo_impresa=False,
-        )
-        .exclude(libro__signatura_topografica="")
-        .order_by("numero_inventario")
-    )
-
-    if numero_inicio is not None:
-        consulta = consulta.filter(
-            numero_inventario__gte=numero_inicio
-        )
-
-    ejemplares = list(consulta[:cantidad])
-
+    # La confirmación afecta exclusivamente las casillas seleccionadas.
     if request.method == "POST" and accion == "confirmar":
-        ids_ejemplares = [
-            ejemplar.pk
-            for ejemplar in ejemplares
-        ]
+        ids_seleccionados = request.POST.getlist("ejemplares_seleccionados")
 
-        if ids_ejemplares:
-            total_actualizados = (
-                Ejemplar.objects
-                .filter(pk__in=ids_ejemplares)
-                .update(
-                    etiqueta_lomo_impresa=True,
-                    fecha_impresion_etiqueta_lomo=timezone.now(),
-                )
+        ejemplares_seleccionados = (
+            Ejemplar.objects
+            .filter(
+                pk__in=ids_seleccionados,
+                numero_inventario__isnull=False,
             )
+            .exclude(libro__signatura_topografica="")
+        )
 
+        total_actualizados = ejemplares_seleccionados.update(
+            etiqueta_lomo_impresa=True,
+            fecha_impresion_etiqueta_lomo=timezone.now(),
+        )
+
+        if total_actualizados:
             messages.success(
                 request,
-                (
-                    f"Se marcaron {total_actualizados} "
-                    "etiquetas de lomo como impresas."
-                ),
+                f"Se marcaron {total_actualizados} etiquetas de lomo como impresas.",
             )
         else:
             messages.warning(
                 request,
-                "No se encontraron etiquetas para confirmar.",
+                "No se seleccionaron etiquetas válidas para confirmar.",
             )
 
         return redirect("libros:etiquetas_lomo_mosaico")
+
+    base = (
+        Ejemplar.objects
+        .select_related("libro")
+        .filter(numero_inventario__isnull=False)
+        .order_by("numero_inventario")
+    )
+
+    if numero_inicio is not None:
+        base = base.filter(numero_inventario__gte=numero_inicio)
+
+    if not incluir_impresas:
+        base = base.filter(etiqueta_lomo_impresa=False)
+
+    etiquetas_omitidas = base.filter(libro__signatura_topografica="").count()
+    ejemplares = list(
+        base.exclude(libro__signatura_topografica="")[:cantidad]
+    )
 
     contexto = {
         "ejemplares": ejemplares,
         "numero_inicio": numero_inicio_texto,
         "cantidad": cantidad,
+        "incluir_impresas": incluir_impresas,
         "total_etiquetas": len(ejemplares),
+        "etiquetas_omitidas": etiquetas_omitidas,
     }
 
     return render(

@@ -4,130 +4,13 @@
 
 {% block content %}
 <style>
-    .pagina-etiquetas {
-        max-width: 1180px;
-        margin: 0 auto;
-    }
-
-    .encabezado-pagina {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        gap: 20px;
-        margin-bottom: 22px;
-    }
-
-    .encabezado-pagina h1 {
-        margin: 0 0 5px;
-        color: #163b56;
-        font-size: 26px;
-    }
-
-    .encabezado-pagina p {
-        margin: 0;
-        color: #526875;
-    }
-
-    .panel-opciones {
-        margin-bottom: 24px;
-        padding: 22px;
-        background: #ffffff;
-        border-radius: 12px;
-        box-shadow: 0 5px 16px rgba(28, 67, 94, 0.10);
-    }
-
-    .formulario-filtros {
-        display: flex;
-        align-items: flex-end;
-        flex-wrap: wrap;
-        gap: 14px;
-    }
-
-    .campo {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-    }
-
-    .campo label {
-        color: #163b56;
-        font-weight: 700;
-    }
-
-    .campo input {
-        width: 190px;
-        min-height: 42px;
-        padding: 8px 12px;
-        border: 1px solid #aebdc7;
-        border-radius: 7px;
-        box-sizing: border-box;
-        font: inherit;
-    }
-
-    .mensaje-informativo {
-        margin: 18px 0 0;
-        padding: 12px 14px;
-        border-left: 4px solid #1689a4;
-        border-radius: 6px;
-        background: #e9f5f8;
-        color: #29495d;
-    }
-
-    .acciones {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin: 22px 0;
-    }
-
-    .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        min-height: 42px;
-        padding: 10px 18px;
-        border: 0;
-        border-radius: 7px;
-        box-sizing: border-box;
-        font: inherit;
-        font-weight: 700;
-        text-decoration: none;
-        cursor: pointer;
-    }
-
-    .btn-preparar {
-        background: #1689a4;
-        color: #ffffff;
-    }
-
-    .btn-imprimir {
-        background: #1c435e;
-        color: #ffffff;
-    }
-
-    .btn-confirmar {
-        background: #238b6c;
-        color: #ffffff;
-    }
-
-    .btn-volver {
-        background: #e5edf1;
-        color: #17384f;
-    }
-
-    .btn:hover {
-        filter: brightness(0.95);
-        text-decoration: none;
-    }
-
+    .pagina-etiquetas { max-width: 1180px; margin: 0 auto; }
     .hoja-oficio {
         width: 216mm;
         min-height: 356mm;
         margin: 0 auto;
         padding: 10mm;
-        background: #ffffff;
+        background: #fff;
         display: grid;
         grid-template-columns: repeat(6, 30mm);
         grid-auto-rows: 40mm;
@@ -135,9 +18,18 @@
         align-content: start;
         gap: 2mm;
         box-sizing: border-box;
-        box-shadow: 0 5px 20px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 5px 20px rgba(0, 0, 0, .15);
     }
-
+    .envoltorio-etiqueta { position: relative; width: 30mm; height: 40mm; }
+    .selector-etiqueta {
+        position: absolute;
+        z-index: 2;
+        top: 2px;
+        left: 2px;
+        width: 17px;
+        height: 17px;
+        cursor: pointer;
+    }
     .etiqueta-lomo {
         width: 30mm;
         height: 40mm;
@@ -150,21 +42,18 @@
         font-family: Arial, Helvetica, sans-serif;
         break-inside: avoid;
     }
-
     .encabezado-lomo {
         min-height: 7mm;
         padding: 0 1mm;
         background: #1c435e;
-        color: #ffffff;
+        color: #fff;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-sizing: border-box;
         font-size: 10pt;
         font-weight: 800;
         letter-spacing: 1.8px;
     }
-
     .contenido-lomo {
         flex: 1;
         min-height: 0;
@@ -172,19 +61,15 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        box-sizing: border-box;
         text-align: center;
     }
-
     .signatura-lomo {
         color: #1c435e;
         font-size: 11pt;
         font-weight: 900;
         line-height: 1.25;
         overflow-wrap: anywhere;
-        word-break: break-word;
     }
-
     .inventario-lomo {
         min-height: 8mm;
         padding: 0 1mm;
@@ -193,60 +78,39 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        box-sizing: border-box;
         font-size: 14pt;
         line-height: 1;
         font-weight: 900;
     }
-
-    .sin-resultados {
-        padding: 30px;
-        background: #ffffff;
-        border-radius: 10px;
-        color: #526875;
-        text-align: center;
+    .etiqueta-ya-impresa {
+        position: absolute;
+        z-index: 2;
+        right: 2px;
+        top: 2px;
+        padding: 1px 3px;
+        border-radius: 3px;
+        background: #ffc107;
+        color: #212529;
+        font-size: 8px;
+        font-weight: 700;
     }
-
     @media screen and (max-width: 1100px) {
-        .contenedor-hoja {
-            overflow-x: auto;
-            padding-bottom: 15px;
-        }
+        .contenedor-hoja { overflow-x: auto; padding-bottom: 15px; }
     }
-
     @media print {
-        @page {
-            size: legal portrait;
-            margin: 8mm;
-        }
-
-        body {
-            margin: 0 !important;
-            background: #ffffff !important;
-        }
-
-        header,
-        nav,
-        footer,
-        .encabezado-pagina,
-        .panel-opciones,
-        .acciones,
-        .sin-resultados {
-            display: none !important;
-        }
-
-        main,
-        .pagina-etiquetas,
-        .contenedor-hoja {
+        @page { size: legal portrait; margin: 8mm; }
+        body { margin: 0 !important; background: #fff !important; }
+        header, nav, footer, .no-imprimir, .selector-etiqueta,
+        .etiqueta-ya-impresa { display: none !important; }
+        main, .pagina-etiquetas, .contenedor-hoja {
             width: auto !important;
             max-width: none !important;
             margin: 0 !important;
             padding: 0 !important;
-            background: #ffffff !important;
+            background: #fff !important;
             box-shadow: none !important;
             overflow: visible !important;
         }
-
         .hoja-oficio {
             width: 200mm !important;
             min-height: auto !important;
@@ -258,7 +122,7 @@
             justify-content: center;
             box-shadow: none !important;
         }
-
+        .envoltorio-etiqueta.no-seleccionada { display: none !important; }
         .etiqueta-lomo {
             width: 30mm !important;
             height: 40mm !important;
@@ -270,129 +134,149 @@
     }
 </style>
 
-<div class="pagina-etiquetas">
-    <div class="encabezado-pagina">
+<div class="pagina-etiquetas py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4 no-imprimir">
         <div>
-            <h1>Etiquetas de lomo en mosaico</h1>
-            <p>Impresión de hasta 48 etiquetas en una hoja oficio.</p>
+            <h1 class="h3 mb-1">Etiquetas de lomo en mosaico</h1>
+            <p class="text-secondary mb-0">Hasta 48 etiquetas en una hoja oficio.</p>
         </div>
-
-        <a href="{% url 'libros:lista' %}" class="btn btn-volver">
-            Volver
-        </a>
+        <a href="{% url 'libros:lista' %}" class="btn btn-light">Volver</a>
     </div>
 
-    <section class="panel-opciones">
-        <form method="get" class="formulario-filtros">
-            <div class="campo">
-                <label for="numero_inicio">Inventario inicial</label>
+    <section class="card border-0 shadow-sm mb-4 no-imprimir">
+        <div class="card-body p-4">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-md-4">
+                    <label for="numero_inicio" class="form-label fw-semibold">Inventario inicial</label>
+                    <input type="number" id="numero_inicio" name="numero_inicio"
+                           min="1" value="{{ numero_inicio }}" class="form-control"
+                           placeholder="Ejemplo: 2573">
+                </div>
+                <div class="col-md-3">
+                    <label for="cantidad" class="form-label fw-semibold">Cantidad</label>
+                    <input type="number" id="cantidad" name="cantidad" min="1" max="48"
+                           value="{{ cantidad }}" class="form-control">
+                </div>
+                <div class="col-md-3">
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="checkbox" value="si"
+                               id="incluir_impresas" name="incluir_impresas"
+                               {% if incluir_impresas %}checked{% endif %}>
+                        <label class="form-check-label" for="incluir_impresas">
+                            Incluir etiquetas ya impresas
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-2 d-grid">
+                    <button type="submit" class="btn btn-primary">Preparar</button>
+                </div>
+            </form>
 
-                <input
-                    type="number"
-                    id="numero_inicio"
-                    name="numero_inicio"
-                    min="1"
-                    value="{{ numero_inicio|default:'' }}"
-                    placeholder="Ejemplo: 2573"
-                >
+            <div class="alert alert-info mt-3 mb-0">
+                Se encontraron <strong>{{ total_etiquetas }}</strong> etiquetas.
+                {% if etiquetas_omitidas %}
+                    Se omitieron <strong>{{ etiquetas_omitidas }}</strong> ejemplares sin signatura.
+                {% endif %}
             </div>
-
-            <div class="campo">
-                <label for="cantidad">Cantidad de etiquetas</label>
-
-                <input
-                    type="number"
-                    id="cantidad"
-                    name="cantidad"
-                    min="1"
-                    max="48"
-                    value="{{ cantidad|default:48 }}"
-                >
-            </div>
-
-            <button type="submit" class="btn btn-preparar">
-                Preparar etiquetas
-            </button>
-        </form>
-
-        <div class="mensaje-informativo">
-            Solo se preparan ejemplares que tengan número de inventario y
-            signatura topográfica.
         </div>
     </section>
 
     {% if ejemplares %}
-        <div class="acciones">
-            <button
-                type="button"
-                class="btn btn-imprimir"
-                onclick="window.print()"
-            >
-                Imprimir mosaico
-            </button>
+        <form method="post" id="formulario-etiquetas">
+            {% csrf_token %}
+            <input type="hidden" name="numero_inicio" value="{{ numero_inicio }}">
+            <input type="hidden" name="cantidad" value="{{ cantidad }}">
+            {% if incluir_impresas %}
+                <input type="hidden" name="incluir_impresas" value="si">
+            {% endif %}
 
-            <form method="post">
-                {% csrf_token %}
-
-                <input
-                    type="hidden"
-                    name="numero_inicio"
-                    value="{{ numero_inicio|default:'' }}"
-                >
-
-                <input
-                    type="hidden"
-                    name="cantidad"
-                    value="{{ cantidad|default:48 }}"
-                >
-
-                <button
-                    type="submit"
-                    name="accion"
-                    value="confirmar"
-                    class="btn btn-confirmar"
-                >
+            <div class="d-flex flex-wrap justify-content-center gap-2 mb-4 no-imprimir">
+                <button type="button" class="btn btn-outline-primary" id="seleccionar-todas">
+                    Seleccionar todas
+                </button>
+                <button type="button" class="btn btn-outline-secondary" id="quitar-seleccion">
+                    Quitar selección
+                </button>
+                <button type="button" class="btn btn-primary" id="imprimir-seleccionadas">
+                    Imprimir seleccionadas
+                </button>
+                <button type="submit" name="accion" value="confirmar"
+                        class="btn btn-success" id="confirmar-impresion">
                     Confirmar impresión
                 </button>
-            </form>
-        </div>
+            </div>
 
-        <div class="contenedor-hoja">
-            <section class="hoja-oficio">
-                {% for ejemplar in ejemplares %}
-                    <article class="etiqueta-lomo">
-                        <div class="encabezado-lomo">
-                            CCTL
+            <div class="contenedor-hoja">
+                <section class="hoja-oficio">
+                    {% for ejemplar in ejemplares %}
+                        <div class="envoltorio-etiqueta">
+                            <input type="checkbox" class="selector-etiqueta"
+                                   name="ejemplares_seleccionados" value="{{ ejemplar.pk }}"
+                                   checked aria-label="Seleccionar inventario {{ ejemplar.numero_inventario }}">
+                            {% if ejemplar.etiqueta_lomo_impresa %}
+                                <span class="etiqueta-ya-impresa">REIMP.</span>
+                            {% endif %}
+                            <article class="etiqueta-lomo">
+                                <div class="encabezado-lomo">CCTL</div>
+                                <div class="contenido-lomo">
+                                    <div class="signatura-lomo">
+                                        {{ ejemplar.libro.signatura_topografica }}
+                                    </div>
+                                </div>
+                                <div class="inventario-lomo">{{ ejemplar.numero_inventario }}</div>
+                            </article>
                         </div>
-
-                        <div class="contenido-lomo">
-                            <div class="signatura-lomo">
-                                {{ ejemplar.libro.signatura_topografica }}
-                            </div>
-                        </div>
-
-                        <div class="inventario-lomo">
-                            {{ ejemplar.numero_inventario }}
-                        </div>
-                    </article>
-                {% endfor %}
-            </section>
-        </div>
-
-        <div class="acciones">
-            <button
-                type="button"
-                class="btn btn-imprimir"
-                onclick="window.print()"
-            >
-                Imprimir mosaico
-            </button>
-        </div>
+                    {% endfor %}
+                </section>
+            </div>
+        </form>
     {% else %}
-        <div class="sin-resultados">
-            Ingrese el número de inventario inicial y presione
-            <strong>Preparar etiquetas</strong>.
+        <div class="alert alert-warning text-center no-imprimir">
+            No hay etiquetas de lomo pendientes con los filtros indicados.
         </div>
     {% endif %}
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const casillas = Array.from(document.querySelectorAll(".selector-etiqueta"));
+
+    function actualizarVista() {
+        casillas.forEach(function (casilla) {
+            casilla.closest(".envoltorio-etiqueta")
+                .classList.toggle("no-seleccionada", !casilla.checked);
+        });
+    }
+
+    document.getElementById("seleccionar-todas")?.addEventListener("click", function () {
+        casillas.forEach(c => c.checked = true);
+        actualizarVista();
+    });
+
+    document.getElementById("quitar-seleccion")?.addEventListener("click", function () {
+        casillas.forEach(c => c.checked = false);
+        actualizarVista();
+    });
+
+    casillas.forEach(c => c.addEventListener("change", actualizarVista));
+
+    document.getElementById("imprimir-seleccionadas")?.addEventListener("click", function () {
+        actualizarVista();
+        if (!casillas.some(c => c.checked)) {
+            alert("Seleccione al menos una etiqueta.");
+            return;
+        }
+        window.print();
+    });
+
+    document.getElementById("formulario-etiquetas")?.addEventListener("submit", function (evento) {
+        if (!casillas.some(c => c.checked)) {
+            evento.preventDefault();
+            alert("Seleccione las etiquetas que realmente imprimió.");
+        }
+    });
+
+    actualizarVista();
+});
+</script>
 {% endblock %}

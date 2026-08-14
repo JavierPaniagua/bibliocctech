@@ -1,59 +1,40 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}
-Inicio | Biblioteca Escolar
-{% endblock %}
+{% block title %}Inicio | BIBLIOTECH{% endblock %}
 
 {% block content %}
-
 <section class="bienvenida">
     <h2>Panel principal</h2>
-
-    <p>
-        Seleccione la operación que desea realizar.
-    </p>
+    <p>Seleccione la operación que desea realizar.</p>
 </section>
 
 <section class="tarjetas">
-
     <a href="{% url 'alumnos:lista' %}" class="tarjeta tarjeta-azul">
         <span class="icono">👥</span>
-
         <div>
             <h3>Alumnos</h3>
-            <p>
-                Registrar, importar y buscar alumnos.
-            </p>
+            <p>Registrar, importar y buscar alumnos.</p>
         </div>
     </a>
 
-
     <a href="{% url 'docentes:lista' %}" class="tarjeta tarjeta-docentes">
         <span class="icono">👨‍🏫</span>
-
         <div>
             <h3>Docentes</h3>
-
-            <p>
-                Registrar, importar y buscar docentes.
-            </p>
+            <p>Registrar, importar y buscar docentes.</p>
         </div>
     </a>
 
     <a href="{% url 'libros:lista' %}" class="tarjeta tarjeta-verde">
         <span class="icono">📚</span>
-
         <div>
             <h3>Libros</h3>
-            <p>
-                Registrar libros y controlar ejemplares.
-            </p>
+            <p>Registrar libros y controlar ejemplares.</p>
         </div>
     </a>
 
     <a href="{% url 'prestamos:crear' %}" class="tarjeta tarjeta-naranja">
         <span class="icono">📤</span>
-
         <div>
             <h3>Registrar préstamo</h3>
             <p>Entregar un libro a un alumno o docente.</p>
@@ -62,7 +43,6 @@ Inicio | Biblioteca Escolar
 
     <a href="{% url 'prestamos:lista' %}?estado=activos" class="tarjeta tarjeta-celeste">
         <span class="icono">📥</span>
-
         <div>
             <h3>Registrar devolución</h3>
             <p>Buscar un préstamo activo y devolver el libro.</p>
@@ -71,77 +51,51 @@ Inicio | Biblioteca Escolar
 
     <a href="{% url 'prestamos:lista' %}?estado=vencidos" class="tarjeta tarjeta-roja">
         <span class="icono">⏰</span>
-
         <div>
             <h3>Préstamos vencidos</h3>
             <p>Consultar libros que no fueron devueltos.</p>
         </div>
     </a>
 
-    <a
-    href="{% url 'core:reportes' %}"
-    class="tarjeta tarjeta-morada"
->
-    <span class="icono">📊</span>
+    <a href="{% url 'core:reportes' %}" class="tarjeta tarjeta-morada">
+        <span class="icono">📊</span>
+        <div>
+            <h3>Reportes</h3>
+            <p>Consultar préstamos, devoluciones y movimientos.</p>
+        </div>
+    </a>
 
-    <div>
-        <h3>Reportes</h3>
+    <a href="{% url 'libros:etiquetas_mosaico' %}" class="tarjeta tarjeta-etiquetas">
+        <span class="icono">🏷️</span>
+        <div>
+            <h3>Imprimir etiquetas</h3>
+            <p>Preparar etiquetas individuales o en mosaico.</p>
+        </div>
+    </a>
 
-        <p>
-            Consultar préstamos, devoluciones y movimientos.
-        </p>
-
-    </div>
-
-    <a
-    href="{% url 'libros:etiquetas_mosaico' %}"
-    class="tarjeta tarjeta-etiquetas"
->
-    <span class="icono">🏷️</span>
-
-    <div>
-        <h3>Imprimir etiquetas</h3>
-
-        <p>
-            Preparar etiquetas individuales o en mosaico.
-        </p>
-    </div>
-</a>
-
-<form
-    method="post"
-    action="{% url 'core:crear_respaldo' %}"
-    class="formulario-tarjeta"
-    onsubmit="return confirm('¿Desea crear una copia de seguridad de la base de datos?');"
->
-    {% csrf_token %}
-
-    <button
-        type="submit"
-        class="tarjeta tarjeta-respaldo tarjeta-boton"
+    <form
+        method="post"
+        action="{% url 'core:crear_respaldo' %}"
+        class="formulario-tarjeta"
+        onsubmit="return confirm('¿Desea crear y descargar una copia de seguridad?');"
     >
-        <span class="icono">💾</span>
-
-        <span>
-            <strong class="titulo-tarjeta">
-                Crear respaldo
-            </strong>
-
-            <span class="descripcion-tarjeta">
-                Guardar una copia de seguridad del sistema.
+        {% csrf_token %}
+        <button type="submit" class="tarjeta tarjeta-respaldo tarjeta-boton">
+            <span class="icono">💾</span>
+            <span>
+                <strong class="titulo-tarjeta">Crear respaldo</strong>
+                <span class="descripcion-tarjeta">
+                    Guardar y descargar una copia de seguridad.
+                </span>
             </span>
-        </span>
-    </button>
-</form>
-</a>
-
+        </button>
+    </form>
 </section>
-<section class="resumen">
 
+<section class="resumen">
     <h2>Resumen de la biblioteca</h2>
 
     <div class="resumen-tarjetas">
-
         <div class="dato">
             <strong>{{ total_titulos }}</strong>
             <span>Títulos registrados</span>
@@ -166,9 +120,6 @@ Inicio | Biblioteca Escolar
             <strong>{{ prestamos_vencidos }}</strong>
             <span>Préstamos vencidos</span>
         </div>
-
     </div>
-
 </section>
-
 {% endblock %}

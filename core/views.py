@@ -84,3 +84,63 @@ def crear_respaldo(request):
 
 def reportes(request):
     return render(request, "core/reportes.html")
+
+def estadisticas_biblioteca(request):
+    """Resumen estadístico del uso y composición de la biblioteca."""
+    from django.db.models import Count
+
+    fecha_actual = timezone.localdate()
+
+    libros_solicitados = (
+        Libro.objects
+        .filter(activo=True)
+        .annotate(
+            total_prestamos=Count("ejemplares__prestamos", distinct=True),
+            total_ejemplares=Count("ejemplares", distinct=True),
+        )
+        .order_by("-total_prestamos", "titulo")[:20]
+    )
+
+    cantidades_por_area = list(
+        Libro.objects
+        .filter(activo=True)
+        .values("area")
+        .annotate(
+            total_titulos=Count("id", distinct=True),
+            total_ejemplares=Count("ejemplares", distinct=True),
+            total_prestamos=Count("ejemplares__prestamos", distinct=True),
+        )
+        .order_by("area")
+    )
+
+    nombres_area = {
+        str(valor): nombre
+        for valor, nombre in Libro._meta.get_field("area").choices
+    }
+
+    for fila in cantidades_por_area:
+        valor_area = str(fila["area"] or "")
+        fila["nombre_area"] = nombres_area.get(valor_area, "Sin clasificar")
+
+    prestamos = Prestamo.objects.all()
+
+    contexto = {
+        "fecha_actual": fecha_actual,
+        "libros_solicitados": libros_solicitados,
+        "cantidades_por_area": cantidades_por_area,
+        "total_titulos": Libro.objects.filter(activo=True).count(),
+        "total_ejemplares": Ejemplar.objects.count(),
+        "total_prestamos": prestamos.count(),
+        "total_activos": prestamos.filter(
+            estado=Prestamo.Estado.ACTIVO
+        ).count(),
+        "total_devueltos": prestamos.filter(
+            estado=Prestamo.Estado.DEVUELTO
+        ).count(),
+        "total_vencidos": prestamos.filter(
+            estado=Prestamo.Estado.ACTIVO,
+            fecha_devolucion_prevista__lt=fecha_actual,
+        ).count(),
+    }
+
+    return render(request, "core/estadisticas_biblioteca.html", contexto)

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+
+{% block title %}Estadísticas | BIBLIOTECH{% endblock %}
+
+{% block content %}
+<style>
+    .pagina-estadisticas { max-width: 1250px; margin: 0 auto; }
+    .resumen-estadisticas .card { border-left: 5px solid #2867b2; }
+    .tabla-estadisticas th { white-space: nowrap; }
+    .encabezado-impresion { display: none; }
+
+    @media print {
+        @page { size: legal landscape; margin: 10mm; }
+        header, nav, footer, .no-imprimir { display: none !important; }
+        body, main { background: #fff !important; }
+        main, .pagina-estadisticas {
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .encabezado-impresion { display: block; text-align: center; margin-bottom: 10px; }
+        .card { box-shadow: none !important; }
+        tr { break-inside: avoid; page-break-inside: avoid; }
+    }
+</style>
+
+<div class="pagina-estadisticas py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4 no-imprimir">
+        <div>
+            <h1 class="h3 mb-1">Estadísticas de la biblioteca</h1>
+            <p class="text-secondary mb-0">Composición del inventario y utilización de los libros.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary" onclick="window.print()">Imprimir</button>
+            <a href="{% url 'core:reportes' %}" class="btn btn-light">Volver</a>
+        </div>
+    </div>
+
+    <div class="encabezado-impresion">
+        <h1>BIBLIOTECH — Biblioteca Escolar CCTL</h1>
+        <h2>Estadísticas generales</h2>
+        <p>Fecha: {{ fecha_actual|date:"d/m/Y" }}</p>
+    </div>
+
+    <section class="row g-3 mb-4 resumen-estadisticas">
+        <div class="col-6 col-lg-2"><div class="card h-100 shadow-sm"><div class="card-body"><div class="fs-3 fw-bold">{{ total_titulos }}</div><small class="text-secondary">Títulos</small></div></div></div>
+        <div class="col-6 col-lg-2"><div class="card h-100 shadow-sm"><div class="card-body"><div class="fs-3 fw-bold">{{ total_ejemplares }}</div><small class="text-secondary">Ejemplares</small></div></div></div>
+        <div class="col-6 col-lg-2"><div class="card h-100 shadow-sm"><div class="card-body"><div class="fs-3 fw-bold">{{ total_prestamos }}</div><small class="text-secondary">Préstamos</small></div></div></div>
+        <div class="col-6 col-lg-2"><div class="card h-100 shadow-sm"><div class="card-body"><div class="fs-3 fw-bold text-primary">{{ total_activos }}</div><small class="text-secondary">Activos</small></div></div></div>
+        <div class="col-6 col-lg-2"><div class="card h-100 shadow-sm"><div class="card-body"><div class="fs-3 fw-bold text-success">{{ total_devueltos }}</div><small class="text-secondary">Devueltos</small></div></div></div>
+        <div class="col-6 col-lg-2"><div class="card h-100 shadow-sm"><div class="card-body"><div class="fs-3 fw-bold text-danger">{{ total_vencidos }}</div><small class="text-secondary">Vencidos</small></div></div></div>
+    </section>
+
+    <div class="row g-4">
+        <div class="col-lg-6">
+            <section class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-primary text-white py-3">
+                    <h2 class="h5 mb-0">Libros más solicitados</h2>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle mb-0 tabla-estadisticas">
+                        <thead><tr><th>Posición</th><th>Título</th><th>Ejemplares</th><th>Préstamos</th></tr></thead>
+                        <tbody>
+                            {% for libro in libros_solicitados %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td><strong>{{ libro.titulo }}</strong><br><small class="text-secondary">{{ libro.autor|default:"Sin autor" }}</small></td>
+                                    <td class="text-center">{{ libro.total_ejemplares }}</td>
+                                    <td class="text-center fw-bold">{{ libro.total_prestamos }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="4" class="text-center text-secondary py-4">No existen libros registrados.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-lg-6">
+            <section class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-success text-white py-3">
+                    <h2 class="h5 mb-0">Inventario y préstamos por área</h2>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped align-middle mb-0 tabla-estadisticas">
+                        <thead><tr><th>Área</th><th>Títulos</th><th>Ejemplares</th><th>Préstamos</th></tr></thead>
+                        <tbody>
+                            {% for fila in cantidades_por_area %}
+                                <tr>
+                                    <td><strong>{{ fila.nombre_area }}</strong></td>
+                                    <td class="text-center">{{ fila.total_titulos }}</td>
+                                    <td class="text-center">{{ fila.total_ejemplares }}</td>
+                                    <td class="text-center fw-bold">{{ fila.total_prestamos }}</td>
+                                </tr>
+                            {% empty %}
+                                <tr><td colspan="4" class="text-center text-secondary py-4">No existen datos por área.</td></tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </div>
+</div>
+{% endblock %}

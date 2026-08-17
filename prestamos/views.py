@@ -246,34 +246,91 @@ def prestamo_devolver(request, prestamo_id):
         },
     )
 
-def prestamo_reporte(request):
-    fecha_actual = timezone.localdate()
 
-    prestamos = Prestamo.objects.select_related(
+def prestamo_reporte(request):
+    """Reporte imprimible de préstamos con búsqueda y filtros."""
+    from django.utils.dateparse import parse_date
+
+    fecha_actual = timezone.localdate()
+    busqueda = request.GET.get("q", "").strip()
+    estado = request.GET.get("estado", "todos").strip()
+    tipo = request.GET.get("tipo", "todos").strip()
+    fecha_desde_texto = request.GET.get("desde", "").strip()
+    fecha_hasta_texto = request.GET.get("hasta", "").strip()
+
+    fecha_desde = parse_date(fecha_desde_texto) if fecha_desde_texto else None
+    fecha_hasta = parse_date(fecha_hasta_texto) if fecha_hasta_texto else None
+
+    consulta_general = Prestamo.objects.select_related(
         "alumno",
         "docente",
         "ejemplar",
         "ejemplar__libro",
-    ).order_by(
-        "estado",
-        "fecha_devolucion_prevista",
-        "-fecha_prestamo",
     )
 
-    total_prestamos = prestamos.count()
-
-    prestamos_activos = prestamos.filter(
+    # Los totales superiores representan toda la base de datos.
+    total_prestamos = consulta_general.count()
+    prestamos_activos = consulta_general.filter(
         estado=Prestamo.Estado.ACTIVO
     ).count()
-
-    prestamos_devueltos = prestamos.filter(
+    prestamos_devueltos = consulta_general.filter(
         estado=Prestamo.Estado.DEVUELTO
     ).count()
-
-    prestamos_vencidos = prestamos.filter(
+    prestamos_vencidos = consulta_general.filter(
         estado=Prestamo.Estado.ACTIVO,
         fecha_devolucion_prevista__lt=fecha_actual,
     ).count()
+
+    prestamos = consulta_general
+
+    if estado == "activos":
+        prestamos = prestamos.filter(estado=Prestamo.Estado.ACTIVO)
+    elif estado == "vencidos":
+        prestamos = prestamos.filter(
+            estado=Prestamo.Estado.ACTIVO,
+            fecha_devolucion_prevista__lt=fecha_actual,
+        )
+    elif estado == "devueltos":
+        prestamos = prestamos.filter(estado=Prestamo.Estado.DEVUELTO)
+    else:
+        estado = "todos"
+
+    if tipo == "alumnos":
+        prestamos = prestamos.filter(alumno__isnull=False)
+    elif tipo == "docentes":
+        prestamos = prestamos.filter(docente__isnull=False)
+    else:
+        tipo = "todos"
+
+    if fecha_desde:
+        prestamos = prestamos.filter(fecha_prestamo__gte=fecha_desde)
+
+    if fecha_hasta:
+        prestamos = prestamos.filter(fecha_prestamo__lte=fecha_hasta)
+
+    if busqueda:
+        filtros = (
+            Q(alumno__cedula__icontains=busqueda)
+            | Q(alumno__nombres__icontains=busqueda)
+            | Q(alumno__apellidos__icontains=busqueda)
+            | Q(docente__cedula__icontains=busqueda)
+            | Q(docente__nombres__icontains=busqueda)
+            | Q(docente__apellidos__icontains=busqueda)
+            | Q(ejemplar__libro__titulo__icontains=busqueda)
+            | Q(ejemplar__libro__autor__icontains=busqueda)
+        )
+
+        if busqueda.isdigit():
+            filtros |= Q(ejemplar__numero_inventario=int(busqueda))
+
+        prestamos = prestamos.filter(filtros)
+
+    prestamos = prestamos.order_by(
+        "estado",
+        "fecha_devolucion_prevista",
+        "-fecha_prestamo",
+        "-id",
+    )
 
     contexto = {
         "prestamos": prestamos,
@@ -282,10 +339,12 @@ def prestamo_reporte(request):
         "prestamos_activos": prestamos_activos,
         "prestamos_devueltos": prestamos_devueltos,
         "prestamos_vencidos": prestamos_vencidos,
+        "total_resultados": prestamos.count(),
+        "busqueda": busqueda,
+        "estado_seleccionado": estado,
+        "tipo_seleccionado": tipo,
+        "fecha_desde": fecha_desde_texto,
+        "fecha_hasta": fecha_hasta_texto,
     }
 
-    return render(
-        request,
-        "prestamos/prestamo_reporte.html",
-        contexto,
-    )
+    return render(request, "prestamos/prestamo_reporte.html", contexto)

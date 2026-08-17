@@ -956,50 +956,115 @@ def etiquetas_mosaico(request):
     )
     
 def reporte_inventario(request):
-    ejemplares = (
-        Ejemplar.objects
-        .select_related("libro")
-        .order_by(
-            "libro__area",
-            "libro__clasificacion",
-            "numero_inventario",
-        )
-    )
+    """Reporte general del inventario con búsqueda y filtros."""
+    from django.db.models import Count
+
+    busqueda = request.GET.get("q", "").strip()
+    area = request.GET.get("area", "").strip()
+    estado = request.GET.get("estado", "").strip()
+    condicion = request.GET.get("condicion", "").strip()
+    ubicacion = request.GET.get("ubicacion", "todos").strip()
 
     filtro_incompleto = (
         Q(libro__signatura_topografica="")
+        | Q(libro__signatura_topografica__isnull=True)
         | Q(estanteria="")
+        | Q(estanteria__isnull=True)
         | Q(balda="")
+        | Q(balda__isnull=True)
+    )
+
+    consulta_general = (
+        Ejemplar.objects
+        .select_related("libro")
+        .annotate(cantidad_prestamos=Count("prestamos", distinct=True))
+    )
+
+    # Estos indicadores representan toda la base actual.
+    total_titulos = Libro.objects.filter(activo=True).count()
+    total_ejemplares = consulta_general.count()
+    total_disponibles = consulta_general.filter(
+        estado=Ejemplar.Estado.DISPONIBLE
+    ).count()
+    total_prestados = consulta_general.filter(
+        estado=Ejemplar.Estado.PRESTADO
+    ).count()
+    total_incompletos = consulta_general.filter(filtro_incompleto).count()
+
+    ejemplares = consulta_general
+
+    if busqueda:
+        filtros_busqueda = (
+            Q(libro__titulo__icontains=busqueda)
+            | Q(libro__autor__icontains=busqueda)
+            | Q(libro__editorial__icontains=busqueda)
+            | Q(libro__clasificacion__icontains=busqueda)
+            | Q(libro__signatura_topografica__icontains=busqueda)
+            | Q(codigo_anterior__icontains=busqueda)
+            | Q(estanteria__icontains=busqueda)
+            | Q(balda__icontains=busqueda)
+        )
+
+        if busqueda.isdigit():
+            filtros_busqueda |= Q(numero_inventario=int(busqueda))
+
+        ejemplares = ejemplares.filter(filtros_busqueda)
+
+    valores_area = {str(valor) for valor, _ in Libro._meta.get_field("area").choices}
+    if area in valores_area:
+        ejemplares = ejemplares.filter(libro__area=area)
+    else:
+        area = ""
+
+    valores_estado = {
+        str(valor) for valor, _ in Ejemplar._meta.get_field("estado").choices
+    }
+    if estado in valores_estado:
+        ejemplares = ejemplares.filter(estado=estado)
+    else:
+        estado = ""
+
+    valores_condicion = {
+        str(valor) for valor, _ in Ejemplar._meta.get_field("condicion").choices
+    }
+    if condicion in valores_condicion:
+        ejemplares = ejemplares.filter(condicion=condicion)
+    else:
+        condicion = ""
+
+    if ubicacion == "completa":
+        ejemplares = ejemplares.exclude(filtro_incompleto)
+    elif ubicacion == "incompleta":
+        ejemplares = ejemplares.filter(filtro_incompleto)
+    else:
+        ubicacion = "todos"
+
+    ejemplares = ejemplares.order_by(
+        "libro__area",
+        "libro__clasificacion",
+        "numero_inventario",
     )
 
     contexto = {
         "ejemplares": ejemplares,
         "fecha_actual": timezone.localdate(),
-
-        "total_titulos": Libro.objects.filter(
-            activo=True
-        ).count(),
-
-        "total_ejemplares": ejemplares.count(),
-
-        "total_disponibles": ejemplares.filter(
-            estado=Ejemplar.Estado.DISPONIBLE
-        ).count(),
-
-        "total_prestados": ejemplares.filter(
-            estado=Ejemplar.Estado.PRESTADO
-        ).count(),
-
-        "total_incompletos": ejemplares.filter(
-            filtro_incompleto
-        ).count(),
+        "total_titulos": total_titulos,
+        "total_ejemplares": total_ejemplares,
+        "total_disponibles": total_disponibles,
+        "total_prestados": total_prestados,
+        "total_incompletos": total_incompletos,
+        "total_resultados": ejemplares.count(),
+        "busqueda": busqueda,
+        "area_seleccionada": area,
+        "estado_seleccionado": estado,
+        "condicion_seleccionada": condicion,
+        "ubicacion_seleccionada": ubicacion,
+        "opciones_area": Libro._meta.get_field("area").choices,
+        "opciones_estado": Ejemplar._meta.get_field("estado").choices,
+        "opciones_condicion": Ejemplar._meta.get_field("condicion").choices,
     }
 
-    return render(
-        request,
-        "libros/reporte_inventario.html",
-        contexto,
-    )
+    return render(request, "libros/reporte_inventario.html", contexto)
     
 def etiqueta_lomo_individual(request, numero_inventario):
     ejemplar = get_object_or_404(

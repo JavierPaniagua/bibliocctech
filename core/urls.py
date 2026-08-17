@@ -22,4 +22,9 @@ urlpatterns = [
         views.reportes,
         name="reportes",
     ),
+    path(
+    "estadisticas/",
+    views.estadisticas_biblioteca,
+    name="estadisticas",
+),
 ]

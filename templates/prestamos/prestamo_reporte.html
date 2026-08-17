@@ -1,394 +1,194 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}
-    Reporte de préstamos | Biblioteca Escolar
-{% endblock %}
+{% block title %}Reporte de préstamos | BIBLIOTECH{% endblock %}
 
 {% block content %}
-
-<div class="cabecera-pagina no-imprimir">
-
-    <div>
-        <h2>Reporte de préstamos</h2>
-        <p>Resumen general de movimientos de la biblioteca.</p>
-    </div>
-
-    <div class="grupo-botones">
-
-        <button
-            type="button"
-            class="boton boton-primario"
-            onclick="window.print()"
-        >
-            Imprimir reporte
-        </button>
-
-        <a
-            href="{% url 'prestamos:lista' %}"
-            class="boton boton-secundario"
-        >
-            Volver
-        </a>
-
-    </div>
-
-</div>
-
-<div class="encabezado-impresion">
-
-    <h1>Biblioteca Escolar CCTL</h1>
-
-    <h2>Reporte general de préstamos</h2>
-
-    <p>
-        Fecha de emisión: {{ fecha_actual|date:"d/m/Y" }}
-    </p>
-
-</div>
-
-<section class="resumen-reporte">
-
-    <div class="dato-reporte">
-        <strong>{{ total_prestamos }}</strong>
-        <span>Total de préstamos</span>
-    </div>
-
-    <div class="dato-reporte dato-activo">
-        <strong>{{ prestamos_activos }}</strong>
-        <span>Préstamos activos</span>
-    </div>
-
-    <div class="dato-reporte dato-devuelto">
-        <strong>{{ prestamos_devueltos }}</strong>
-        <span>Libros devueltos</span>
-    </div>
-
-    <div class="dato-reporte dato-vencido">
-        <strong>{{ prestamos_vencidos }}</strong>
-        <span>Préstamos vencidos</span>
-    </div>
-
-</section>
-
-<div class="tarjeta reporte-contenido">
-
-    <h3>Detalle de préstamos</h3>
-
-    <div class="tabla-responsive">
-
-        <table class="tabla tabla-reporte">
-
-            <thead>
-                <tr>
-                    <th>N.º</th>
-                    <th>Inventario</th>
-                    <th>Libro</th>
-                    <th>Beneficiario</th>
-                    <th>Cédula</th>
-                    <th>Préstamo</th>
-                    <th>Fecha prevista</th>
-                    <th>Devolución real</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-
-            <tbody>
-
-                {% for prestamo in prestamos %}
-
-                    <tr>
-
-                        <td>{{ forloop.counter }}</td>
-
-                        <td>
-                            {{ prestamo.ejemplar.numero_inventario }}
-                        </td>
-
-                        <td>
-                            <strong>
-                                {{ prestamo.ejemplar.libro.titulo }}
-                            </strong>
-                        </td>
-
-                        <td>
-                            {% if prestamo.alumno %}
-                                {{ prestamo.alumno.nombre_visible }}
-                                <br>
-                                <small>Alumno</small>
-                            {% elif prestamo.docente %}
-                                {{ prestamo.docente }}
-                                <br>
-                                <small>Docente</small>
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            {% if prestamo.alumno %}
-                                {{ prestamo.alumno.cedula }}
-                            {% elif prestamo.docente %}
-                                {{ prestamo.docente.cedula }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            {{ prestamo.fecha_prestamo|date:"d/m/Y" }}
-                        </td>
-
-                        <td>
-                            {{ prestamo.fecha_devolucion_prevista|date:"d/m/Y" }}
-                        </td>
-
-                        <td>
-                            {% if prestamo.fecha_devolucion_real %}
-                                {{ prestamo.fecha_devolucion_real|date:"d/m/Y" }}
-                            {% else %}
-                                -
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            {% if prestamo.estado == 'DEVUELTO' %}
-
-                                <span class="estado estado-devuelto">
-                                    Devuelto
-                                </span>
-
-                            {% elif prestamo.fecha_devolucion_prevista < fecha_actual %}
-
-                                <span class="estado estado-vencido">
-                                    Vencido
-                                </span>
-
-                            {% else %}
-
-                                <span class="estado estado-activo">
-                                    Activo
-                                </span>
-
-                            {% endif %}
-                        </td>
-
-                    </tr>
-
-                {% empty %}
-
-                    <tr>
-                        <td colspan="9" class="sin-registros">
-                            No existen préstamos registrados.
-                        </td>
-                    </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-</div>
-
 <style>
-    .encabezado-impresion {
-        display: none;
-    }
-
-    .resumen-reporte {
-        display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 15px;
-        margin-bottom: 25px;
-    }
-
-    .dato-reporte {
-        padding: 20px;
-        border-left: 5px solid #1c435e;
-        border-radius: 9px;
-        background: white;
-        box-shadow: 0 3px 12px rgba(26, 57, 75, 0.09);
-    }
-
-    .dato-reporte strong {
-        display: block;
-        margin-bottom: 5px;
-        color: #173c57;
-        font-size: 31px;
-    }
-
-    .dato-reporte span {
-        color: #60727e;
-    }
-
-    .dato-activo {
-        border-left-color: #df9414;
-    }
-
-    .dato-devuelto {
-        border-left-color: #218767;
-    }
-
-    .dato-vencido {
-        border-left-color: #bd3548;
-    }
-
-    .reporte-contenido h3 {
-        margin-top: 0;
-        margin-bottom: 20px;
-        color: #173c57;
-    }
-
-    .tabla-reporte {
-        font-size: 14px;
-    }
-
-    .tabla-reporte th,
-    .tabla-reporte td {
-        padding: 10px 8px;
-    }
-
-    .tabla-reporte small {
-        color: #60727e;
-    }
-
-    .estado {
-        display: inline-block;
-        padding: 5px 9px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-        white-space: nowrap;
-    }
-
-    .estado-activo {
-        background: #fff0c7;
-        color: #805300;
-    }
-
-    .estado-devuelto {
-        background: #ddf4ed;
-        color: #08745d;
-    }
-
-    .estado-vencido {
-        background: #fbe1e5;
-        color: #a32d3c;
-    }
-
-    .sin-registros {
-        padding: 30px !important;
-        color: #60727e;
-        text-align: center;
-    }
-
-    @media (max-width: 850px) {
-        .resumen-reporte {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-    }
-
-    @media (max-width: 500px) {
-        .resumen-reporte {
-            grid-template-columns: 1fr;
-        }
-    }
+    .reporte-prestamos { max-width: 1400px; margin: 0 auto; }
+    .resumen-reporte .card { border-left: 5px solid #2867b2; }
+    .resumen-reporte .vencidos { border-left-color: #b43a4b; }
+    .resumen-reporte .devueltos { border-left-color: #23856d; }
+    .tabla-reporte { font-size: .92rem; }
+    .tabla-reporte th { white-space: nowrap; }
+    .observacion { max-width: 240px; white-space: normal; }
 
     @media print {
-        @page {
-            size: legal landscape;
-            margin: 1cm;
+        @page { size: legal landscape; margin: 10mm; }
+        header, nav, footer, .no-imprimir { display: none !important; }
+        body, main { background: #fff !important; }
+        main, .reporte-prestamos {
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
-
-        body {
-            background: white;
-            color: black;
-            font-size: 10pt;
-        }
-
-        .encabezado,
-        .pie-pagina,
-        .no-imprimir {
-            display: none !important;
-        }
-
-        .contenido-principal {
-            width: 100%;
-            margin: 0;
-        }
-
-        .encabezado-impresion {
-            display: block;
-            margin-bottom: 18px;
-            text-align: center;
-        }
-
-        .encabezado-impresion h1 {
-            margin: 0 0 5px;
-            font-size: 18pt;
-        }
-
-        .encabezado-impresion h2 {
-            margin: 0 0 5px;
-            font-size: 14pt;
-        }
-
-        .encabezado-impresion p {
-            margin: 0;
-        }
-
-        .resumen-reporte {
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-
-        .dato-reporte {
-            padding: 10px;
-            border: 1px solid #777;
-            box-shadow: none;
-        }
-
-        .dato-reporte strong {
-            font-size: 18pt;
-        }
-
-        .tarjeta {
-            padding: 0;
-            box-shadow: none;
-        }
-
-        .tabla-responsive {
-            overflow: visible;
-        }
-
-        .tabla-reporte {
-            width: 100%;
-            font-size: 8pt;
-        }
-
-        .tabla-reporte th {
-            border: 1px solid #555;
-            background: #dddddd !important;
-            color: black !important;
-        }
-
-        .tabla-reporte td {
-            border: 1px solid #777;
-        }
-
-        .tabla-reporte tr {
-            break-inside: avoid;
-        }
-
-        .estado {
-            padding: 0;
-            background: transparent !important;
-            color: black !important;
-        }
+        .card { box-shadow: none !important; }
+        .table-responsive { overflow: visible !important; }
+        .tabla-reporte { font-size: 8.5pt; }
+        .tabla-reporte th, .tabla-reporte td { padding: 4px !important; }
+        tr { break-inside: avoid; page-break-inside: avoid; }
     }
 </style>
 
+<div class="reporte-prestamos py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">Reporte de préstamos</h1>
+            <p class="text-secondary mb-0">
+                Préstamos activos, vencidos, devueltos e historial de movimientos.
+            </p>
+        </div>
+
+        <div class="d-flex gap-2 no-imprimir">
+            <button type="button" class="btn btn-primary" onclick="window.print()">
+                Imprimir reporte
+            </button>
+            <a href="{% url 'core:reportes' %}" class="btn btn-light">Volver</a>
+        </div>
+    </div>
+
+    <section class="row g-3 mb-4 resumen-reporte">
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 shadow-sm border-top-0 border-end-0 border-bottom-0">
+                <div class="card-body">
+                    <div class="fs-3 fw-bold">{{ total_prestamos }}</div>
+                    <div class="text-secondary">Préstamos registrados</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card h-100 shadow-sm border-top-0 border-end-0 border-bottom-0">
+                <div class="card-body">
+                    <div class="fs-3 fw-bold">{{ prestamos_activos }}</div>
+                    <div class="text-secondary">Préstamos activos</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card vencidos h-100 shadow-sm border-top-0 border-end-0 border-bottom-0">
+                <div class="card-body">
+                    <div class="fs-3 fw-bold text-danger">{{ prestamos_vencidos }}</div>
+                    <div class="text-secondary">Préstamos vencidos</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-3">
+            <div class="card devueltos h-100 shadow-sm border-top-0 border-end-0 border-bottom-0">
+                <div class="card-body">
+                    <div class="fs-3 fw-bold text-success">{{ prestamos_devueltos }}</div>
+                    <div class="text-secondary">Préstamos devueltos</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card border-0 shadow-sm mb-4 no-imprimir">
+        <div class="card-body p-4">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-lg-4">
+                    <label for="q" class="form-label fw-semibold">Buscar</label>
+                    <input type="search" id="q" name="q" value="{{ busqueda }}"
+                           class="form-control"
+                           placeholder="Cédula, persona, título, autor o inventario">
+                </div>
+                <div class="col-md-3 col-lg-2">
+                    <label for="estado" class="form-label fw-semibold">Estado</label>
+                    <select id="estado" name="estado" class="form-select">
+                        <option value="todos" {% if estado_seleccionado == 'todos' %}selected{% endif %}>Todos</option>
+                        <option value="activos" {% if estado_seleccionado == 'activos' %}selected{% endif %}>Activos</option>
+                        <option value="vencidos" {% if estado_seleccionado == 'vencidos' %}selected{% endif %}>Vencidos</option>
+                        <option value="devueltos" {% if estado_seleccionado == 'devueltos' %}selected{% endif %}>Devueltos</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-lg-2">
+                    <label for="tipo" class="form-label fw-semibold">Beneficiario</label>
+                    <select id="tipo" name="tipo" class="form-select">
+                        <option value="todos" {% if tipo_seleccionado == 'todos' %}selected{% endif %}>Todos</option>
+                        <option value="alumnos" {% if tipo_seleccionado == 'alumnos' %}selected{% endif %}>Alumnos</option>
+                        <option value="docentes" {% if tipo_seleccionado == 'docentes' %}selected{% endif %}>Docentes</option>
+                    </select>
+                </div>
+                <div class="col-md-3 col-lg-2">
+                    <label for="desde" class="form-label fw-semibold">Desde</label>
+                    <input type="date" id="desde" name="desde" value="{{ fecha_desde }}" class="form-control">
+                </div>
+                <div class="col-md-3 col-lg-2">
+                    <label for="hasta" class="form-label fw-semibold">Hasta</label>
+                    <input type="date" id="hasta" name="hasta" value="{{ fecha_hasta }}" class="form-control">
+                </div>
+                <div class="col-12 d-flex flex-wrap gap-2">
+                    <button type="submit" class="btn btn-primary">Aplicar filtros</button>
+                    <a href="{% url 'prestamos:reporte' %}" class="btn btn-outline-secondary">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h5 mb-0">Movimientos encontrados: {{ total_resultados }}</h2>
+        <small class="text-secondary">Fecha del reporte: {{ fecha_actual|date:"d/m/Y" }}</small>
+    </div>
+
+    <section class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle mb-0 tabla-reporte">
+                <thead class="table-primary">
+                    <tr>
+                        <th>Inventario</th>
+                        <th>Libro</th>
+                        <th>Tipo</th>
+                        <th>Beneficiario</th>
+                        <th>Cédula</th>
+                        <th>Préstamo</th>
+                        <th>Prevista</th>
+                        <th>Devolución</th>
+                        <th>Estado</th>
+                        <th>Observaciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for prestamo in prestamos %}
+                        <tr>
+                            <td class="fw-semibold">{{ prestamo.ejemplar.numero_inventario }}</td>
+                            <td>
+                                <strong>{{ prestamo.ejemplar.libro.titulo }}</strong><br>
+                                <small class="text-secondary">{{ prestamo.ejemplar.libro.autor|default:"Sin autor" }}</small>
+                            </td>
+                            <td>{{ prestamo.tipo_beneficiario }}</td>
+                            <td>{{ prestamo.nombre_beneficiario }}</td>
+                            <td>{{ prestamo.cedula_beneficiario }}</td>
+                            <td>{{ prestamo.fecha_prestamo|date:"d/m/Y" }}</td>
+                            <td>{{ prestamo.fecha_devolucion_prevista|date:"d/m/Y" }}</td>
+                            <td>
+                                {% if prestamo.fecha_devolucion_real %}
+                                    {{ prestamo.fecha_devolucion_real|date:"d/m/Y" }}
+                                {% else %}
+                                    —
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if prestamo.esta_vencido %}
+                                    <span class="badge text-bg-danger">
+                                        Vencido · {{ prestamo.dias_atraso }} día{{ prestamo.dias_atraso|pluralize }} hábil{{ prestamo.dias_atraso|pluralize:"es" }}
+                                    </span>
+                                {% elif prestamo.estado == 'ACTIVO' %}
+                                    <span class="badge text-bg-primary">Activo</span>
+                                {% else %}
+                                    <span class="badge text-bg-success">Devuelto</span>
+                                {% endif %}
+                            </td>
+                            <td class="observacion">{{ prestamo.observaciones|default:"—"|linebreaksbr }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="10" class="text-center text-secondary py-5">
+                                No se encontraron préstamos con los filtros seleccionados.
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
 {% endblock %}

@@ -1,481 +1,200 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}
-    Reporte de inventario | Biblioteca CCTL
-{% endblock %}
+{% block title %}Reporte de inventario | BIBLIOTECH{% endblock %}
 
 {% block content %}
-
-<div class="cabecera-pagina no-imprimir">
-
-    <div>
-        <h2>Reporte general del inventario</h2>
-
-        <p>
-            Existencia, clasificación, ubicación y estado de los ejemplares.
-        </p>
-    </div>
-
-    <div class="grupo-botones">
-
-        <button
-            type="button"
-            class="boton boton-primario"
-            onclick="window.print()"
-        >
-            Imprimir reporte
-        </button>
-
-        <a
-            href="{% url 'libros:lista' %}"
-            class="boton boton-secundario"
-        >
-            Volver
-        </a>
-
-    </div>
-
-</div>
-
-<div class="encabezado-impresion">
-
-    <h1>Biblioteca Escolar CCTL</h1>
-
-    <h2>Reporte general del inventario bibliográfico</h2>
-
-    <p>
-        Fecha de emisión: {{ fecha_actual|date:"d/m/Y" }}
-    </p>
-
-</div>
-
-<section class="resumen-inventario">
-
-    <div class="dato-inventario">
-        <strong>{{ total_titulos }}</strong>
-        <span>Títulos registrados</span>
-    </div>
-
-    <div class="dato-inventario">
-        <strong>{{ total_ejemplares }}</strong>
-        <span>Ejemplares físicos</span>
-    </div>
-
-    <div class="dato-inventario dato-disponible">
-        <strong>{{ total_disponibles }}</strong>
-        <span>Disponibles</span>
-    </div>
-
-    <div class="dato-inventario dato-prestado">
-        <strong>{{ total_prestados }}</strong>
-        <span>Prestados</span>
-    </div>
-
-    <div class="dato-inventario dato-pendiente">
-        <strong>{{ total_incompletos }}</strong>
-        <span>Datos pendientes</span>
-    </div>
-
-</section>
-
-<div class="tarjeta reporte-contenido">
-
-    <div class="titulo-detalle">
-        <h3>Detalle de ejemplares</h3>
-
-        <p>
-            Cada fila representa un ejemplar físico.
-        </p>
-    </div>
-
-    <div class="tabla-responsive">
-
-        <table class="tabla tabla-inventario">
-
-            <thead>
-                <tr>
-                    <th>N.º</th>
-                    <th>Inventario</th>
-                    <th>Título y autor</th>
-                    <th>Área</th>
-                    <th>Signatura</th>
-                    <th>Ubicación</th>
-                    <th>Estado</th>
-                    <th>Condición</th>
-                    <th>Etiqueta</th>
-                </tr>
-            </thead>
-
-            <tbody>
-
-                {% for ejemplar in ejemplares %}
-
-                    <tr
-                        {% if not ejemplar.libro.signatura_topografica or not ejemplar.estanteria or not ejemplar.balda %}
-                            class="fila-incompleta"
-                        {% endif %}
-                    >
-
-                        <td>
-                            {{ forloop.counter }}
-                        </td>
-
-                        <td>
-                            <strong>
-                                {{ ejemplar.numero_inventario }}
-                            </strong>
-
-                            {% if ejemplar.codigo_anterior %}
-                                <br>
-
-                                <small>
-                                    Anterior:
-                                    {{ ejemplar.codigo_anterior }}
-                                </small>
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            <strong>
-                                {{ ejemplar.libro.titulo }}
-                            </strong>
-
-                            {% if ejemplar.libro.autor %}
-                                <br>
-
-                                <small>
-                                    {{ ejemplar.libro.autor }}
-                                </small>
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            {% if ejemplar.libro.area %}
-                                {{ ejemplar.libro.get_area_display }}
-                            {% else %}
-                                <span class="texto-pendiente">
-                                    Pendiente
-                                </span>
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            {% if ejemplar.libro.signatura_topografica %}
-                                <strong>
-                                    {{ ejemplar.libro.signatura_topografica }}
-                                </strong>
-                            {% else %}
-                                <span class="texto-pendiente">
-                                    Pendiente
-                                </span>
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            {% if ejemplar.estanteria and ejemplar.balda %}
-                                Estantería {{ ejemplar.estanteria }}
-                                <br>
-                                Balda
-                                {{ ejemplar.estanteria }}{{ ejemplar.balda }}
-                            {% else %}
-                                <span class="texto-pendiente">
-                                    Pendiente
-                                </span>
-                            {% endif %}
-                        </td>
-
-                        <td>
-                            <span class="estado estado-{{ ejemplar.estado|lower }}">
-                                {{ ejemplar.get_estado_display }}
-                            </span>
-                        </td>
-
-                        <td>
-                            {{ ejemplar.get_condicion_display }}
-                        </td>
-
-                        <td>
-                            {% if ejemplar.etiqueta_impresa %}
-                                <span class="etiqueta-si">
-                                    Impresa
-                                </span>
-                            {% else %}
-                                <span class="etiqueta-no">
-                                    Pendiente
-                                </span>
-                            {% endif %}
-                        </td>
-
-                    </tr>
-
-                {% empty %}
-
-                    <tr>
-                        <td colspan="9" class="sin-registros">
-                            No existen ejemplares registrados.
-                        </td>
-                    </tr>
-
-                {% endfor %}
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-</div>
-
 <style>
-    .encabezado-impresion {
-        display: none;
-    }
-
-    .resumen-inventario {
-        display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
-        gap: 14px;
-        margin-bottom: 25px;
-    }
-
-    .dato-inventario {
-        padding: 18px;
-        border-left: 5px solid #1c435e;
-        border-radius: 9px;
-        background: white;
-        color: #263740;
-        box-shadow: 0 3px 12px rgba(26, 57, 75, 0.09);
-    }
-
-    .dato-inventario strong {
-        display: block;
-        margin-bottom: 5px;
-        color: #1c435e;
-        font-size: 29px;
-    }
-
-    .dato-inventario span {
-        color: #60727e;
-    }
-
-    .dato-disponible {
-        border-left-color: #218767;
-    }
-
-    .dato-prestado {
-        border-left-color: #df9414;
-    }
-
-    .dato-pendiente {
-        border-left-color: #bd3548;
-    }
-
-    .reporte-contenido {
-        color: #263740;
-    }
-
-    .titulo-detalle {
-        margin-bottom: 18px;
-    }
-
-    .titulo-detalle h3 {
-        margin: 0 0 5px;
-        color: #1c435e;
-    }
-
-    .titulo-detalle p {
-        margin: 0;
-        color: #60727e;
-    }
-
-    .tabla-inventario {
-        font-size: 13px;
-    }
-
-    .tabla-inventario th,
-    .tabla-inventario td {
-        padding: 9px 7px;
-        vertical-align: middle;
-    }
-
-    .tabla-inventario small {
-        color: #60727e;
-    }
-
-    .fila-incompleta {
-        background: #fff3f4;
-    }
-
-    .texto-pendiente,
-    .etiqueta-no {
-        color: #b12d40;
-        font-weight: bold;
-    }
-
-    .etiqueta-si {
-        color: #08745d;
-        font-weight: bold;
-    }
-
-    .estado {
-        display: inline-block;
-        padding: 4px 8px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: bold;
-        white-space: nowrap;
-    }
-
-    .estado-disponible {
-        background: #ddf4ed;
-        color: #08745d;
-    }
-
-    .estado-prestado {
-        background: #fff0c7;
-        color: #805300;
-    }
-
-    .estado-deteriorado,
-    .estado-extraviado,
-    .estado-baja {
-        background: #fbe1e5;
-        color: #a32d3c;
-    }
-
-    .estado-reparacion {
-        background: #e4eff7;
-        color: #245e82;
-    }
-
-    .sin-registros {
-        padding: 30px !important;
-        color: #60727e;
-        text-align: center;
-    }
-
-    @media (max-width: 900px) {
-        .resumen-inventario {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-        }
-    }
-
-    @media (max-width: 500px) {
-        .resumen-inventario {
-            grid-template-columns: 1fr;
-        }
-    }
+    .pagina-reporte { max-width: 1500px; margin: 0 auto; }
+    .resumen-inventario .card { border-left: 5px solid #2867b2; }
+    .resumen-inventario .disponibles { border-left-color: #23856d; }
+    .resumen-inventario .prestados { border-left-color: #d58a0b; }
+    .resumen-inventario .incompletos { border-left-color: #b43a4b; }
+    .tabla-inventario { font-size: .88rem; }
+    .tabla-inventario th { white-space: nowrap; }
+    .fila-incompleta > td { background-color: #fff2f3 !important; }
+    .encabezado-impresion { display: none; }
 
     @media print {
-        @page {
-            size: legal landscape;
-            margin: 9mm;
+        @page { size: legal landscape; margin: 8mm; }
+        header, nav, footer, .no-imprimir { display: none !important; }
+        body, main { background: #fff !important; }
+        main, .pagina-reporte {
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
         }
-
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            background: white;
-            color: black;
-            font-size: 9pt;
-        }
-
-        .encabezado,
-        .pie-pagina,
-        .no-imprimir {
-            display: none !important;
-        }
-
-        .contenido-principal {
-            width: 100%;
-            margin: 0;
-            padding: 0;
-        }
-
-        .encabezado-impresion {
-            display: block;
-            margin-bottom: 12px;
-            text-align: center;
-        }
-
-        .encabezado-impresion h1 {
-            margin: 0 0 4px;
-            font-size: 17pt;
-        }
-
-        .encabezado-impresion h2 {
-            margin: 0 0 4px;
-            font-size: 13pt;
-        }
-
-        .encabezado-impresion p {
-            margin: 0;
-        }
-
-        .resumen-inventario {
-            grid-template-columns: repeat(5, 1fr);
-            gap: 7px;
-            margin-bottom: 12px;
-        }
-
-        .dato-inventario {
-            padding: 8px;
-            border: 1px solid #777;
-            box-shadow: none;
-        }
-
-        .dato-inventario strong {
-            font-size: 16pt;
-        }
-
-        .tarjeta {
-            padding: 0;
-            box-shadow: none;
-        }
-
-        .titulo-detalle {
-            margin-bottom: 8px;
-        }
-
-        .tabla-responsive {
-            overflow: visible;
-        }
-
-        .tabla-inventario {
-            width: 100%;
-            font-size: 7.5pt;
-        }
-
-        .tabla-inventario thead {
-            display: table-header-group;
-        }
-
-        .tabla-inventario tr {
-            break-inside: avoid;
-            page-break-inside: avoid;
-        }
-
-        .tabla-inventario th {
-            border: 1px solid #555;
-            background: #dce5ea !important;
-            color: black !important;
-        }
-
-        .tabla-inventario td {
-            border: 1px solid #777;
-        }
-
-        .fila-incompleta {
-            background: #eeeeee !important;
-        }
-
-        .estado {
-            padding: 0;
-            background: transparent !important;
-            color: black !important;
-        }
+        .encabezado-impresion { display: block; text-align: center; margin-bottom: 8px; }
+        .encabezado-impresion h1 { margin: 0; font-size: 17pt; }
+        .encabezado-impresion h2 { margin: 2px 0; font-size: 12pt; }
+        .card { box-shadow: none !important; }
+        .table-responsive { overflow: visible !important; }
+        .tabla-inventario { font-size: 7.5pt; }
+        .tabla-inventario th, .tabla-inventario td { padding: 3px !important; }
+        .tabla-inventario thead { display: table-header-group; }
+        tr { break-inside: avoid; page-break-inside: avoid; }
+        .fila-incompleta > td { background: #eee !important; }
     }
 </style>
 
+<div class="pagina-reporte py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4 no-imprimir">
+        <div>
+            <h1 class="h3 mb-1">Reporte general del inventario</h1>
+            <p class="text-secondary mb-0">
+                Existencia, clasificación, ubicación, condición y movimientos.
+            </p>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="button" class="btn btn-primary" onclick="window.print()">
+                Imprimir reporte
+            </button>
+            <a href="{% url 'core:reportes' %}" class="btn btn-light">Volver</a>
+        </div>
+    </div>
+
+    <div class="encabezado-impresion">
+        <h1>BIBLIOTECH — Biblioteca Escolar CCTL</h1>
+        <h2>Reporte general del inventario bibliográfico</h2>
+        <p>Fecha de emisión: {{ fecha_actual|date:"d/m/Y" }}</p>
+    </div>
+
+    <section class="row g-3 mb-4 resumen-inventario">
+        <div class="col-6 col-lg">
+            <div class="card h-100 shadow-sm border-top-0 border-end-0 border-bottom-0">
+                <div class="card-body"><div class="fs-3 fw-bold">{{ total_titulos }}</div><div class="text-secondary">Títulos</div></div>
+            </div>
+        </div>
+        <div class="col-6 col-lg">
+            <div class="card h-100 shadow-sm border-top-0 border-end-0 border-bottom-0">
+                <div class="card-body"><div class="fs-3 fw-bold">{{ total_ejemplares }}</div><div class="text-secondary">Ejemplares</div></div>
+            </div>
+        </div>
+        <div class="col-6 col-lg">
+            <div class="card disponibles h-100 shadow-sm border-top-0 border-end-0 border-bottom-0">
+                <div class="card-body"><div class="fs-3 fw-bold text-success">{{ total_disponibles }}</div><div class="text-secondary">Disponibles</div></div>
+            </div>
+        </div>
+        <div class="col-6 col-lg">
+            <div class="card prestados h-100 shadow-sm border-top-0 border-end-0 border-bottom-0">
+                <div class="card-body"><div class="fs-3 fw-bold">{{ total_prestados }}</div><div class="text-secondary">Prestados</div></div>
+            </div>
+        </div>
+        <div class="col-6 col-lg">
+            <div class="card incompletos h-100 shadow-sm border-top-0 border-end-0 border-bottom-0">
+                <div class="card-body"><div class="fs-3 fw-bold text-danger">{{ total_incompletos }}</div><div class="text-secondary">Datos pendientes</div></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="card border-0 shadow-sm mb-4 no-imprimir">
+        <div class="card-body p-4">
+            <form method="get" class="row g-3 align-items-end">
+                <div class="col-lg-4">
+                    <label for="q" class="form-label fw-semibold">Buscar</label>
+                    <input type="search" id="q" name="q" value="{{ busqueda }}" class="form-control"
+                           placeholder="Título, autor, inventario, signatura o ubicación">
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <label for="area" class="form-label fw-semibold">Área</label>
+                    <select id="area" name="area" class="form-select">
+                        <option value="">Todas</option>
+                        {% for valor, nombre in opciones_area %}
+                            <option value="{{ valor }}" {% if area_seleccionada == valor|stringformat:"s" %}selected{% endif %}>{{ nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <label for="estado" class="form-label fw-semibold">Estado</label>
+                    <select id="estado" name="estado" class="form-select">
+                        <option value="">Todos</option>
+                        {% for valor, nombre in opciones_estado %}
+                            <option value="{{ valor }}" {% if estado_seleccionado == valor|stringformat:"s" %}selected{% endif %}>{{ nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <label for="condicion" class="form-label fw-semibold">Condición</label>
+                    <select id="condicion" name="condicion" class="form-select">
+                        <option value="">Todas</option>
+                        {% for valor, nombre in opciones_condicion %}
+                            <option value="{{ valor }}" {% if condicion_seleccionada == valor|stringformat:"s" %}selected{% endif %}>{{ nombre }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4 col-lg-2">
+                    <label for="ubicacion" class="form-label fw-semibold">Datos</label>
+                    <select id="ubicacion" name="ubicacion" class="form-select">
+                        <option value="todos" {% if ubicacion_seleccionada == 'todos' %}selected{% endif %}>Todos</option>
+                        <option value="completa" {% if ubicacion_seleccionada == 'completa' %}selected{% endif %}>Completos</option>
+                        <option value="incompleta" {% if ubicacion_seleccionada == 'incompleta' %}selected{% endif %}>Pendientes</option>
+                    </select>
+                </div>
+                <div class="col-12 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Aplicar filtros</button>
+                    <a href="{% url 'libros:reporte_inventario' %}" class="btn btn-outline-secondary">Limpiar</a>
+                </div>
+            </form>
+        </div>
+    </section>
+
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <h2 class="h5 mb-0">Ejemplares encontrados: {{ total_resultados }}</h2>
+        <small class="text-secondary">Fecha: {{ fecha_actual|date:"d/m/Y" }}</small>
+    </div>
+
+    <section class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-striped table-hover align-middle mb-0 tabla-inventario">
+                <thead class="table-primary">
+                    <tr>
+                        <th>N.º</th>
+                        <th>Inventario</th>
+                        <th>Título y autor</th>
+                        <th>Área</th>
+                        <th>Signatura</th>
+                        <th>Ubicación</th>
+                        <th>Estado</th>
+                        <th>Condición</th>
+                        <th>Préstamos</th>
+                        <th>Etiquetas</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ejemplar in ejemplares %}
+                        <tr {% if not ejemplar.libro.signatura_topografica or not ejemplar.estanteria or not ejemplar.balda %}class="fila-incompleta"{% endif %}>
+                            <td>{{ forloop.counter }}</td>
+                            <td>
+                                <strong>{{ ejemplar.numero_inventario }}</strong>
+                                {% if ejemplar.codigo_anterior %}<br><small class="text-secondary">Anterior: {{ ejemplar.codigo_anterior }}</small>{% endif %}
+                            </td>
+                            <td>
+                                <strong>{{ ejemplar.libro.titulo }}</strong>
+                                {% if ejemplar.libro.autor %}<br><small class="text-secondary">{{ ejemplar.libro.autor }}</small>{% endif %}
+                            </td>
+                            <td>{{ ejemplar.libro.get_area_display|default:"Pendiente" }}</td>
+                            <td><strong>{{ ejemplar.libro.signatura_topografica|default:"Pendiente" }}</strong></td>
+                            <td>
+                                {% if ejemplar.estanteria and ejemplar.balda %}
+                                    Estantería {{ ejemplar.estanteria }}<br>Balda {{ ejemplar.balda }}
+                                {% else %}
+                                    <span class="text-danger fw-semibold">Pendiente</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ ejemplar.get_estado_display }}</td>
+                            <td>{{ ejemplar.get_condicion_display }}</td>
+                            <td class="text-center fw-semibold">{{ ejemplar.cantidad_prestamos }}</td>
+                            <td>
+                                Interior: {% if ejemplar.etiqueta_impresa %}<span class="text-success">Sí</span>{% else %}<span class="text-danger">No</span>{% endif %}<br>
+                                Lomo: {% if ejemplar.etiqueta_lomo_impresa %}<span class="text-success">Sí</span>{% else %}<span class="text-danger">No</span>{% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr><td colspan="10" class="text-center text-secondary py-5">No se encontraron ejemplares con los filtros seleccionados.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
 {% endblock %}

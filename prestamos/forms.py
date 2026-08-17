@@ -31,7 +31,7 @@ class PrestamoForm(forms.Form):
     tipo_beneficiario = forms.ChoiceField(
         label="Tipo de beneficiario",
         choices=TIPO_BENEFICIARIO,
-        widget=forms.Select(attrs={"class": "campo"}),
+        widget=forms.Select(attrs={"class": "form-select"}),
     )
 
     cedula = forms.CharField(
@@ -39,9 +39,10 @@ class PrestamoForm(forms.Form):
         max_length=20,
         widget=forms.TextInput(
             attrs={
-                "class": "campo",
+                "class": "form-control",
                 "placeholder": "Ingrese la cédula",
                 "autocomplete": "off",
+                "autofocus": True,
             }
         ),
     )
@@ -51,7 +52,7 @@ class PrestamoForm(forms.Form):
         min_value=1,
         widget=forms.NumberInput(
             attrs={
-                "class": "campo",
+                "class": "form-control",
                 "placeholder": "Ejemplo: 5011",
                 "autocomplete": "off",
             }
@@ -63,7 +64,7 @@ class PrestamoForm(forms.Form):
         initial=timezone.localdate,
         widget=forms.DateInput(
             attrs={
-                "class": "campo",
+                "class": "form-control",
                 "type": "date",
             }
         ),
@@ -74,7 +75,7 @@ class PrestamoForm(forms.Form):
         required=False,
         widget=forms.Textarea(
             attrs={
-                "class": "campo",
+                "class": "form-control",
                 "rows": 3,
                 "placeholder": "Observaciones opcionales",
             }
@@ -93,6 +94,16 @@ class PrestamoForm(forms.Form):
             )
 
         return cedula
+
+    def clean_fecha_prestamo(self):
+        fecha = self.cleaned_data["fecha_prestamo"]
+
+        if fecha > timezone.localdate():
+            raise forms.ValidationError(
+                "La fecha del préstamo no puede ser futura."
+            )
+
+        return fecha
 
     def clean(self):
         cleaned_data = super().clean()
@@ -146,6 +157,32 @@ class PrestamoForm(forms.Form):
                         "cedula",
                         "El docente está inactivo.",
                     )
+
+        # Una persona con libros vencidos debe devolverlos antes
+        # de recibir otro ejemplar.
+        if alumno is not None or docente is not None:
+            prestamos_vencidos = Prestamo.objects.filter(
+                estado=Prestamo.Estado.ACTIVO,
+                fecha_devolucion_prevista__lt=timezone.localdate(),
+            )
+
+            if alumno is not None:
+                prestamos_vencidos = prestamos_vencidos.filter(
+                    alumno=alumno
+                )
+            else:
+                prestamos_vencidos = prestamos_vencidos.filter(
+                    docente=docente
+                )
+
+            if prestamos_vencidos.exists():
+                self.add_error(
+                    "cedula",
+                    (
+                        "El beneficiario posee uno o más préstamos "
+                        "vencidos. Registre primero la devolución."
+                    ),
+                )
 
         try:
             ejemplar = Ejemplar.objects.select_related("libro").get(
@@ -202,7 +239,7 @@ class DevolucionForm(forms.Form):
     condicion = forms.ChoiceField(
         label="Condición del libro",
         choices=Ejemplar.Condicion.choices,
-        widget=forms.Select(attrs={"class": "campo"}),
+        widget=forms.Select(attrs={"class": "form-select"}),
     )
 
     observaciones = forms.CharField(
@@ -210,7 +247,7 @@ class DevolucionForm(forms.Form):
         required=False,
         widget=forms.Textarea(
             attrs={
-                "class": "campo",
+                "class": "form-control",
                 "rows": 3,
                 "placeholder": (
                     "Ejemplo: devuelto correctamente o presenta daños"
@@ -226,12 +263,24 @@ class DevolucionForm(forms.Form):
         if prestamo is not None and not self.is_bound:
             self.fields["condicion"].initial = prestamo.ejemplar.condicion
 
+        self.fields["fecha_devolucion_real"].widget.attrs.update(
+            {
+                "class": "form-control",
+                "max": timezone.localdate().isoformat(),
+            }
+        )
+
     def clean_fecha_devolucion_real(self):
         fecha = self.cleaned_data["fecha_devolucion_real"]
 
         if self.prestamo and fecha < self.prestamo.fecha_prestamo:
             raise forms.ValidationError(
                 "La devolución no puede ser anterior a la fecha del préstamo."
+            )
+
+        if fecha > timezone.localdate():
+            raise forms.ValidationError(
+                "La fecha de devolución no puede ser futura."
             )
 
         return fecha

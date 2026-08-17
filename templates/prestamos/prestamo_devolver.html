@@ -1,290 +1,187 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
-{% block title %}
-    Registrar devolución | Biblioteca Escolar
-{% endblock %}
+{% block title %}Registrar devolución | BIBLIOTECH{% endblock %}
 
 {% block content %}
-
-<div class="cabecera-pagina">
-    <div>
-        <h2>Registrar devolución</h2>
-        <p>Confirme la devolución del ejemplar prestado.</p>
+<div class="container py-4" style="max-width: 1050px;">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">Registrar devolución</h1>
+            <p class="text-secondary mb-0">Revise el ejemplar y confirme su condición actual.</p>
+        </div>
+        <a href="{% url 'prestamos:lista' %}" class="btn btn-light">Volver</a>
     </div>
 
-    <a
-        href="{% url 'prestamos:lista' %}"
-        class="boton boton-secundario"
-    >
-        Volver
-    </a>
+    {% if prestamo.esta_vencido %}
+        <div class="alert alert-danger d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <strong>Este préstamo está vencido.</strong>
+            <span>
+                {{ prestamo.dias_atraso }} día{{ prestamo.dias_atraso|pluralize }}
+                hábil{{ prestamo.dias_atraso|pluralize:"es" }} de atraso.
+            </span>
+        </div>
+    {% endif %}
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <section class="card border-0 shadow-sm h-100">
+                <div class="card-header bg-primary text-white py-3">
+                    <h2 class="h5 mb-0">{{ prestamo.ejemplar.libro.titulo }}</h2>
+                </div>
+                <div class="card-body p-4">
+                    {% if prestamo.ejemplar.libro.autor %}
+                        <p class="text-secondary mb-4">{{ prestamo.ejemplar.libro.autor }}</p>
+                    {% endif %}
+
+                    <dl class="row g-3 mb-0">
+                        <div class="col-sm-6">
+                            <dt class="text-secondary small">Número de inventario</dt>
+                            <dd class="fs-4 fw-bold mb-0">{{ prestamo.ejemplar.numero_inventario }}</dd>
+                        </div>
+                        <div class="col-sm-6">
+                            <dt class="text-secondary small">Tipo</dt>
+                            <dd class="fw-semibold mb-0">{{ prestamo.tipo_beneficiario }}</dd>
+                        </div>
+                        <div class="col-sm-6">
+                            <dt class="text-secondary small">Beneficiario</dt>
+                            <dd class="fw-semibold mb-0">{{ prestamo.nombre_beneficiario }}</dd>
+                        </div>
+                        <div class="col-sm-6">
+                            <dt class="text-secondary small">Cédula</dt>
+                            <dd class="fw-semibold mb-0">{{ prestamo.cedula_beneficiario }}</dd>
+                        </div>
+
+                        {% if prestamo.alumno %}
+                            <div class="col-sm-6">
+                                <dt class="text-secondary small">Curso y sección</dt>
+                                <dd class="fw-semibold mb-0">
+                                    {{ prestamo.alumno.curso|default:"-" }}
+                                    {% if prestamo.alumno.seccion %}— {{ prestamo.alumno.seccion }}{% endif %}
+                                </dd>
+                            </div>
+                            <div class="col-sm-6">
+                                <dt class="text-secondary small">Especialidad</dt>
+                                <dd class="fw-semibold mb-0">{{ prestamo.alumno.especialidad|default:"-" }}</dd>
+                            </div>
+                        {% endif %}
+
+                        <div class="col-sm-6">
+                            <dt class="text-secondary small">Fecha del préstamo</dt>
+                            <dd class="fw-semibold mb-0">{{ prestamo.fecha_prestamo|date:"d/m/Y" }}</dd>
+                        </div>
+                        <div class="col-sm-6">
+                            <dt class="text-secondary small">Devolución prevista</dt>
+                            <dd class="fw-semibold mb-0">{{ prestamo.fecha_devolucion_prevista|date:"d/m/Y" }}</dd>
+                        </div>
+                        <div class="col-12">
+                            <dt class="text-secondary small">Ubicación del ejemplar</dt>
+                            <dd class="fw-semibold mb-0">
+                                {% if prestamo.ejemplar.estanteria %}
+                                    Estantería {{ prestamo.ejemplar.estanteria }}
+                                {% else %}
+                                    Sin estantería
+                                {% endif %}
+                                —
+                                {% if prestamo.ejemplar.balda %}
+                                    Balda {{ prestamo.ejemplar.balda }}
+                                {% else %}
+                                    Sin balda
+                                {% endif %}
+                            </dd>
+                        </div>
+                    </dl>
+                </div>
+            </section>
+        </div>
+
+        <div class="col-lg-5">
+            <section class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="alert alert-warning">
+                        <strong>Antes de confirmar:</strong><br>
+                        revise tapas, hojas y estado físico del libro.
+                    </div>
+
+                    <form method="post" novalidate id="formulario-devolucion">
+                        {% csrf_token %}
+
+                        {% if formulario.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in formulario.non_field_errors %}<div>{{ error }}</div>{% endfor %}
+                            </div>
+                        {% endif %}
+
+                        <div class="mb-3">
+                            <label for="{{ formulario.fecha_devolucion_real.id_for_label }}" class="form-label fw-semibold">
+                                {{ formulario.fecha_devolucion_real.label }}
+                            </label>
+                            {{ formulario.fecha_devolucion_real }}
+                            {% for error in formulario.fecha_devolucion_real.errors %}
+                                <div class="text-danger fw-semibold small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ formulario.condicion.id_for_label }}" class="form-label fw-semibold">
+                                {{ formulario.condicion.label }}
+                            </label>
+                            {{ formulario.condicion }}
+                            {% for error in formulario.condicion.errors %}
+                                <div class="text-danger fw-semibold small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ formulario.observaciones.id_for_label }}" class="form-label fw-semibold">
+                                {{ formulario.observaciones.label }}
+                            </label>
+                            {{ formulario.observaciones }}
+                            <div class="form-text">Registre daños, hojas faltantes u otra información importante.</div>
+                            {% for error in formulario.observaciones.errors %}
+                                <div class="text-danger fw-semibold small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success" id="confirmar-devolucion">
+                                Confirmar devolución
+                            </button>
+                            <a href="{% url 'prestamos:lista' %}" class="btn btn-outline-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        </div>
+    </div>
 </div>
+{% endblock %}
 
-<div class="tarjeta tarjeta-formulario">
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const condicion = document.getElementById("{{ formulario.condicion.id_for_label }}");
+        const formulario = document.getElementById("formulario-devolucion");
+        const boton = document.getElementById("confirmar-devolucion");
 
-    <div class="resumen-prestamo">
+        setTimeout(function () {
+            condicion?.focus({ preventScroll: true });
+        }, 100);
 
-        <h3>{{ prestamo.ejemplar.libro.titulo }}</h3>
+        formulario?.addEventListener("submit", function (evento) {
+            const confirmado = window.confirm(
+                "¿Confirma la devolución del ejemplar {{ prestamo.ejemplar.numero_inventario }}?"
+            );
 
-        <div class="datos-resumen">
+            if (!confirmado) {
+                evento.preventDefault();
+                return;
+            }
 
-            <div>
-                <span>Número de inventario</span>
-                <strong>
-                    {{ prestamo.ejemplar.numero_inventario }}
-                </strong>
-            </div>
-
-            <div>
-                <span>Beneficiario</span>
-
-                <strong>
-                    {% if prestamo.alumno %}
-                        {{ prestamo.alumno.nombre_visible }}
-                    {% elif prestamo.docente %}
-                        {{ prestamo.docente }}
-                    {% else %}
-                        -
-                    {% endif %}
-                </strong>
-            </div>
-
-            <div>
-                <span>Cédula</span>
-
-                <strong>
-                    {% if prestamo.alumno %}
-                        {{ prestamo.alumno.cedula }}
-                    {% elif prestamo.docente %}
-                        {{ prestamo.docente.cedula }}
-                    {% else %}
-                        -
-                    {% endif %}
-                </strong>
-            </div>
-
-            <div>
-                <span>Fecha del préstamo</span>
-                <strong>
-                    {{ prestamo.fecha_prestamo|date:"d/m/Y" }}
-                </strong>
-            </div>
-
-            <div>
-                <span>Devolución prevista</span>
-                <strong>
-                    {{ prestamo.fecha_devolucion_prevista|date:"d/m/Y" }}
-                </strong>
-            </div>
-
-            <div>
-                <span>Ubicación</span>
-                <strong>
-                    {% if prestamo.ejemplar.estanteria %}
-                        Estantería {{ prestamo.ejemplar.estanteria }}
-                    {% else %}
-                        Sin estantería
-                    {% endif %}
-
-                    -
-
-                    {% if prestamo.ejemplar.balda %}
-                        Balda
-                        {{ prestamo.ejemplar.estanteria }}{{ prestamo.ejemplar.balda }}
-                    {% else %}
-                        Sin balda
-                    {% endif %}
-                </strong>
-            </div>
-
-        </div>
-
-    </div>
-
-    <div class="aviso-devolucion">
-        <strong>Antes de confirmar:</strong>
-        revise el estado físico del libro y seleccione su condición actual.
-    </div>
-
-    <form method="post" novalidate>
-
-        {% csrf_token %}
-
-        {% if formulario.non_field_errors %}
-            <div class="mensaje mensaje-error">
-                {% for error in formulario.non_field_errors %}
-                    <p>{{ error }}</p>
-                {% endfor %}
-            </div>
-        {% endif %}
-
-        <div class="grupo-campo">
-            <label for="{{ formulario.fecha_devolucion_real.id_for_label }}">
-                {{ formulario.fecha_devolucion_real.label }}
-            </label>
-
-            {{ formulario.fecha_devolucion_real }}
-
-            {% for error in formulario.fecha_devolucion_real.errors %}
-                <div class="error-campo">{{ error }}</div>
-            {% endfor %}
-        </div>
-
-        <div class="grupo-campo">
-            <label for="{{ formulario.condicion.id_for_label }}">
-                {{ formulario.condicion.label }}
-            </label>
-
-            {{ formulario.condicion }}
-
-            {% for error in formulario.condicion.errors %}
-                <div class="error-campo">{{ error }}</div>
-            {% endfor %}
-        </div>
-
-        <div class="grupo-campo">
-            <label for="{{ formulario.observaciones.id_for_label }}">
-                {{ formulario.observaciones.label }}
-            </label>
-
-            {{ formulario.observaciones }}
-
-            <small>
-                Registre aquí daños, hojas faltantes u otra información importante.
-            </small>
-
-            {% for error in formulario.observaciones.errors %}
-                <div class="error-campo">{{ error }}</div>
-            {% endfor %}
-        </div>
-
-        <div class="grupo-botones formulario-acciones">
-
-            <button type="submit" class="boton boton-primario">
-                Confirmar devolución
-            </button>
-
-            <a
-                href="{% url 'prestamos:lista' %}"
-                class="boton boton-secundario"
-            >
-                Cancelar
-            </a>
-
-        </div>
-
-    </form>
-
-</div>
-
-<style>
-    .tarjeta-formulario {
-        max-width: 800px;
-        margin-left: auto;
-        margin-right: auto;
-    }
-
-    .resumen-prestamo {
-        margin-bottom: 22px;
-        padding: 22px;
-        border-radius: 9px;
-        background: #f0f5f7;
-    }
-
-    .resumen-prestamo h3 {
-        margin-top: 0;
-        margin-bottom: 20px;
-        color: #1c435e;
-    }
-
-    .datos-resumen {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        gap: 18px;
-    }
-
-    .datos-resumen span {
-        display: block;
-        margin-bottom: 5px;
-        color: #60727e;
-        font-size: 14px;
-    }
-
-    .datos-resumen strong {
-        display: block;
-        color: #1f3340;
-    }
-
-    .aviso-devolucion {
-        margin-bottom: 24px;
-        padding: 15px 18px;
-        border-left: 5px solid #df9414;
-        border-radius: 6px;
-        background: #fff2d4;
-        color: #5d430f;
-    }
-
-    .grupo-campo {
-        margin-bottom: 20px;
-    }
-
-    .grupo-campo label {
-        display: block;
-        margin-bottom: 7px;
-        color: #1f3340;
-        font-weight: bold;
-    }
-
-    .grupo-campo .campo {
-        display: block;
-        width: 100%;
-        box-sizing: border-box;
-        padding: 12px;
-        border: 1px solid #bdcbd3;
-        border-radius: 7px;
-        background: white;
-        font-size: 16px;
-    }
-
-    .grupo-campo textarea.campo {
-        resize: vertical;
-    }
-
-    .grupo-campo small {
-        display: block;
-        margin-top: 6px;
-        color: #60727e;
-    }
-
-    .error-campo {
-        margin-top: 7px;
-        color: #b3263b;
-        font-size: 14px;
-        font-weight: bold;
-    }
-
-    .formulario-acciones {
-        margin-top: 28px;
-        padding-top: 20px;
-        border-top: 1px solid #d6e0e5;
-    }
-
-    @media (max-width: 650px) {
-        .datos-resumen {
-            grid-template-columns: 1fr;
-        }
-
-        .formulario-acciones {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .formulario-acciones .boton {
-            width: 100%;
-            box-sizing: border-box;
-            text-align: center;
-        }
-    }
-</style>
-
+            if (boton) {
+                boton.disabled = true;
+                boton.textContent = "Registrando devolución…";
+            }
+        });
+    });
+</script>
 {% endblock %}

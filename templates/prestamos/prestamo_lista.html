@@ -29,11 +29,13 @@
 
         <input
             type="text"
+            id="buscar-prestamo"
             name="q"
             value="{{ busqueda }}"
             placeholder="Buscar por cédula, persona, título o inventario"
             class="campo-busqueda"
             autocomplete="off"
+            autofocus
         >
 
         <select name="estado" class="campo-filtro">
@@ -91,6 +93,7 @@
                     <th>Libro</th>
                     <th>Beneficiario</th>
                     <th>Cédula</th>
+                    <th>Curso</th>
                     <th>Préstamo</th>
                     <th>Devolución</th>
                     <th>Estado</th>
@@ -142,6 +145,31 @@
                                 {{ prestamo.alumno.cedula }}
                             {% elif prestamo.docente %}
                                 {{ prestamo.docente.cedula }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if prestamo.alumno %}
+                                <strong>
+                                    {{ prestamo.alumno.curso|default:"-" }}
+                                </strong>
+
+                                {% if prestamo.alumno.seccion %}
+                                    — {{ prestamo.alumno.seccion }}
+                                {% endif %}
+
+                                {% if prestamo.alumno.especialidad %}
+                                    <br>
+                                    <small>
+                                        {{ prestamo.alumno.especialidad }}
+                                    </small>
+                                {% endif %}
+                            {% elif prestamo.docente %}
+                                <span class="texto-secundario">
+                                    Docente
+                                </span>
                             {% else %}
                                 -
                             {% endif %}
@@ -203,7 +231,7 @@
                 {% empty %}
 
                     <tr>
-                        <td colspan="8" class="sin-resultados">
+                        <td colspan="9" class="sin-resultados">
                             No se encontraron préstamos.
                         </td>
                     </tr>
@@ -331,4 +359,29 @@
     }
 </style>
 
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function enfocarBusquedaPrestamos() {
+        const campo = document.getElementById("buscar-prestamo");
+
+        if (!campo) {
+            return;
+        }
+
+        campo.focus({ preventScroll: true });
+
+        const posicionFinal = campo.value.length;
+        campo.setSelectionRange(posicionFinal, posicionFinal);
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        setTimeout(enfocarBusquedaPrestamos, 50);
+    });
+
+    window.addEventListener("pageshow", function () {
+        setTimeout(enfocarBusquedaPrestamos, 100);
+    });
+</script>
 {% endblock %}

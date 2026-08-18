@@ -2,6 +2,7 @@ import hashlib
 from pathlib import Path
 from tempfile import gettempdir
 from django.utils import timezone
+from django.core.paginator import Paginator
 
 from django.contrib import messages
 from django.db import transaction
@@ -70,10 +71,19 @@ def libro_lista(request):
             )
         ).distinct()
 
+    paginador = Paginator(
+        libros,
+        25,
+    )
+
+    numero_pagina = request.GET.get("pagina")
+    pagina_libros = paginador.get_page(numero_pagina)
+
     contexto = {
-        'libros': libros,
-        'busqueda': busqueda,
-    }
+    "libros": pagina_libros,
+    "busqueda": busqueda,
+    "total_encontrados": paginador.count,
+}
 
     return render(
         request,

@@ -6,6 +6,7 @@ from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
+from django.core.paginator import Paginator
 from prestamos.models import Prestamo
 from openpyxl import load_workbook
 
@@ -14,7 +15,10 @@ from .models import Alumno
 
 
 def alumno_lista(request):
-    busqueda = request.GET.get('buscar', '').strip()
+    busqueda = request.GET.get(
+        "buscar",
+        "",
+    ).strip()
 
     alumnos = Alumno.objects.all()
 
@@ -29,14 +33,23 @@ def alumno_lista(request):
             | Q(seccion__icontains=busqueda)
         )
 
+    paginador = Paginator(
+        alumnos,
+        25,
+    )
+
+    numero_pagina = request.GET.get("pagina")
+    pagina_alumnos = paginador.get_page(numero_pagina)
+
     contexto = {
-        'alumnos': alumnos,
-        'busqueda': busqueda,
+        "alumnos": pagina_alumnos,
+        "busqueda": busqueda,
+        "total_encontrados": paginador.count,
     }
 
     return render(
         request,
-        'alumnos/alumno_lista.html',
+        "alumnos/alumno_lista.html",
         contexto,
     )
 

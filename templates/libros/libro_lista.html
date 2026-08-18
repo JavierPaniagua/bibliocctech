@@ -107,15 +107,81 @@
                     </table>
                 </div>
 
-                <div class="d-flex flex-column flex-sm-row justify-content-between gap-2 pt-3 mt-3 border-top">
-                    <span class="text-secondary">
-                        Total mostrado: <strong>{{ libros|length }}</strong> título{{ libros|length|pluralize }}
-                    </span>
+                <div class="d-flex flex-column gap-3 pt-3 mt-3 border-top">
+    <div class="d-flex flex-wrap justify-content-between gap-2">
+        <span class="text-secondary">
+            Total encontrado:
+            <strong>{{ total_encontrados }}</strong>
+            título{{ total_encontrados|pluralize }}
+        </span>
 
-                    {% if busqueda %}
-                        <a href="{% url 'libros:lista' %}" class="link-primary">Mostrar todo el inventario</a>
+        {% if busqueda %}
+            <a
+                href="{% url 'libros:lista' %}"
+                class="link-primary"
+            >
+                Mostrar todo el inventario
+            </a>
+        {% endif %}
+    </div>
+
+    {% if libros.paginator.num_pages > 1 %}
+        <nav aria-label="Páginas del inventario">
+            <ul class="pagination justify-content-center mb-0">
+
+                {% if libros.has_previous %}
+                    <li class="page-item">
+                        <a
+                            class="page-link"
+                            href="?buscar={{ busqueda|urlencode }}&pagina={{ libros.previous_page_number }}"
+                        >
+                            Anterior
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Anterior</span>
+                    </li>
+                {% endif %}
+
+                {% for numero in libros.paginator.page_range %}
+                    {% if numero == libros.number %}
+                        <li class="page-item active">
+                            <span class="page-link">
+                                {{ numero }}
+                            </span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a
+                                class="page-link"
+                                href="?buscar={{ busqueda|urlencode }}&pagina={{ numero }}"
+                            >
+                                {{ numero }}
+                            </a>
+                        </li>
                     {% endif %}
-                </div>
+                {% endfor %}
+
+                {% if libros.has_next %}
+                    <li class="page-item">
+                        <a
+                            class="page-link"
+                            href="?buscar={{ busqueda|urlencode }}&pagina={{ libros.next_page_number }}"
+                        >
+                            Siguiente
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Siguiente</span>
+                    </li>
+                {% endif %}
+
+            </ul>
+        </nav>
+    {% endif %}
+</div>
             {% else %}
                 <div class="text-center py-5">
                     <div class="fs-1 mb-3" aria-hidden="true">📚</div>

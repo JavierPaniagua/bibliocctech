@@ -4,7 +4,9 @@ from django.core.validators import validate_email
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from openpyxl import load_workbook
+from django.utils import timezone
 
+from prestamos.models import Prestamo
 from .forms import DocenteForm, ImportarDocentesForm
 from .models import Docente
 
@@ -32,6 +34,53 @@ def docente_lista(request):
         'docentes/docente_lista.html',
         contexto,
     )
+def docente_historial(request, docente_id):
+    docente = get_object_or_404(
+        Docente,
+        id=docente_id,
+    )
+
+    prestamos = docente.prestamos.select_related(
+        "ejemplar",
+        "ejemplar__libro",
+    ).order_by(
+        "-fecha_prestamo",
+        "-id",
+    )
+
+    fecha_actual = timezone.localdate()
+
+    cantidad_total = prestamos.count()
+
+    cantidad_activos = prestamos.filter(
+        estado=Prestamo.Estado.ACTIVO,
+    ).count()
+
+    cantidad_devueltos = prestamos.filter(
+        estado=Prestamo.Estado.DEVUELTO,
+    ).count()
+
+    cantidad_vencidos = prestamos.filter(
+        estado=Prestamo.Estado.ACTIVO,
+        fecha_devolucion_prevista__lt=fecha_actual,
+    ).count()
+
+    contexto = {
+        "docente": docente,
+        "prestamos": prestamos,
+        "fecha_actual": fecha_actual,
+        "cantidad_total": cantidad_total,
+        "cantidad_activos": cantidad_activos,
+        "cantidad_devueltos": cantidad_devueltos,
+        "cantidad_vencidos": cantidad_vencidos,
+    }
+
+    return render(
+        request,
+        "docentes/docente_historial.html",
+        contexto,
+    )
+
 
 
 def docente_crear(request):
@@ -64,7 +113,6 @@ def docente_crear(request):
         'docentes/docente_formulario.html',
         contexto,
     )
-
 
 def docente_editar(request, docente_id):
     docente = get_object_or_404(
@@ -102,6 +150,88 @@ def docente_editar(request, docente_id):
         'docentes/docente_formulario.html',
         contexto,
     )
+
+def docente_eliminar(request, docente_id):
+    docente = get_object_or_404(
+        Docente,
+        id=docente_id,
+    )
+
+    tiene_prestamos = docente.prestamos.exists()
+    nombre_docente = (
+        f"{docente.nombres} {docente.apellidos}"
+    ).strip()
+
+    if request.method == "POST":
+        accion = request.POST.get("accion", "")
+
+        if accion == "desactivar":
+            docente.activo = False
+            docente.save(update_fields=["activo"])
+
+            messages.success(
+                request,
+                (
+                    f"El docente {nombre_docente} "
+                    "fue marcado como inactivo."
+                ),
+            )
+
+            return redirect("docentes:lista")
+
+        if tiene_prestamos:
+            messages.error(
+                request,
+                (
+                    "El docente no puede eliminarse porque "
+                    "posee préstamos registrados. Debe "
+                    "marcarlo como inactivo para conservar "
+                    "su historial."
+                ),
+            )
+
+            return redirect(
+                "docentes:eliminar",
+                docente_id=docente.id,
+            )
+
+        if accion != "eliminar":
+            messages.error(
+                request,
+                "No se reconoció la operación solicitada.",
+            )
+
+            return redirect(
+                "docentes:eliminar",
+                docente_id=docente.id,
+            )
+
+        docente.delete()
+
+        messages.success(
+            request,
+            (
+                f"El docente {nombre_docente} "
+                "fue eliminado correctamente."
+            ),
+        )
+
+        return redirect("docentes:lista")
+
+    contexto = {
+        "docente": docente,
+        "tiene_prestamos": tiene_prestamos,
+        "nombre_docente": nombre_docente,
+    }
+
+    return render(
+        request,
+        "docentes/docente_confirmar_eliminar.html",
+        contexto,
+    )
+
+
+
 
 def limpiar_texto(valor):
     if valor is None:

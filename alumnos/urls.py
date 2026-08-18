@@ -24,7 +24,11 @@ urlpatterns = [
         views.alumno_importar,
         name='importar',
     ),
-
+path(
+    '<int:alumno_id>/historial/',
+    views.alumno_historial,
+    name='historial',
+),
     path(
         '<int:alumno_id>/editar/',
         views.alumno_editar,

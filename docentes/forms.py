@@ -8,16 +8,14 @@ class DocenteForm(forms.ModelForm):
         model = Docente
 
         fields = [
-            'cedula',
-            'nombres',
-            'apellidos',
-            'area',
-            'especialidad',
-            'telefono',
-            'correo',
-            'turno',
-            'activo',
-        ]
+        'cedula',
+        'nombres',
+        'apellidos',
+        'area',
+        'telefono',
+        'correo',
+        'activo',
+    ]
 
         widgets = {
             'cedula': forms.TextInput(
@@ -49,11 +47,6 @@ class DocenteForm(forms.ModelForm):
                 }
             ),
 
-            'especialidad': forms.Select(
-                attrs={
-                    'class': 'campo',
-                }
-            ),
 
             'telefono': forms.TextInput(
                 attrs={
@@ -69,11 +62,7 @@ class DocenteForm(forms.ModelForm):
                 }
             ),
 
-            'turno': forms.Select(
-                attrs={
-                    'class': 'campo',
-                }
-            ),
+            
 
             'activo': forms.CheckboxInput(
                 attrs={

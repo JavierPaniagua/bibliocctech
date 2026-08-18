@@ -117,12 +117,21 @@
                         </td>
 
                         <td>
-                            <a
-                                href="{% url 'alumnos:editar' alumno.id %}"
-                                class="enlace-editar"
-                            >
-                                Editar
-                            </a>
+                            <div class="d-flex flex-wrap gap-2">
+    <a
+        href="{% url 'alumnos:historial' alumno.id %}"
+        class="btn btn-sm btn-outline-primary"
+    >
+        Historial
+    </a>
+
+    <a
+        href="{% url 'alumnos:editar' alumno.id %}"
+        class="btn btn-sm btn-outline-secondary"
+    >
+        Editar
+    </a>
+</div>
                         </td>
                     </tr>
                 {% empty %}

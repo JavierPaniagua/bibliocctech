@@ -25,9 +25,23 @@ urlpatterns = [
         name='importar',
     ),
 
+path(
+    '<int:docente_id>/historial/',
+    views.docente_historial,
+    name='historial',
+),
+
+
     path(
         '<int:docente_id>/editar/',
         views.docente_editar,
         name='editar',
     ),
+    
+    
+    path(
+    '<int:docente_id>/eliminar/',
+    views.docente_eliminar,
+    name='eliminar',
+),
 ]

@@ -84,7 +84,6 @@ def buscar_beneficiario(request):
             for dato in [
                 "Docente",
                 beneficiario.area,
-                beneficiario.especialidad,
             ]
             if dato
         )

@@ -36,10 +36,12 @@ class Docente(models.Model):
     )
 
     especialidad = models.CharField(
-        max_length=20,
-        choices=ESPECIALIDAD_CHOICES,
-        verbose_name='Especialidad',
-    )
+    max_length=20,
+    choices=ESPECIALIDAD_CHOICES,
+    blank=True,
+    default='',
+    verbose_name='Especialidad',
+)
 
     telefono = models.CharField(
         max_length=30,
@@ -55,6 +57,8 @@ class Docente(models.Model):
     turno = models.CharField(
         max_length=10,
         choices=TURNO_CHOICES,
+        blank=True,
+        default='',
         verbose_name='Turno',
     )
 

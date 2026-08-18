@@ -4,7 +4,9 @@ from django.contrib import messages
 from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
+from prestamos.models import Prestamo
 from openpyxl import load_workbook
 
 from .forms import AlumnoForm, ImportarAlumnosForm
@@ -38,7 +40,53 @@ def alumno_lista(request):
         contexto,
     )
 
+def alumno_historial(request, alumno_id):
+    alumno = get_object_or_404(
+        Alumno,
+        id=alumno_id,
+    )
 
+    prestamos = alumno.prestamos.select_related(
+        "ejemplar",
+        "ejemplar__libro",
+    ).order_by(
+        "-fecha_prestamo",
+        "-id",
+    )
+
+    fecha_actual = timezone.localdate()
+
+    cantidad_total = prestamos.count()
+
+    cantidad_activos = prestamos.filter(
+        estado=Prestamo.Estado.ACTIVO,
+    ).count()
+
+    cantidad_devueltos = prestamos.filter(
+        estado=Prestamo.Estado.DEVUELTO,
+    ).count()
+
+    cantidad_vencidos = prestamos.filter(
+        estado=Prestamo.Estado.ACTIVO,
+        fecha_devolucion_prevista__lt=fecha_actual,
+    ).count()
+
+    contexto = {
+        "alumno": alumno,
+        "prestamos": prestamos,
+        "fecha_actual": fecha_actual,
+        "cantidad_total": cantidad_total,
+        "cantidad_activos": cantidad_activos,
+        "cantidad_devueltos": cantidad_devueltos,
+        "cantidad_vencidos": cantidad_vencidos,
+    }
+
+    return render(
+        request,
+        "alumnos/alumno_historial.html",
+        contexto,
+    )
+    
 def alumno_crear(request):
     if request.method == 'POST':
         formulario = AlumnoForm(request.POST)

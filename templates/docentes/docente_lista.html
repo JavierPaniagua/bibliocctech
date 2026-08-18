@@ -32,13 +32,6 @@
 </div>
 </div>
 
-{% if messages %}
-    {% for message in messages %}
-        <div class="mensaje mensaje-{{ message.tags }}">
-            {{ message }}
-        </div>
-    {% endfor %}
-{% endif %}
 
 <div class="panel">
 
@@ -75,10 +68,8 @@
                     <th>Cédula</th>
                     <th>Docente</th>
                     <th>Área</th>
-                    <th>Especialidad</th>
                     <th>Teléfono</th>
                     <th>Correo</th>
-                    <th>Turno</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
@@ -98,9 +89,6 @@
                             {{ docente.area|default:"-" }}
                         </td>
 
-                        <td>
-                            {{ docente.get_especialidad_display }}
-                        </td>
 
                         <td>
                             {{ docente.telefono|default:"-" }}
@@ -110,9 +98,6 @@
                             {{ docente.correo|default:"-" }}
                         </td>
 
-                        <td>
-                            {{ docente.get_turno_display }}
-                        </td>
 
                         <td>
                             {% if docente.activo %}
@@ -127,17 +112,26 @@
                         </td>
 
                         <td>
-                            <a
-                                href="{% url 'docentes:editar' docente.id %}"
-                                class="enlace-editar"
-                            >
-                                Editar
-                            </a>
+                          <div class="d-flex flex-wrap gap-2">
+    <a
+        href="{% url 'docentes:historial' docente.id %}"
+        class="btn btn-sm btn-outline-primary"
+    >
+        Historial
+    </a>
+
+    <a
+        href="{% url 'docentes:editar' docente.id %}"
+        class="btn btn-sm btn-outline-secondary"
+    >
+        Editar
+    </a>
+</div>
                         </td>
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="9" class="sin-registros">
+                        <td colspan="7" class="sin-registros">
                             No se encontraron docentes.
                         </td>
                     </tr>

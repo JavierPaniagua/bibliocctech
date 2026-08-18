@@ -76,7 +76,18 @@
                 class="boton boton-secundario"
             >
                 Cancelar
+                
             </a>
+
+
+            {% if docente %}
+    <a
+        href="{% url 'docentes:eliminar' docente.id %}"
+        class="btn btn-danger ms-auto"
+    >
+        Eliminar docente
+    </a>
+{% endif %}
         </div>
     </form>
 

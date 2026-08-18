@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Eliminar docente | BIBLIOTECH
+{% endblock %}
+
+{% block content %}
+<div class="container py-4" style="max-width: 850px;">
+    <div class="mb-4">
+        <h1 class="h3 mb-1">Administrar docente</h1>
+        <p class="text-secondary mb-0">
+            Confirme la operación que desea realizar.
+        </p>
+    </div>
+
+    <section class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <div class="mb-4">
+                <div class="small text-secondary">
+                    Docente seleccionado
+                </div>
+
+                <div class="fs-4 fw-bold">
+                    {{ nombre_docente }}
+                </div>
+
+                <div class="text-secondary">
+                    Cédula: {{ docente.cedula }}
+                </div>
+            </div>
+
+            {% if tiene_prestamos %}
+                <div class="alert alert-warning">
+                    <h2 class="h5">No se puede eliminar</h2>
+
+                    <p class="mb-0">
+                        Este docente posee préstamos registrados.
+                        Para conservar su historial solamente puede
+                        marcarse como inactivo.
+                    </p>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="d-flex flex-wrap gap-2">
+                        {% if docente.activo %}
+                            <button
+                                type="submit"
+                                name="accion"
+                                value="desactivar"
+                                class="btn btn-warning"
+                                onclick="return confirm(
+                                    '¿Desea marcar este docente como inactivo?'
+                                );"
+                            >
+                                Marcar como inactivo
+                            </button>
+                        {% endif %}
+
+                        <a
+                            href="{% url 'docentes:historial' docente.id %}"
+                            class="btn btn-outline-primary"
+                        >
+                            Ver historial
+                        </a>
+
+                        <a
+                            href="{% url 'docentes:editar' docente.id %}"
+                            class="btn btn-light"
+                        >
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            {% else %}
+                <div class="alert alert-danger">
+                    <h2 class="h5">¿Eliminar definitivamente?</h2>
+
+                    <p class="mb-0">
+                        El docente no posee préstamos registrados.
+                        Si continúa, sus datos serán eliminados
+                        permanentemente.
+                    </p>
+                </div>
+
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="d-flex flex-wrap gap-2">
+                        <button
+                            type="submit"
+                            name="accion"
+                            value="eliminar"
+                            class="btn btn-danger"
+                            onclick="return confirm(
+                                'Esta operación no puede deshacerse. ¿Desea continuar?'
+                            );"
+                        >
+                            Eliminar definitivamente
+                        </button>
+
+                        {% if docente.activo %}
+                            <button
+                                type="submit"
+                                name="accion"
+                                value="desactivar"
+                                class="btn btn-warning"
+                            >
+                                Marcar como inactivo
+                            </button>
+                        {% endif %}
+
+                        <a
+                            href="{% url 'docentes:editar' docente.id %}"
+                            class="btn btn-light"
+                        >
+                            Cancelar
+                        </a>
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </section>
+</div>
+{% endblock %}

@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}
+    Historial de {{ alumno.nombre_visible }} | BIBLIOTECH
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div
+        class="d-flex flex-wrap justify-content-between
+               align-items-start gap-3 mb-4"
+    >
+        <div>
+            <h1 class="h3 mb-1">Historial del alumno</h1>
+            <p class="text-secondary mb-0">
+                Préstamos y devoluciones registrados.
+            </p>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+            <a
+                href="{% url 'alumnos:editar' alumno.id %}"
+                class="btn btn-outline-primary"
+            >
+                Editar alumno
+            </a>
+
+            <a
+                href="{% url 'alumnos:lista' %}"
+                class="btn btn-light"
+            >
+                Volver
+            </a>
+        </div>
+    </div>
+
+    <section class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="small text-secondary">Alumno</div>
+                    <div class="fs-5 fw-bold">
+                        {{ alumno.nombre_visible }}
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="small text-secondary">Cédula</div>
+                    <div class="fw-semibold">{{ alumno.cedula }}</div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="small text-secondary">Estado</div>
+
+                    {% if alumno.activo %}
+                        <span class="badge text-bg-success">Activo</span>
+                    {% else %}
+                        <span class="badge text-bg-secondary">Inactivo</span>
+                    {% endif %}
+                </div>
+
+                <div class="col-md-4">
+                    <div class="small text-secondary">Curso</div>
+                    <div class="fw-semibold">
+                        {{ alumno.curso }}
+                        {% if alumno.seccion %}
+                            — {{ alumno.seccion }}
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="small text-secondary">Especialidad</div>
+                    <div class="fw-semibold">
+                        {{ alumno.especialidad|default:"-" }}
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="small text-secondary">Turno</div>
+                    <div class="fw-semibold">
+                        {{ alumno.get_turno_display }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body border-start border-primary border-4">
+                    <div class="fs-3 fw-bold">{{ cantidad_total }}</div>
+                    <div class="text-secondary">Total de préstamos</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body border-start border-warning border-4">
+                    <div class="fs-3 fw-bold">{{ cantidad_activos }}</div>
+                    <div class="text-secondary">Préstamos activos</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body border-start border-success border-4">
+                    <div class="fs-3 fw-bold">{{ cantidad_devueltos }}</div>
+                    <div class="text-secondary">Libros devueltos</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body border-start border-danger border-4">
+                    <div class="fs-3 fw-bold">{{ cantidad_vencidos }}</div>
+                    <div class="text-secondary">Préstamos vencidos</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <section class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <h2 class="h5 mb-3">Movimientos registrados</h2>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-primary">
+                        <tr>
+                            <th>Inventario</th>
+                            <th>Libro</th>
+                            <th>Préstamo</th>
+                            <th>Fecha prevista</th>
+                            <th>Devolución real</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for prestamo in prestamos %}
+                            <tr>
+                                <td class="fw-bold">
+                                    {{ prestamo.ejemplar.numero_inventario }}
+                                </td>
+
+                                <td>
+                                    <div class="fw-semibold">
+                                        {{ prestamo.ejemplar.libro.titulo }}
+                                    </div>
+                                    <div class="small text-secondary">
+                                        {{ prestamo.ejemplar.libro.autor|default:"-" }}
+                                    </div>
+                                </td>
+
+                                <td class="text-capitalize">
+                                    {{ prestamo.fecha_prestamo|date:"l d/m/Y" }}
+                                </td>
+
+                                <td class="text-capitalize">
+                                    {{ prestamo.fecha_devolucion_prevista|date:"l d/m/Y" }}
+                                </td>
+
+                                <td class="text-capitalize">
+                                    {% if prestamo.fecha_devolucion_real %}
+                                        {{ prestamo.fecha_devolucion_real|date:"l d/m/Y" }}
+                                    {% else %}
+                                        -
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if prestamo.esta_vencido %}
+                                        <span class="badge text-bg-danger">
+                                            Vencido
+                                        </span>
+                                        <div class="small text-danger mt-1">
+                                            {{ prestamo.dias_atraso }}
+                                            día(s) hábil(es)
+                                        </div>
+                                    {% elif prestamo.estado == "ACTIVO" %}
+                                        <span class="badge text-bg-warning">
+                                            Prestado
+                                        </span>
+                                    {% else %}
+                                        <span class="badge text-bg-success">
+                                            Devuelto
+                                        </span>
+                                    {% endif %}
+                                </td>
+
+                                <td>
+                                    {% if prestamo.estado == "ACTIVO" %}
+                                        <a
+                                            href="{% url 'prestamos:devolver' prestamo.id %}"
+                                            class="btn btn-sm btn-success"
+                                        >
+                                            Devolver
+                                        </a>
+                                    {% else %}
+                                        <span class="text-secondary">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td
+                                    colspan="7"
+                                    class="text-center text-secondary py-5"
+                                >
+                                    Este alumno todavía no posee préstamos registrados.
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+</div>
+{% endblock %}

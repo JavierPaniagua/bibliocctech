@@ -8,10 +8,15 @@ Promoción anual | BIBLIOTECH
 <div class="container py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
         <div>
-            <h1 class="h2 mb-1">Promoción anual</h1>
+            <h1 class="h2 mb-1">
+                Promoción anual
+            </h1>
+
             <p class="text-muted mb-0">
-                Promoción del año {{ anio_origen }}
-                al año {{ anio_destino }}.
+                Promoción del año
+                {{ anio_origen }}
+                al año
+                {{ anio_destino }}.
             </p>
         </div>
 
@@ -23,8 +28,12 @@ Promoción anual | BIBLIOTECH
 
     {% if promocion_realizada %}
         <div class="alert alert-info">
-            <strong>Promoción ya realizada.</strong>
-            La promoción al año {{ anio_destino }}
+            <strong>
+                Promoción ya realizada.
+            </strong>
+
+            La promoción al año
+            {{ anio_destino }}
             fue ejecutada el
             {{ promocion_realizada.fecha_ejecucion|date:"d/m/Y H:i" }}.
         </div>
@@ -33,55 +42,61 @@ Promoción anual | BIBLIOTECH
     <div class="row g-3 mb-4">
         <div class="col-md-4">
             <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="fs-2 fw-bold text-primary">
+                <div class="card-body p-4">
+                    <div class="display-6 fw-bold text-primary">
                         {{ cantidad_primero }}
                     </div>
-                    <div class="fw-semibold">
+
+                    <div class="fw-bold">
                         Pasarán a segundo curso
                     </div>
-                    <small class="text-muted">
+
+                    <div class="text-muted small">
                         Actualmente están en primero.
-                    </small>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="col-md-4">
             <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="fs-2 fw-bold text-primary">
+                <div class="card-body p-4">
+                    <div class="display-6 fw-bold text-primary">
                         {{ cantidad_segundo }}
                     </div>
-                    <div class="fw-semibold">
+
+                    <div class="fw-bold">
                         Pasarán a tercer curso
                     </div>
-                    <small class="text-muted">
+
+                    <div class="text-muted small">
                         Actualmente están en segundo.
-                    </small>
+                    </div>
                 </div>
             </div>
         </div>
 
         <div class="col-md-4">
             <div class="card h-100 border-0 shadow-sm">
-                <div class="card-body">
-                    <div class="fs-2 fw-bold text-success">
+                <div class="card-body p-4">
+                    <div class="display-6 fw-bold text-success">
                         {{ cantidad_tercero }}
                     </div>
-                    <div class="fw-semibold">
+
+                    <div class="fw-bold">
                         Quedarán como egresados
                     </div>
-                    <small class="text-muted">
+
+                    <div class="text-muted small">
                         No serán eliminados del sistema.
-                    </small>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     {% if prestamos_pendientes %}
-        <div class="alert alert-danger">
+        <div class="alert alert-danger mb-4">
             <h2 class="h5">
                 Alumnos con préstamos pendientes
             </h2>
@@ -93,11 +108,17 @@ Promoción anual | BIBLIOTECH
 
             <ul class="mb-0">
                 {% for prestamo in prestamos_pendientes %}
-                    <li>
-                        {{ prestamo.alumno.nombre_visible }}
-                        — Cédula {{ prestamo.alumno.cedula }}
+                    <li class="mb-1">
+                        <strong>
+                            {{ prestamo.alumno.nombre_visible }}
+                        </strong>
+
+                        — Cédula
+                        {{ prestamo.alumno.cedula }}
+
                         — Inventario
                         {{ prestamo.ejemplar.numero_inventario }}
+
                         — {{ prestamo.ejemplar.libro.titulo }}
                     </li>
                 {% endfor %}
@@ -106,7 +127,7 @@ Promoción anual | BIBLIOTECH
     {% endif %}
 
     {% if cursos_no_reconocidos %}
-        <div class="alert alert-danger">
+        <div class="alert alert-danger mb-4">
             <h2 class="h5">
                 Cursos que deben corregirse
             </h2>
@@ -118,9 +139,13 @@ Promoción anual | BIBLIOTECH
 
             <ul class="mb-0">
                 {% for alumno in cursos_no_reconocidos %}
-                    <li>
-                        {{ alumno.nombre_visible }}
+                    <li class="mb-1">
+                        <strong>
+                            {{ alumno.nombre_visible }}
+                        </strong>
+
                         — Cédula {{ alumno.cedula }}
+
                         — Curso “{{ alumno.curso }}”
                     </li>
                 {% endfor %}
@@ -128,45 +153,61 @@ Promoción anual | BIBLIOTECH
         </div>
     {% endif %}
 
-    <div class="card border-0 shadow-sm">
+    <div class="card border-0 shadow-sm mb-4">
         <div class="card-body p-4">
             <h2 class="h4">
                 Confirmación
             </h2>
 
             <p>
-                Al confirmar, el sistema realizará estos cambios:
+                Al confirmar, el sistema realizará
+                los siguientes cambios:
             </p>
 
             <ul>
                 <li>
                     Los alumnos de 1° pasarán a 2°.
                 </li>
+
                 <li>
                     Los alumnos de 2° pasarán a 3°.
                 </li>
+
                 <li>
-                    Los alumnos de 3° quedarán inactivos
-                    como egresados.
+                    Los alumnos de 3° quedarán
+                    inactivos como egresados.
                 </li>
+
                 <li>
-                    La sección y la especialidad no cambiarán.
+                    La sección y la especialidad
+                    no cambiarán.
                 </li>
+
                 <li>
                     Ningún alumno será eliminado.
+                </li>
+
+                <li>
+                    La promoción quedará registrada
+                    en el historial.
                 </li>
             </ul>
 
             {% if puede_confirmar %}
+                <div class="alert alert-warning">
+                    <strong>Importante:</strong>
+                    cree un respaldo de la base de datos
+                    antes de confirmar esta operación.
+                </div>
+
                 <form method="post"
-                      onsubmit="return confirm(
-                          '¿Confirma la promoción anual? Esta operación modificará los cursos de los alumnos.'
-                      );">
+                      onsubmit="return confirm('¿Confirma la promoción anual? Se modificarán los cursos y los alumnos de tercer curso quedarán como egresados.');">
                     {% csrf_token %}
 
                     <button type="submit"
                             class="btn btn-primary">
-                        Confirmar promoción a {{ anio_destino }}
+                        Confirmar promoción a
+                        {{ anio_destino }}
                     </button>
 
                     <a href="{% url 'alumnos:lista' %}"
@@ -185,6 +226,63 @@ Promoción anual | BIBLIOTECH
                    class="btn btn-light">
                     Volver
                 </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <h2 class="h4 mb-3">
+                Historial de promociones
+            </h2>
+
+            {% if historial_promociones %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-primary">
+                            <tr>
+                                <th>Promoción</th>
+                                <th>Pasaron a 2°</th>
+                                <th>Pasaron a 3°</th>
+                                <th>Egresados</th>
+                                <th>Fecha</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            {% for promocion in historial_promociones %}
+                                <tr>
+                                    <td class="fw-bold">
+                                        {{ promocion.anio_origen }}
+                                        →
+                                        {{ promocion.anio_destino }}
+                                    </td>
+
+                                    <td>
+                                        {{ promocion.alumnos_primero_a_segundo }}
+                                    </td>
+
+                                    <td>
+                                        {{ promocion.alumnos_segundo_a_tercero }}
+                                    </td>
+
+                                    <td>
+                                        {{ promocion.alumnos_egresados }}
+                                    </td>
+
+                                    <td>
+                                        {{ promocion.fecha_ejecucion|date:"d/m/Y H:i" }}
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% else %}
+                <div class="alert alert-light border mb-0">
+                    Todavía no se realizó ninguna
+                    promoción anual.
+                </div>
             {% endif %}
         </div>
     </div>

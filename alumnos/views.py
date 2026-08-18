@@ -1132,7 +1132,8 @@ def promocion_anual(request):
                 (
                     'No se puede confirmar la '
                     'promoción porque existen '
-                    'cursos que deben corregirse.'
+                    'alumnos con cursos que '
+                    'deben corregirse.'
                 ),
             )
 
@@ -1165,6 +1166,7 @@ def promocion_anual(request):
                 alumno.anio_lectivo = (
                     anio_destino
                 )
+                alumno.anio_egreso = None
 
                 alumno.save(
                     update_fields=[
@@ -1181,6 +1183,7 @@ def promocion_anual(request):
                 alumno.anio_lectivo = (
                     anio_destino
                 )
+                alumno.anio_egreso = None
 
                 alumno.save(
                     update_fields=[
@@ -1240,34 +1243,61 @@ def promocion_anual(request):
             'alumnos:lista'
         )
 
+    historial_promociones = (
+        PromocionAnual.objects.all()
+        .order_by(
+            '-anio_destino'
+        )
+    )
+
     contexto = {
         'anio_origen': anio_origen,
         'anio_destino': anio_destino,
+
         'promocion_realizada': (
             promocion_realizada
         ),
+
+        'historial_promociones': (
+            historial_promociones
+        ),
+
         'cantidad_primero': len(
             resumen['primero']
         ),
+
         'cantidad_segundo': len(
             resumen['segundo']
         ),
+
         'cantidad_tercero': len(
             resumen['tercero']
         ),
-        'primero': resumen['primero'],
-        'segundo': resumen['segundo'],
-        'tercero': resumen['tercero'],
+
+        'primero': (
+            resumen['primero']
+        ),
+
+        'segundo': (
+            resumen['segundo']
+        ),
+
+        'tercero': (
+            resumen['tercero']
+        ),
+
         'cursos_no_reconocidos': (
             resumen[
                 'cursos_no_reconocidos'
             ]
         ),
+
         'prestamos_pendientes': (
             resumen[
                 'prestamos_pendientes'
             ]
         ),
+
         'puede_confirmar': (
             not promocion_realizada
             and not resumen[

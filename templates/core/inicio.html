@@ -3,73 +3,151 @@
 {% block title %}Inicio | BIBLIOTECH{% endblock %}
 
 {% block content %}
+
+<style>
+    .dato-enlace {
+        color: inherit;
+        text-decoration: none;
+        transition:
+            transform 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+
+    .dato-enlace:hover {
+        color: inherit;
+        text-decoration: none;
+        transform: translateY(-3px);
+        box-shadow: 0 6px 16px rgba(24, 58, 120, 0.15);
+    }
+</style>
+
 <section class="bienvenida">
     <h2>Panel principal</h2>
-    <p>Seleccione la operación que desea realizar.</p>
+
+    <p>
+        Seleccione la operación que desea realizar.
+    </p>
 </section>
 
 <section class="tarjetas">
-    <a href="{% url 'alumnos:lista' %}" class="tarjeta tarjeta-azul">
+
+    <a
+        href="{% url 'alumnos:lista' %}"
+        class="tarjeta tarjeta-azul"
+    >
         <span class="icono">👥</span>
+
         <div>
             <h3>Alumnos</h3>
-            <p>Registrar, importar y buscar alumnos.</p>
+
+            <p>
+                Registrar, importar y buscar alumnos.
+            </p>
         </div>
     </a>
 
-    <a href="{% url 'docentes:lista' %}" class="tarjeta tarjeta-docentes">
+    <a
+        href="{% url 'docentes:lista' %}"
+        class="tarjeta tarjeta-docentes"
+    >
         <span class="icono">👨‍🏫</span>
+
         <div>
             <h3>Docentes</h3>
-            <p>Registrar, importar y buscar docentes.</p>
+
+            <p>
+                Registrar, importar y buscar docentes.
+            </p>
         </div>
     </a>
 
-    <a href="{% url 'libros:lista' %}" class="tarjeta tarjeta-verde">
+    <a
+        href="{% url 'libros:lista' %}"
+        class="tarjeta tarjeta-verde"
+    >
         <span class="icono">📚</span>
+
         <div>
             <h3>Libros</h3>
-            <p>Registrar libros y controlar ejemplares.</p>
+
+            <p>
+                Registrar libros y controlar ejemplares.
+            </p>
         </div>
     </a>
 
-    <a href="{% url 'prestamos:crear' %}" class="tarjeta tarjeta-naranja">
+    <a
+        href="{% url 'prestamos:crear' %}"
+        class="tarjeta tarjeta-naranja"
+    >
         <span class="icono">📤</span>
+
         <div>
             <h3>Registrar préstamo</h3>
-            <p>Entregar un libro a un alumno o docente.</p>
+
+            <p>
+                Entregar un libro a un alumno o docente.
+            </p>
         </div>
     </a>
 
-    <a href="{% url 'prestamos:lista' %}?estado=activos" class="tarjeta tarjeta-celeste">
+    <a
+        href="{% url 'prestamos:lista' %}?estado=activos"
+        class="tarjeta tarjeta-celeste"
+    >
         <span class="icono">📥</span>
+
         <div>
             <h3>Registrar devolución</h3>
-            <p>Buscar un préstamo activo y devolver el libro.</p>
+
+            <p>
+                Buscar un préstamo activo y devolver el libro.
+            </p>
         </div>
     </a>
 
-    <a href="{% url 'prestamos:lista' %}?estado=vencidos" class="tarjeta tarjeta-roja">
+    <a
+        href="{% url 'prestamos:lista' %}?estado=vencidos"
+        class="tarjeta tarjeta-roja"
+    >
         <span class="icono">⏰</span>
+
         <div>
             <h3>Préstamos vencidos</h3>
-            <p>Consultar libros que no fueron devueltos.</p>
+
+            <p>
+                Consultar libros que no fueron devueltos.
+            </p>
         </div>
     </a>
 
-    <a href="{% url 'core:reportes' %}" class="tarjeta tarjeta-morada">
+    <a
+        href="{% url 'core:reportes' %}"
+        class="tarjeta tarjeta-morada"
+    >
         <span class="icono">📊</span>
+
         <div>
             <h3>Reportes</h3>
-            <p>Consultar préstamos, devoluciones y movimientos.</p>
+
+            <p>
+                Consultar préstamos, devoluciones y movimientos.
+            </p>
         </div>
     </a>
 
-    <a href="{% url 'libros:etiquetas_mosaico' %}" class="tarjeta tarjeta-etiquetas">
+    <a
+        href="{% url 'libros:etiquetas_mosaico' %}"
+        class="tarjeta tarjeta-etiquetas"
+    >
         <span class="icono">🏷️</span>
+
         <div>
             <h3>Imprimir etiquetas</h3>
-            <p>Preparar etiquetas individuales o en mosaico.</p>
+
+            <p>
+                Preparar etiquetas individuales o en mosaico.
+            </p>
         </div>
     </a>
 
@@ -77,19 +155,30 @@
         method="post"
         action="{% url 'core:crear_respaldo' %}"
         class="formulario-tarjeta"
-        onsubmit="return confirm('¿Desea crear y descargar una copia de seguridad?');"
+        onsubmit="return confirm(
+            '¿Desea crear y descargar una copia de seguridad?'
+        );"
     >
         {% csrf_token %}
-        <button type="submit" class="tarjeta tarjeta-respaldo tarjeta-boton">
+
+        <button
+            type="submit"
+            class="tarjeta tarjeta-respaldo tarjeta-boton"
+        >
             <span class="icono">💾</span>
+
             <span>
-                <strong class="titulo-tarjeta">Crear respaldo</strong>
+                <strong class="titulo-tarjeta">
+                    Crear respaldo
+                </strong>
+
                 <span class="descripcion-tarjeta">
                     Guardar y descargar una copia de seguridad.
                 </span>
             </span>
         </button>
     </form>
+
 </section>
 
 <section class="resumen">
@@ -97,41 +186,63 @@
 
     <div class="resumen-tarjetas">
 
-        <div class="dato">
-    <strong>{{ alumnos_activos }}</strong>
-    <span>Alumnos activos</span>
-</div>
+        <a
+            href="{% url 'alumnos:lista' %}"
+            class="dato dato-enlace"
+        >
+            <strong>{{ alumnos_activos }}</strong>
+            <span>Alumnos activos</span>
+        </a>
 
-<div class="dato">
-    <strong>{{ docentes_activos }}</strong>
-    <span>Docentes activos</span>
-</div>
+        <a
+            href="{% url 'docentes:lista' %}"
+            class="dato dato-enlace"
+        >
+            <strong>{{ docentes_activos }}</strong>
+            <span>Docentes activos</span>
+        </a>
 
-
-        <div class="dato">
+        <a
+            href="{% url 'libros:lista' %}"
+            class="dato dato-enlace"
+        >
             <strong>{{ total_titulos }}</strong>
             <span>Títulos registrados</span>
-        </div>
+        </a>
 
-        <div class="dato">
+        <a
+            href="{% url 'libros:lista' %}"
+            class="dato dato-enlace"
+        >
             <strong>{{ total_ejemplares }}</strong>
             <span>Ejemplares físicos</span>
-        </div>
+        </a>
 
-        <div class="dato">
+        <a
+            href="{% url 'libros:lista' %}"
+            class="dato dato-enlace"
+        >
             <strong>{{ ejemplares_disponibles }}</strong>
             <span>Ejemplares disponibles</span>
-        </div>
+        </a>
 
-        <div class="dato">
+        <a
+            href="{% url 'prestamos:lista' %}?estado=activos"
+            class="dato dato-enlace"
+        >
             <strong>{{ prestamos_activos }}</strong>
             <span>Préstamos activos</span>
-        </div>
+        </a>
 
-        <div class="dato dato-alerta">
+        <a
+            href="{% url 'prestamos:lista' %}?estado=vencidos"
+            class="dato dato-alerta dato-enlace"
+        >
             <strong>{{ prestamos_vencidos }}</strong>
             <span>Préstamos vencidos</span>
-        </div>
+        </a>
+
     </div>
 </section>
+
 {% endblock %}

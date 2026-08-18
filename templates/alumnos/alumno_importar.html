@@ -1,154 +1,279 @@
 {% extends 'base.html' %}
 
 {% block title %}
-    Importar alumnos | Biblioteca Escolar
+Importar alumnos | BIBLIOTECH
 {% endblock %}
 
 {% block content %}
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <h1 class="h2 mb-1">
+                Importar alumnos desde Excel
+            </h1>
 
-<div class="cabecera-pagina">
-    <div>
-        <h2>Importar alumnos desde Excel</h2>
+            <p class="text-muted mb-0">
+                Carga y actualización de la lista oficial
+                de alumnos por año lectivo.
+            </p>
+        </div>
 
-        <p>
-            Seleccione la plantilla completada con los datos
-            de los estudiantes.
-        </p>
+        <a href="{% url 'alumnos:lista' %}"
+           class="btn btn-light">
+            Volver
+        </a>
     </div>
 
-    <a
-        href="{% url 'alumnos:lista' %}"
-        class="boton boton-secundario"
-    >
-        Volver
-    </a>
-</div>
+    <div class="row g-4">
+        <div class="col-lg-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <div class="alert alert-info">
+                        <h2 class="h5">
+                            Funcionamiento
+                        </h2>
 
-<div class="panel formulario-panel">
+                        <ul class="mb-0">
+                            <li>
+                                Seleccione el año lectivo
+                                correspondiente.
+                            </li>
+                            <li>
+                                Utilice la plantilla oficial.
+                            </li>
+                            <li>
+                                Las cédulas nuevas crearán alumnos.
+                            </li>
+                            <li>
+                                Las cédulas existentes actualizarán
+                                sus datos.
+                            </li>
+                            <li>
+                                Los alumnos ausentes no serán
+                                eliminados.
+                            </li>
+                            <li>
+                                Si existe una fila incorrecta,
+                                no se guardará ningún registro.
+                            </li>
+                        </ul>
+                    </div>
 
-    <div class="aviso-importacion">
-        <h3>Antes de importar</h3>
+                    <form method="post"
+                          enctype="multipart/form-data">
+                        {% csrf_token %}
 
-        <ul>
-            <li>
-                Utilice la plantilla oficial de alumnos.
-            </li>
+                        {% if formulario.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {% for error in formulario.non_field_errors %}
+                                    <div>{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
 
-            <li>
-                No cambie los nombres de las columnas.
-            </li>
+                        <div class="mb-3">
+                            <label for="{{ formulario.anio_lectivo.id_for_label }}"
+                                   class="form-label fw-semibold">
+                                {{ formulario.anio_lectivo.label }}
+                            </label>
 
-            <li>
-                La cédula no debe repetirse.
-            </li>
+                            {{ formulario.anio_lectivo }}
 
-            <li>
-                Las especialidades permitidas son
-                Electrónica y Electricidad.
-            </li>
+                            {% if formulario.anio_lectivo.help_text %}
+                                <div class="form-text">
+                                    {{ formulario.anio_lectivo.help_text }}
+                                </div>
+                            {% endif %}
 
-            <li>
-                El archivo debe estar guardado como .xlsx.
-            </li>
-        </ul>
+                            {% for error in formulario.anio_lectivo.errors %}
+                                <div class="text-danger small fw-semibold mt-1">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="{{ formulario.archivo.id_for_label }}"
+                                   class="form-label fw-semibold">
+                                {{ formulario.archivo.label }}
+                            </label>
+
+                            {{ formulario.archivo }}
+
+                            <div class="form-text">
+                                Solo se admiten archivos .xlsx
+                                de hasta 5 MB.
+                            </div>
+
+                            {% for error in formulario.archivo.errors %}
+                                <div class="text-danger small fw-semibold mt-1">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2">
+                            <button type="submit"
+                                    class="btn btn-primary">
+                                Importar alumnos
+                            </button>
+
+                            <a href="{% url 'alumnos:lista' %}"
+                               class="btn btn-light">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-7">
+            {% if resultados %}
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h2 class="h4 mb-1">
+                            Resultado de la importación
+                        </h2>
+
+                        <p class="text-muted">
+                            Año lectivo:
+                            <strong>
+                                {{ resultados.anio_lectivo }}
+                            </strong>
+                        </p>
+
+                        {% if resultados.guardado %}
+                            <div class="alert alert-success">
+                                La planilla fue procesada
+                                correctamente.
+                            </div>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-sm-6">
+                                    <div class="p-3 bg-light rounded border-start border-primary border-4 h-100">
+                                        <div class="fs-3 fw-bold text-primary">
+                                            {{ resultados.creados }}
+                                        </div>
+                                        <div>
+                                            Alumnos nuevos
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <div class="p-3 bg-light rounded border-start border-success border-4 h-100">
+                                        <div class="fs-3 fw-bold text-success">
+                                            {{ resultados.actualizados }}
+                                        </div>
+                                        <div>
+                                            Alumnos actualizados
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <div class="p-3 bg-light rounded border-start border-secondary border-4 h-100">
+                                        <div class="fs-3 fw-bold">
+                                            {{ resultados.sin_cambios }}
+                                        </div>
+                                        <div>
+                                            Registros sin cambios
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-sm-6">
+                                    <div class="p-3 bg-light rounded border-start border-warning border-4 h-100">
+                                        <div class="fs-3 fw-bold text-warning">
+                                            {{ resultados.ausentes }}
+                                        </div>
+                                        <div>
+                                            Alumnos actuales no incluidos
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {% if resultados.ausentes %}
+                                <div class="alert alert-warning">
+                                    <strong>Atención:</strong>
+                                    existen
+                                    {{ resultados.ausentes }}
+                                    alumnos activos del año
+                                    {{ resultados.anio_lectivo }}
+                                    que no aparecen en el Excel.
+                                    No fueron eliminados ni
+                                    desactivados.
+                                </div>
+                            {% endif %}
+
+                            <a href="{% url 'alumnos:lista' %}"
+                               class="btn btn-primary">
+                                Ver alumnos
+                            </a>
+                        {% else %}
+                            <div class="alert alert-danger">
+                                <strong>
+                                    La importación fue cancelada.
+                                </strong>
+
+                                No se guardó ni actualizó ningún
+                                alumno porque existen filas que
+                                deben corregirse.
+                            </div>
+
+                            {% if resultados.errores %}
+                                <div class="border rounded p-3 bg-light"
+                                     style="max-height: 360px; overflow-y: auto;">
+                                    <h3 class="h5">
+                                        Correcciones necesarias
+                                    </h3>
+
+                                    <ul class="mb-0">
+                                        {% for error in resultados.errores %}
+                                            <li class="mb-1">
+                                                {{ error }}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                </div>
+            {% else %}
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h2 class="h4">
+                            Preparación de la planilla
+                        </h2>
+
+                        <p>
+                            La hoja debe llamarse
+                            <strong>Alumnos</strong>
+                            y conservar las columnas oficiales.
+                        </p>
+
+                        <p class="mb-2">
+                            Columnas requeridas:
+                        </p>
+
+                        <ol class="mb-0">
+                            <li>Cédula</li>
+                            <li>Nombres</li>
+                            <li>Apellidos</li>
+                            <li>Curso</li>
+                            <li>Sección</li>
+                            <li>Especialidad</li>
+                            <li>Turno</li>
+                            <li>Teléfono</li>
+                            <li>Activo</li>
+                        </ol>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
     </div>
-
-    <form
-        method="post"
-        enctype="multipart/form-data"
-        novalidate
-    >
-        {% csrf_token %}
-
-        <div class="grupo-campo">
-            <label for="{{ formulario.archivo.id_for_label }}">
-                {{ formulario.archivo.label }}
-            </label>
-
-            {{ formulario.archivo }}
-
-            {% for error in formulario.archivo.errors %}
-                <span class="error-campo">
-                    {{ error }}
-                </span>
-            {% endfor %}
-        </div>
-
-        <div class="acciones-formulario">
-            <button
-                type="submit"
-                class="boton boton-primario"
-            >
-                Importar alumnos
-            </button>
-
-            <a
-                href="{% url 'alumnos:lista' %}"
-                class="boton boton-secundario"
-            >
-                Cancelar
-            </a>
-        </div>
-    </form>
-
 </div>
-
-{% if resultados %}
-
-    <section class="resultado-importacion">
-
-        <h2>Resultado de la importación</h2>
-
-        <div class="resumen-importacion">
-
-            <div class="resultado resultado-correcto">
-                <strong>{{ resultados.importados }}</strong>
-                <span>Alumnos importados</span>
-            </div>
-
-            <div class="resultado resultado-duplicado">
-                <strong>{{ resultados.duplicados }}</strong>
-                <span>Registros duplicados</span>
-            </div>
-
-            <div class="resultado resultado-error">
-                <strong>{{ resultados.cantidad_errores }}</strong>
-                <span>Filas con observaciones</span>
-            </div>
-
-        </div>
-
-        {% if resultados.errores %}
-
-            <div class="lista-errores">
-                <h3>Observaciones encontradas</h3>
-
-                <ul>
-                    {% for error in resultados.errores %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-
-        {% else %}
-
-            <div class="mensaje mensaje-success">
-                Todos los alumnos fueron importados correctamente.
-            </div>
-
-        {% endif %}
-
-        {% if resultados.importados > 0 %}
-            <a
-                href="{% url 'alumnos:lista' %}"
-                class="boton boton-primario"
-            >
-                Ver alumnos registrados
-            </a>
-        {% endif %}
-
-    </section>
-
-{% endif %}
-
 {% endblock %}

@@ -175,7 +175,9 @@
 
                         <td>
                             {% if prestamo.fecha_devolucion_real %}
-                                {{ prestamo.fecha_devolucion_real|date:"d/m/Y" }}
+                                <span style="text-transform: capitalize;">
+    {{ prestamo.fecha_devolucion_real|date:"l d/m/Y" }}
+</span>
                             {% else %}
                                 <span style="text-transform: capitalize;">
     {{ prestamo.fecha_devolucion_prevista|date:"l d/m/Y" }}
@@ -241,6 +243,72 @@
     </div>
 
 </div>
+
+<div class="d-flex flex-column gap-3 pt-3 mt-3 border-top">
+    <div class="text-secondary">
+        Total encontrado:
+        <strong>{{ total_encontrados }}</strong>
+        préstamo{{ total_encontrados|pluralize }}
+    </div>
+
+    {% if prestamos.paginator.num_pages > 1 %}
+        <nav aria-label="Páginas de préstamos">
+            <ul class="pagination justify-content-center mb-0">
+
+                {% if prestamos.has_previous %}
+                    <li class="page-item">
+                        <a
+                            class="page-link"
+                            href="?q={{ busqueda|urlencode }}&estado={{ filtro }}&pagina={{ prestamos.previous_page_number }}"
+                        >
+                            Anterior
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Anterior</span>
+                    </li>
+                {% endif %}
+
+                {% for numero in prestamos.paginator.page_range %}
+                    {% if numero == prestamos.number %}
+                        <li class="page-item active">
+                            <span class="page-link">
+                                {{ numero }}
+                            </span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a
+                                class="page-link"
+                                href="?q={{ busqueda|urlencode }}&estado={{ filtro }}&pagina={{ numero }}"
+                            >
+                                {{ numero }}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if prestamos.has_next %}
+                    <li class="page-item">
+                        <a
+                            class="page-link"
+                            href="?q={{ busqueda|urlencode }}&estado={{ filtro }}&pagina={{ prestamos.next_page_number }}"
+                        >
+                            Siguiente
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Siguiente</span>
+                    </li>
+                {% endif %}
+
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+
 
 <style>
     .prestamos-tarjeta {

@@ -140,9 +140,68 @@
         </table>
     </div>
 
-    <p class="cantidad-registros">
-        Total encontrado: {{ docentes|length }}
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4">
+    <p class="cantidad-registros mb-0">
+        Total encontrado: {{ total_encontrados }}
     </p>
+
+    {% if docentes.paginator.num_pages > 1 %}
+        <nav aria-label="Páginas de docentes">
+            <ul class="pagination mb-0">
+
+                {% if docentes.has_previous %}
+                    <li class="page-item">
+                        <a
+                            class="page-link"
+                            href="?buscar={{ busqueda|urlencode }}&pagina={{ docentes.previous_page_number }}"
+                        >
+                            Anterior
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Anterior</span>
+                    </li>
+                {% endif %}
+
+                {% for numero in docentes.paginator.page_range %}
+                    {% if numero == docentes.number %}
+                        <li class="page-item active">
+                            <span class="page-link">
+                                {{ numero }}
+                            </span>
+                        </li>
+                    {% else %}
+                        <li class="page-item">
+                            <a
+                                class="page-link"
+                                href="?buscar={{ busqueda|urlencode }}&pagina={{ numero }}"
+                            >
+                                {{ numero }}
+                            </a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+
+                {% if docentes.has_next %}
+                    <li class="page-item">
+                        <a
+                            class="page-link"
+                            href="?buscar={{ busqueda|urlencode }}&pagina={{ docentes.next_page_number }}"
+                        >
+                            Siguiente
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">Siguiente</span>
+                    </li>
+                {% endif %}
+
+            </ul>
+        </nav>
+    {% endif %}
+</div>
 
 </div>
 

@@ -1,6 +1,7 @@
 from django import forms
 
 from .models import Alumno
+from django.utils import timezone
 
 
 class AlumnoForm(forms.ModelForm):
@@ -101,11 +102,28 @@ class AlumnoForm(forms.ModelForm):
         return cedula
 
 class ImportarAlumnosForm(forms.Form):
+    anio_lectivo = forms.IntegerField(
+        label='Año lectivo',
+        min_value=2026,
+        max_value=2100,
+        initial=lambda: timezone.localdate().year,
+        widget=forms.NumberInput(
+            attrs={
+                'class': 'form-control',
+                'placeholder': 'Ejemplo: 2027',
+            }
+        ),
+        help_text=(
+            'Indique el año al que pertenece la lista '
+            'oficial de alumnos.'
+        ),
+    )
+
     archivo = forms.FileField(
         label='Planilla Excel',
         widget=forms.ClearableFileInput(
             attrs={
-                'class': 'campo',
+                'class': 'form-control',
                 'accept': '.xlsx',
             }
         ),
@@ -116,7 +134,8 @@ class ImportarAlumnosForm(forms.Form):
 
         if not archivo.name.lower().endswith('.xlsx'):
             raise forms.ValidationError(
-                'Seleccione un archivo de Excel con extensión .xlsx.'
+                'Seleccione un archivo de Excel '
+                'con extensión .xlsx.'
             )
 
         if archivo.size > 5 * 1024 * 1024:

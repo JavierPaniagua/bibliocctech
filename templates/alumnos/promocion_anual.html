@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Promoción anual | BIBLIOTECH
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-start gap-3 mb-4">
+        <div>
+            <h1 class="h2 mb-1">Promoción anual</h1>
+            <p class="text-muted mb-0">
+                Promoción del año {{ anio_origen }}
+                al año {{ anio_destino }}.
+            </p>
+        </div>
+
+        <a href="{% url 'alumnos:lista' %}"
+           class="btn btn-light">
+            Volver
+        </a>
+    </div>
+
+    {% if promocion_realizada %}
+        <div class="alert alert-info">
+            <strong>Promoción ya realizada.</strong>
+            La promoción al año {{ anio_destino }}
+            fue ejecutada el
+            {{ promocion_realizada.fecha_ejecucion|date:"d/m/Y H:i" }}.
+        </div>
+    {% endif %}
+
+    <div class="row g-3 mb-4">
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="fs-2 fw-bold text-primary">
+                        {{ cantidad_primero }}
+                    </div>
+                    <div class="fw-semibold">
+                        Pasarán a segundo curso
+                    </div>
+                    <small class="text-muted">
+                        Actualmente están en primero.
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="fs-2 fw-bold text-primary">
+                        {{ cantidad_segundo }}
+                    </div>
+                    <div class="fw-semibold">
+                        Pasarán a tercer curso
+                    </div>
+                    <small class="text-muted">
+                        Actualmente están en segundo.
+                    </small>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card h-100 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="fs-2 fw-bold text-success">
+                        {{ cantidad_tercero }}
+                    </div>
+                    <div class="fw-semibold">
+                        Quedarán como egresados
+                    </div>
+                    <small class="text-muted">
+                        No serán eliminados del sistema.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if prestamos_pendientes %}
+        <div class="alert alert-danger">
+            <h2 class="h5">
+                Alumnos con préstamos pendientes
+            </h2>
+
+            <p>
+                Deben devolver los libros antes de realizar
+                la promoción anual.
+            </p>
+
+            <ul class="mb-0">
+                {% for prestamo in prestamos_pendientes %}
+                    <li>
+                        {{ prestamo.alumno.nombre_visible }}
+                        — Cédula {{ prestamo.alumno.cedula }}
+                        — Inventario
+                        {{ prestamo.ejemplar.numero_inventario }}
+                        — {{ prestamo.ejemplar.libro.titulo }}
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    {% if cursos_no_reconocidos %}
+        <div class="alert alert-danger">
+            <h2 class="h5">
+                Cursos que deben corregirse
+            </h2>
+
+            <p>
+                Estos alumnos tienen un curso que el sistema
+                no reconoce como 1°, 2° o 3°:
+            </p>
+
+            <ul class="mb-0">
+                {% for alumno in cursos_no_reconocidos %}
+                    <li>
+                        {{ alumno.nombre_visible }}
+                        — Cédula {{ alumno.cedula }}
+                        — Curso “{{ alumno.curso }}”
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <h2 class="h4">
+                Confirmación
+            </h2>
+
+            <p>
+                Al confirmar, el sistema realizará estos cambios:
+            </p>
+
+            <ul>
+                <li>
+                    Los alumnos de 1° pasarán a 2°.
+                </li>
+                <li>
+                    Los alumnos de 2° pasarán a 3°.
+                </li>
+                <li>
+                    Los alumnos de 3° quedarán inactivos
+                    como egresados.
+                </li>
+                <li>
+                    La sección y la especialidad no cambiarán.
+                </li>
+                <li>
+                    Ningún alumno será eliminado.
+                </li>
+            </ul>
+
+            {% if puede_confirmar %}
+                <form method="post"
+                      onsubmit="return confirm(
+                          '¿Confirma la promoción anual? Esta operación modificará los cursos de los alumnos.'
+                      );">
+                    {% csrf_token %}
+
+                    <button type="submit"
+                            class="btn btn-primary">
+                        Confirmar promoción a {{ anio_destino }}
+                    </button>
+
+                    <a href="{% url 'alumnos:lista' %}"
+                       class="btn btn-light">
+                        Cancelar
+                    </a>
+                </form>
+            {% else %}
+                <button type="button"
+                        class="btn btn-secondary"
+                        disabled>
+                    No se puede confirmar
+                </button>
+
+                <a href="{% url 'alumnos:lista' %}"
+                   class="btn btn-light">
+                    Volver
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

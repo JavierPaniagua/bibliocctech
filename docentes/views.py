@@ -9,10 +9,14 @@ from django.utils import timezone
 from prestamos.models import Prestamo
 from .forms import DocenteForm, ImportarDocentesForm
 from .models import Docente
+from django.core.paginator import Paginator
 
 
 def docente_lista(request):
-    busqueda = request.GET.get('buscar', '').strip()
+    busqueda = request.GET.get(
+        "buscar",
+        "",
+    ).strip()
 
     docentes = Docente.objects.all()
 
@@ -24,16 +28,26 @@ def docente_lista(request):
             | Q(area__icontains=busqueda)
         )
 
+    paginador = Paginator(
+        docentes,
+        25,
+    )
+
+    numero_pagina = request.GET.get("pagina")
+    pagina_docentes = paginador.get_page(numero_pagina)
+
     contexto = {
-        'docentes': docentes,
-        'busqueda': busqueda,
+        "docentes": pagina_docentes,
+        "busqueda": busqueda,
+        "total_encontrados": paginador.count,
     }
 
     return render(
         request,
-        'docentes/docente_lista.html',
+        "docentes/docente_lista.html",
         contexto,
     )
+    
 def docente_historial(request, docente_id):
     docente = get_object_or_404(
         Docente,
@@ -80,7 +94,6 @@ def docente_historial(request, docente_id):
         "docentes/docente_historial.html",
         contexto,
     )
-
 
 
 def docente_crear(request):

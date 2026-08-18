@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 from django.http import JsonResponse
 from libros.models import Ejemplar
+from django.core.paginator import Paginator
 
 from alumnos.models import Alumno
 from docentes.models import Docente
@@ -274,8 +275,19 @@ def prestamo_lista(request):
         "-fecha_prestamo",
     )
 
+    paginador = Paginator(
+        prestamos,
+        25,
+    )
+
+    numero_pagina = request.GET.get("pagina")
+    pagina_prestamos = paginador.get_page(numero_pagina)
+
+
+
     contexto = {
-        "prestamos": prestamos,
+        "prestamos": pagina_prestamos,
+        "total_encontrados": paginador.count,
         "busqueda": busqueda,
         "filtro": filtro,
         "fecha_actual": timezone.localdate(),

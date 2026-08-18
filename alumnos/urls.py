@@ -40,4 +40,10 @@ path(
         views.alumno_eliminar,
         name='eliminar',
     ),
+    
+    path(
+    'promocion-anual/',
+    views.promocion_anual,
+    name='promocion_anual',
+),
 ]

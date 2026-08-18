@@ -1,7 +1,7 @@
-{% extends 'base.html' %}
+{% extends "base.html" %}
 
 {% block title %}
-    Alumnos | Biblioteca Escolar
+    Alumnos | BIBLIOTECH
 {% endblock %}
 
 {% block content %}
@@ -15,58 +15,118 @@
         </p>
     </div>
 
-   <div class="grupo-botones">
-    <a
-        href="{% url 'alumnos:importar' %}"
-        class="boton boton-excel"
-    >
-        Importar Excel
+    <div class="grupo-botones">
+    <a href="{% url 'alumnos:promocion_anual' %}" class="btn btn-warning">
+        Promoción anual
     </a>
+       
+       
+       
+        <a
+            href="{% url 'alumnos:importar' %}"
+            class="boton boton-excel"
+        >
+            Importar Excel
+        </a>
 
-    <a
-        href="{% url 'alumnos:crear' %}"
-        class="boton boton-primario"
-    >
-        + Registrar alumno
-    </a>
+        <a
+            href="{% url 'alumnos:crear' %}"
+            class="boton boton-primario"
+        >
+            + Registrar alumno
+        </a>
+    </div>
 </div>
-</div>
-
-{% if messages %}
-    {% for message in messages %}
-        <div class="mensaje mensaje-{{ message.tags }}">
-            {{ message }}
-        </div>
-    {% endfor %}
-{% endif %}
 
 <div class="panel">
 
-    <form method="get" class="buscador">
-        <input
-            type="text"
-            name="buscar"
-            value="{{ busqueda }}"
-            class="campo campo-buscar"
-            placeholder="Buscar por cédula, alumno, curso o especialidad"
-        >
+    <form method="get"
+      class="row g-2 align-items-end mb-4">
 
-        <button
-            type="submit"
-            class="boton boton-primario"
-        >
+    <div class="col-lg-5">
+        <label for="buscar"
+               class="form-label fw-semibold">
+            Buscar alumno
+        </label>
+
+        <input type="search"
+               id="buscar"
+               name="buscar"
+               value="{{ busqueda }}"
+               class="form-control"
+               placeholder="Cédula, nombre, curso o especialidad"
+               autofocus>
+    </div>
+
+    <div class="col-md-3 col-lg-2">
+        <label for="estado"
+               class="form-label fw-semibold">
+            Estado
+        </label>
+
+        <select id="estado"
+                name="estado"
+                class="form-select">
+            <option value="activos"
+                    {% if estado == 'activos' %}selected{% endif %}>
+                Activos
+            </option>
+
+            <option value="inactivos"
+                    {% if estado == 'inactivos' %}selected{% endif %}>
+                Egresados/inactivos
+            </option>
+
+            <option value="todos"
+                    {% if estado == 'todos' %}selected{% endif %}>
+                Todos
+            </option>
+        </select>
+    </div>
+
+    <div class="col-md-3 col-lg-2">
+        <label for="anio"
+               class="form-label fw-semibold">
+            Año lectivo
+        </label>
+
+        <select id="anio"
+                name="anio"
+                class="form-select">
+            <option value="">
+                Todos
+            </option>
+
+            {% for anio_disponible in anios_disponibles %}
+                <option value="{{ anio_disponible }}"
+                        {% if anio == anio_disponible|stringformat:"s" %}selected{% endif %}>
+                    {{ anio_disponible }}
+                </option>
+            {% endfor %}
+        </select>
+    </div>
+
+    <div class="col-md-auto">
+        <button type="submit"
+                class="btn btn-primary">
             Buscar
         </button>
+    </div>
 
-        {% if busqueda %}
-            <a
-                href="{% url 'alumnos:lista' %}"
-                class="boton boton-secundario"
-            >
-                Limpiar
-            </a>
-        {% endif %}
-    </form>
+    <div class="col-md-auto">
+        <a href="{% url 'alumnos:lista' %}"
+           class="btn btn-light">
+            Limpiar
+        </a>
+    </div>
+</form>
+
+    {% if busqueda %}
+        <div class="alert alert-light border mt-3">
+            Resultados para:
+            <strong>{{ busqueda }}</strong>
+        </div>
+    {% endif %}
 
     <div class="tabla-contenedor">
         <table class="tabla">
@@ -78,6 +138,7 @@
                     <th>Sección</th>
                     <th>Especialidad</th>
                     <th>Turno</th>
+                    <th>Año</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
@@ -86,13 +147,17 @@
             <tbody>
                 {% for alumno in alumnos %}
                     <tr>
-                        <td>{{ alumno.cedula }}</td>
+                        <td>
+                            {{ alumno.cedula }}
+                        </td>
 
-                        
-                        <td>{{ alumno.nombre_visible }}</td>
-                        
+                        <td>
+                            {{ alumno.nombre_visible }}
+                        </td>
 
-                        <td>{{ alumno.curso }}</td>
+                        <td>
+                            {{ alumno.curso }}
+                        </td>
 
                         <td>
                             {{ alumno.seccion|default:"-" }}
@@ -102,8 +167,19 @@
                             {{ alumno.especialidad|default:"-" }}
                         </td>
 
-                        <td>{{ alumno.get_turno_display }}</td>
+                        <td>
+                            {{ alumno.get_turno_display|default:"-" }}
+                        </td>
 
+                        <td>
+    {{ alumno.anio_lectivo }}
+
+    {% if alumno.anio_egreso %}
+        <div class="small text-muted">
+            Egreso: {{ alumno.anio_egreso }}
+        </div>
+    {% endif %}
+</td>
                         <td>
                             {% if alumno.activo %}
                                 <span class="estado estado-activo">
@@ -118,25 +194,29 @@
 
                         <td>
                             <div class="d-flex flex-wrap gap-2">
-    <a
-        href="{% url 'alumnos:historial' alumno.id %}"
-        class="btn btn-sm btn-outline-primary"
-    >
-        Historial
-    </a>
+                                <a
+                                    href="{% url 'alumnos:historial' alumno.id %}"
+                                    class="btn btn-sm btn-outline-primary"
+                                >
+                                    Historial
+                                </a>
 
-    <a
-        href="{% url 'alumnos:editar' alumno.id %}"
-        class="btn btn-sm btn-outline-secondary"
-    >
-        Editar
-    </a>
-</div>
+                                <a
+                                    href="{% url 'alumnos:editar' alumno.id %}"
+                                    class="btn btn-sm btn-outline-secondary"
+                                >
+                                    Editar
+                                </a>
+                            </div>
                         </td>
                     </tr>
+
                 {% empty %}
                     <tr>
-                        <td colspan="8" class="sin-registros">
+                        <td
+                            colspan="9"
+                            class="sin-registros"
+                        >
                             No se encontraron alumnos.
                         </td>
                     </tr>
@@ -145,69 +225,96 @@
         </table>
     </div>
 
-    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mt-4">
-    <p class="cantidad-registros mb-0">
-        Total encontrado: {{ total_encontrados }}
-    </p>
+    <div
+        class="d-flex flex-wrap justify-content-between
+               align-items-center gap-3 mt-4"
+    >
+        <p class="cantidad-registros mb-0">
+            Total encontrado:
+            <strong>{{ total_encontrados }}</strong>
+        </p>
 
-    {% if alumnos.paginator.num_pages > 1 %}
-        <nav aria-label="Páginas de alumnos">
-            <ul class="pagination mb-0">
+        {% if alumnos.paginator.num_pages > 1 %}
+            <nav aria-label="Páginas de alumnos">
+                <ul class="pagination mb-0">
 
-                {% if alumnos.has_previous %}
-                    <li class="page-item">
-                        <a
-                            class="page-link"
-                            href="?buscar={{ busqueda|urlencode }}&pagina={{ alumnos.previous_page_number }}"
-                        >
-                            Anterior
-                        </a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">Anterior</span>
-                    </li>
-                {% endif %}
-
-                {% for numero in alumnos.paginator.page_range %}
-                    {% if numero == alumnos.number %}
-                        <li class="page-item active">
-                            <span class="page-link">
-                                {{ numero }}
-                            </span>
-                        </li>
-                    {% else %}
+                    {% if alumnos.has_previous %}
                         <li class="page-item">
                             <a
                                 class="page-link"
-                                href="?buscar={{ busqueda|urlencode }}&pagina={{ numero }}"
+                                href="?buscar={{ busqueda|urlencode }}&estado={{ estado }}&pagina={{ alumnos.previous_page_number }}"
                             >
-                                {{ numero }}
+                                Anterior
                             </a>
                         </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Anterior
+                            </span>
+                        </li>
                     {% endif %}
-                {% endfor %}
 
-                {% if alumnos.has_next %}
-                    <li class="page-item">
-                        <a
-                            class="page-link"
-                            href="?buscar={{ busqueda|urlencode }}&pagina={{ alumnos.next_page_number }}"
-                        >
-                            Siguiente
-                        </a>
-                    </li>
-                {% else %}
-                    <li class="page-item disabled">
-                        <span class="page-link">Siguiente</span>
-                    </li>
-                {% endif %}
+                    {% for numero in alumnos.paginator.page_range %}
+                        {% if numero == alumnos.number %}
+                            <li class="page-item active">
+                                <span class="page-link">
+                                    {{ numero }}
+                                </span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a
+                                    class="page-link"
+                                    href="?buscar={{ busqueda|urlencode }}&estado={{ estado }}&pagina={{ numero }}"
+                                >
+                                    {{ numero }}
+                                </a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
 
-            </ul>
-        </nav>
-    {% endif %}
+                    {% if alumnos.has_next %}
+                        <li class="page-item">
+                            <a
+                                class="page-link"
+                                href="?buscar={{ busqueda|urlencode }}&estado={{ estado }}&pagina={{ alumnos.next_page_number }}"
+                            >
+                                Siguiente
+                            </a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">
+                                Siguiente
+                            </span>
+                        </li>
+                    {% endif %}
+
+                </ul>
+            </nav>
+        {% endif %}
+    </div>
+
 </div>
 
-</div>
+{% endblock %}
 
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const campo = document.getElementById("buscar-alumno");
+
+        if (campo) {
+            campo.focus();
+
+            const finalTexto = campo.value.length;
+
+            campo.setSelectionRange(
+                finalTexto,
+                finalTexto
+            );
+        }
+    });
+</script>
 {% endblock %}

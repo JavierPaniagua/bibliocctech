@@ -12,11 +12,22 @@ from django.views.decorators.http import require_POST
 from libros.models import Ejemplar, Libro
 from prestamos.models import Prestamo
 
+from alumnos.models import Alumno
+from docentes.models import Docente
 
 def inicio(request):
     fecha_actual = timezone.localdate()
 
     contexto = {
+        
+        "alumnos_activos": Alumno.objects.filter(
+        activo=True
+        ).count(),
+
+        "docentes_activos": Docente.objects.filter(
+         activo=True
+        ).count(),
+        
         "total_titulos": Libro.objects.filter(activo=True).count(),
         "total_ejemplares": Ejemplar.objects.count(),
         "ejemplares_disponibles": Ejemplar.objects.filter(

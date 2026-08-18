@@ -3,9 +3,189 @@ from django.db import transaction
 from django.db.models import Q
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
+from django.http import JsonResponse
+from libros.models import Ejemplar
+
+from alumnos.models import Alumno
+from docentes.models import Docente
+
+from .forms import DevolucionForm, PrestamoForm, limpiar_cedula
 
 from .forms import DevolucionForm, PrestamoForm
 from .models import Prestamo
+
+def buscar_beneficiario(request):
+    tipo = request.GET.get("tipo", "").strip().upper()
+    cedula = limpiar_cedula(request.GET.get("cedula", ""))
+
+    if tipo not in {"ALUMNO", "DOCENTE"}:
+        return JsonResponse(
+            {
+                "encontrado": False,
+                "mensaje": "Seleccione alumno o docente.",
+            },
+            status=400,
+        )
+
+    if not cedula:
+        return JsonResponse(
+            {
+                "encontrado": False,
+                "mensaje": "Ingrese el número de cédula.",
+            },
+            status=400,
+        )
+
+    if tipo == "ALUMNO":
+        try:
+            beneficiario = Alumno.objects.get(cedula=cedula)
+        except Alumno.DoesNotExist:
+            return JsonResponse(
+                {
+                    "encontrado": False,
+                    "mensaje": "No se encontró un alumno con esta cédula.",
+                }
+            )
+
+        nombre = beneficiario.nombre_visible
+        detalle = " — ".join(
+            dato
+            for dato in [
+                beneficiario.curso,
+                f"Sección {beneficiario.seccion}"
+                if beneficiario.seccion
+                else "",
+                beneficiario.especialidad,
+            ]
+            if dato
+        )
+
+        prestamos_vencidos = Prestamo.objects.filter(
+            alumno=beneficiario,
+            estado=Prestamo.Estado.ACTIVO,
+            fecha_devolucion_prevista__lt=timezone.localdate(),
+        ).count()
+
+    else:
+        try:
+            beneficiario = Docente.objects.get(cedula=cedula)
+        except Docente.DoesNotExist:
+            return JsonResponse(
+                {
+                    "encontrado": False,
+                    "mensaje": "No se encontró un docente con esta cédula.",
+                }
+            )
+
+        nombre = f"{beneficiario.nombres} {beneficiario.apellidos}".strip()
+
+        detalle = " — ".join(
+            dato
+            for dato in [
+                "Docente",
+                beneficiario.area,
+                beneficiario.especialidad,
+            ]
+            if dato
+        )
+
+        prestamos_vencidos = Prestamo.objects.filter(
+            docente=beneficiario,
+            estado=Prestamo.Estado.ACTIVO,
+            fecha_devolucion_prevista__lt=timezone.localdate(),
+        ).count()
+
+    activo = beneficiario.activo
+
+    if not activo:
+        mensaje = "El beneficiario está inactivo."
+    elif prestamos_vencidos:
+        mensaje = (
+            f"Tiene {prestamos_vencidos} préstamo(s) vencido(s). "
+            "Debe registrar primero la devolución."
+        )
+    else:
+        mensaje = "Beneficiario habilitado para recibir préstamos."
+
+    return JsonResponse(
+        {
+            "encontrado": True,
+            "nombre": nombre,
+            "detalle": detalle,
+            "activo": activo,
+            "prestamos_vencidos": prestamos_vencidos,
+            "habilitado": activo and prestamos_vencidos == 0,
+            "mensaje": mensaje,
+        }
+    )
+
+def buscar_ejemplar(request):
+    numero = request.GET.get("numero", "").strip()
+
+    if not numero.isdigit():
+        return JsonResponse(
+            {
+                "encontrado": False,
+                "mensaje": "Ingrese un número de inventario válido.",
+            },
+            status=400,
+        )
+
+    try:
+        ejemplar = Ejemplar.objects.select_related("libro").get(
+            numero_inventario=int(numero)
+        )
+    except Ejemplar.DoesNotExist:
+        return JsonResponse(
+            {
+                "encontrado": False,
+                "mensaje": (
+                    "No existe un ejemplar con este número de inventario."
+                ),
+            }
+        )
+
+    tiene_prestamo_activo = Prestamo.objects.filter(
+        ejemplar=ejemplar,
+        estado=Prestamo.Estado.ACTIVO,
+    ).exists()
+
+    disponible = (
+        ejemplar.estado == Ejemplar.Estado.DISPONIBLE
+        and ejemplar.libro.activo
+        and not tiene_prestamo_activo
+    )
+
+    if not ejemplar.libro.activo:
+        mensaje = "Este libro está inactivo."
+    elif tiene_prestamo_activo:
+        mensaje = "Este ejemplar ya posee un préstamo activo."
+    elif ejemplar.estado != Ejemplar.Estado.DISPONIBLE:
+        mensaje = (
+            "El ejemplar no está disponible. "
+            f"Estado actual: {ejemplar.get_estado_display()}."
+        )
+    else:
+        mensaje = "Ejemplar disponible para préstamo."
+
+    return JsonResponse(
+        {
+            "encontrado": True,
+            "numero_inventario": ejemplar.numero_inventario,
+            "titulo": ejemplar.libro.titulo,
+            "autor": ejemplar.libro.autor or "Autor no registrado",
+            "signatura": (
+                ejemplar.libro.signatura_topografica
+                or "Sin clasificación"
+            ),
+            "ubicacion": ejemplar.ubicacion,
+            "condicion": ejemplar.get_condicion_display(),
+            "estado": ejemplar.get_estado_display(),
+            "disponible": disponible,
+            "mensaje": mensaje,
+        }
+    )
+
 
 
 def prestamo_lista(request):

@@ -36,11 +36,11 @@
                         {% csrf_token %}
 
                         {% if formulario.non_field_errors %}
-                            <div class="alert alert-danger">
-                                {% for error in formulario.non_field_errors %}
-                                    <div>{{ error }}</div>
-                                {% endfor %}
-                            </div>
+                        <div class="alert alert-danger">
+                            {% for error in formulario.non_field_errors %}
+                            <div>{{ error }}</div>
+                            {% endfor %}
+                        </div>
                         {% endif %}
 
                         <div class="mb-3">
@@ -49,9 +49,16 @@
                             </label>
                             {{ formulario.tipo_beneficiario }}
                             {% for error in formulario.tipo_beneficiario.errors %}
-                                <div class="text-danger fw-semibold small mt-1">{{ error }}</div>
+                            <div class="text-danger fw-semibold small mt-1">{{ error }}</div>
                             {% endfor %}
                         </div>
+
+                        <div id="resultado-beneficiario" class="alert d-none mb-3" role="alert">
+                            <div class="fw-bold" id="beneficiario-nombre"></div>
+                            <div id="beneficiario-detalle"></div>
+                            <div class="small mt-1" id="beneficiario-mensaje"></div>
+                        </div>
+
 
                         <div class="mb-3">
                             <label for="{{ formulario.cedula.id_for_label }}" class="form-label fw-semibold">
@@ -60,7 +67,7 @@
                             {{ formulario.cedula }}
                             <div class="form-text">Se admiten cédulas paraguayas y extranjeras.</div>
                             {% for error in formulario.cedula.errors %}
-                                <div class="text-danger fw-semibold small mt-1">{{ error }}</div>
+                            <div class="text-danger fw-semibold small mt-1">{{ error }}</div>
                             {% endfor %}
                         </div>
 
@@ -71,9 +78,38 @@
                             {{ formulario.numero_inventario }}
                             <div class="form-text">Código numérico único pegado en el ejemplar.</div>
                             {% for error in formulario.numero_inventario.errors %}
-                                <div class="text-danger fw-semibold small mt-1">{{ error }}</div>
+                            <div class="text-danger fw-semibold small mt-1">{{ error }}</div>
                             {% endfor %}
                         </div>
+
+<div
+    id="resultado-ejemplar"
+    class="alert d-none mb-3"
+    role="alert"
+>
+    <div class="fw-bold" id="ejemplar-titulo"></div>
+    <div id="ejemplar-autor"></div>
+
+    <div class="small mt-2">
+        <div>
+            <strong>Ubicación:</strong>
+            <span id="ejemplar-ubicacion"></span>
+        </div>
+        <div>
+            <strong>Signatura:</strong>
+            <span id="ejemplar-signatura"></span>
+        </div>
+        <div>
+            <strong>Condición:</strong>
+            <span id="ejemplar-condicion"></span>
+        </div>
+    </div>
+
+    <div
+        class="small fw-semibold mt-2"
+        id="ejemplar-mensaje"
+    ></div>
+</div>
 
                         <div class="mb-3">
                             <label for="{{ formulario.fecha_prestamo.id_for_label }}" class="form-label fw-semibold">
@@ -81,9 +117,21 @@
                             </label>
                             {{ formulario.fecha_prestamo }}
                             {% for error in formulario.fecha_prestamo.errors %}
-                                <div class="text-danger fw-semibold small mt-1">{{ error }}</div>
+                            <div class="text-danger fw-semibold small mt-1">{{ error }}</div>
                             {% endfor %}
                         </div>
+
+                        <div class="alert alert-primary border-0 mb-3">
+    <div class="small text-uppercase fw-semibold">
+        Devolución prevista
+    </div>
+    <div class="fs-5 fw-bold" id="fecha-devolucion-prevista">
+        -
+    </div>
+    <div class="small">
+        Calculada automáticamente a cinco días hábiles.
+    </div>
+</div>
 
                         <div class="mb-4">
                             <label for="{{ formulario.observaciones.id_for_label }}" class="form-label fw-semibold">
@@ -91,7 +139,7 @@
                             </label>
                             {{ formulario.observaciones }}
                             {% for error in formulario.observaciones.errors %}
-                                <div class="text-danger fw-semibold small mt-1">{{ error }}</div>
+                            <div class="text-danger fw-semibold small mt-1">{{ error }}</div>
                             {% endfor %}
                         </div>
 
@@ -110,35 +158,456 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-    const cedula = document.getElementById("{{ formulario.cedula.id_for_label }}");
-    const inventario = document.getElementById("{{ formulario.numero_inventario.id_for_label }}");
-    const fecha = document.getElementById("{{ formulario.fecha_prestamo.id_for_label }}");
-    const boton = document.getElementById("boton-registrar");
-    const formulario = document.getElementById("formulario-prestamo");
+    const tipo = document.getElementById(
+        "{{ formulario.tipo_beneficiario.id_for_label }}"
+    );
+    const cedula = document.getElementById(
+        "{{ formulario.cedula.id_for_label }}"
+    );
+    const inventario = document.getElementById(
+        "{{ formulario.numero_inventario.id_for_label }}"
+    );
+    const fecha = document.getElementById(
+        "{{ formulario.fecha_prestamo.id_for_label }}"
+    );
 
-    cedula?.focus();
+    const fechaDevolucionPrevista = document.getElementById(
+        "fecha-devolucion-prevista"
+    );
 
-    cedula?.addEventListener("keydown", function (evento) {
+    const resultadoBeneficiario = document.getElementById(
+        "resultado-beneficiario"
+    );
+    const beneficiarioNombre = document.getElementById(
+        "beneficiario-nombre"
+    );
+    const beneficiarioDetalle = document.getElementById(
+        "beneficiario-detalle"
+    );
+    const beneficiarioMensaje = document.getElementById(
+        "beneficiario-mensaje"
+    );
+
+    const resultadoEjemplar = document.getElementById(
+        "resultado-ejemplar"
+    );
+    const ejemplarTitulo = document.getElementById(
+        "ejemplar-titulo"
+    );
+    const ejemplarAutor = document.getElementById(
+        "ejemplar-autor"
+    );
+    const ejemplarUbicacion = document.getElementById(
+        "ejemplar-ubicacion"
+    );
+    const ejemplarSignatura = document.getElementById(
+        "ejemplar-signatura"
+    );
+    const ejemplarCondicion = document.getElementById(
+        "ejemplar-condicion"
+    );
+    const ejemplarMensaje = document.getElementById(
+        "ejemplar-mensaje"
+    );
+
+    const boton = document.getElementById(
+        "boton-registrar"
+    );
+    const formulario = document.getElementById(
+        "formulario-prestamo"
+    );
+
+    let beneficiarioConsultado = false;
+    let ejemplarConsultado = false;
+
+    function ocultarBeneficiario() {
+        beneficiarioConsultado = false;
+        resultadoBeneficiario.className = "alert d-none mb-3";
+        beneficiarioNombre.textContent = "";
+        beneficiarioDetalle.textContent = "";
+        beneficiarioMensaje.textContent = "";
+    }
+
+    function mostrarErrorBeneficiario(texto) {
+        resultadoBeneficiario.className =
+            "alert alert-danger mb-3";
+
+        beneficiarioNombre.textContent =
+            "Beneficiario no encontrado";
+
+        beneficiarioDetalle.textContent = "";
+        beneficiarioMensaje.textContent = texto;
+    }
+
+    async function consultarBeneficiario() {
+        const tipoSeleccionado = tipo.value;
+        const numeroCedula = cedula.value.trim();
+
+        if (!numeroCedula) {
+            mostrarErrorBeneficiario(
+                "Ingrese el número de cédula."
+            );
+
+            function sumarDiasHabiles(fechaInicial, cantidadDias) {
+    const fechaResultado = new Date(fechaInicial);
+    let diasAgregados = 0;
+
+    while (diasAgregados < cantidadDias) {
+        fechaResultado.setDate(
+            fechaResultado.getDate() + 1
+        );
+
+        const diaSemana = fechaResultado.getDay();
+
+        if (diaSemana !== 0 && diaSemana !== 6) {
+            diasAgregados++;
+        }
+    }
+
+    return fechaResultado;
+}
+
+function actualizarFechaDevolucion() {
+    if (!fecha.value) {
+        fechaDevolucionPrevista.textContent = "-";
+        return;
+    }
+
+    const partes = fecha.value.split("-");
+
+    const fechaPrestamo = new Date(
+        Number(partes[0]),
+        Number(partes[1]) - 1,
+        Number(partes[2])
+    );
+
+    const devolucion = sumarDiasHabiles(
+        fechaPrestamo,
+        5
+    );
+
+    const dia = String(
+        devolucion.getDate()
+    ).padStart(2, "0");
+
+    const mes = String(
+        devolucion.getMonth() + 1
+    ).padStart(2, "0");
+
+    const anio = devolucion.getFullYear();
+
+    const nombreDia = devolucion.toLocaleDateString(
+        "es-PY",
+        {
+            weekday: "long"
+        }
+    );
+
+    fechaDevolucionPrevista.textContent =
+        nombreDia.charAt(0).toUpperCase() +
+        nombreDia.slice(1) +
+        " " +
+        dia +
+        "/" +
+        mes +
+        "/" +
+        anio;
+}
+
+function sumarDiasHabiles(fechaInicial, cantidadDias) {
+    const fechaResultado = new Date(fechaInicial);
+    let diasAgregados = 0;
+
+    while (diasAgregados < cantidadDias) {
+        fechaResultado.setDate(
+            fechaResultado.getDate() + 1
+        );
+
+        const diaSemana = fechaResultado.getDay();
+
+        if (diaSemana !== 0 && diaSemana !== 6) {
+            diasAgregados++;
+        }
+    }
+
+    return fechaResultado;
+}
+
+function actualizarFechaDevolucion() {
+    if (!fecha.value) {
+        fechaDevolucionPrevista.textContent = "-";
+        return;
+    }
+
+    const partes = fecha.value.split("-");
+
+    const fechaPrestamo = new Date(
+        Number(partes[0]),
+        Number(partes[1]) - 1,
+        Number(partes[2])
+    );
+
+    const devolucion = sumarDiasHabiles(
+        fechaPrestamo,
+        5
+    );
+
+    const dia = String(
+        devolucion.getDate()
+    ).padStart(2, "0");
+
+    const mes = String(
+        devolucion.getMonth() + 1
+    ).padStart(2, "0");
+
+    const anio = devolucion.getFullYear();
+
+    const nombreDia = devolucion.toLocaleDateString(
+        "es-PY",
+        {
+            weekday: "long"
+        }
+    );
+
+    fechaDevolucionPrevista.textContent =
+        nombreDia.charAt(0).toUpperCase() +
+        nombreDia.slice(1) +
+        " " +
+        dia +
+        "/" +
+        mes +
+        "/" +
+        anio;
+}
+
+        fecha.addEventListener(
+            "change",
+            actualizarFechaDevolucion
+        );
+
+        actualizarFechaDevolucion();
+
+
+            cedula.focus();
+            return false;
+        }
+
+        resultadoBeneficiario.className =
+            "alert alert-info mb-3";
+
+        beneficiarioNombre.textContent =
+            "Buscando beneficiario…";
+
+        beneficiarioDetalle.textContent = "";
+        beneficiarioMensaje.textContent = "";
+
+        const parametros = new URLSearchParams({
+            tipo: tipoSeleccionado,
+            cedula: numeroCedula
+        });
+
+        try {
+            const respuesta = await fetch(
+                "{% url 'prestamos:buscar_beneficiario' %}?" +
+                parametros.toString()
+            );
+
+            const datos = await respuesta.json();
+            beneficiarioConsultado = true;
+
+            if (!datos.encontrado) {
+                mostrarErrorBeneficiario(datos.mensaje);
+                cedula.focus();
+                cedula.select();
+                return false;
+            }
+
+            beneficiarioNombre.textContent = datos.nombre;
+            beneficiarioDetalle.textContent = datos.detalle;
+            beneficiarioMensaje.textContent = datos.mensaje;
+
+            if (datos.habilitado) {
+                resultadoBeneficiario.className =
+                    "alert alert-success mb-3";
+
+                inventario.focus();
+                inventario.select();
+                return true;
+            }
+
+            resultadoBeneficiario.className =
+                "alert alert-warning mb-3";
+
+            cedula.focus();
+            cedula.select();
+            return false;
+
+        } catch (error) {
+            beneficiarioConsultado = false;
+
+            mostrarErrorBeneficiario(
+                "No se pudo consultar la cédula."
+            );
+
+            return false;
+        }
+    }
+
+    function ocultarEjemplar() {
+        ejemplarConsultado = false;
+        resultadoEjemplar.className = "alert d-none mb-3";
+        ejemplarTitulo.textContent = "";
+        ejemplarAutor.textContent = "";
+        ejemplarUbicacion.textContent = "";
+        ejemplarSignatura.textContent = "";
+        ejemplarCondicion.textContent = "";
+        ejemplarMensaje.textContent = "";
+    }
+
+    function mostrarErrorEjemplar(texto) {
+        resultadoEjemplar.className =
+            "alert alert-danger mb-3";
+
+        ejemplarTitulo.textContent =
+            "Ejemplar no encontrado";
+
+        ejemplarAutor.textContent = "";
+        ejemplarUbicacion.textContent = "-";
+        ejemplarSignatura.textContent = "-";
+        ejemplarCondicion.textContent = "-";
+        ejemplarMensaje.textContent = texto;
+    }
+
+    async function consultarEjemplar() {
+        const numero = inventario.value.trim();
+
+        if (!numero) {
+            mostrarErrorEjemplar(
+                "Ingrese el número de inventario."
+            );
+            inventario.focus();
+            return false;
+        }
+
+        resultadoEjemplar.className =
+            "alert alert-info mb-3";
+
+        ejemplarTitulo.textContent =
+            "Buscando ejemplar…";
+
+        ejemplarAutor.textContent = "";
+        ejemplarUbicacion.textContent = "";
+        ejemplarSignatura.textContent = "";
+        ejemplarCondicion.textContent = "";
+        ejemplarMensaje.textContent = "";
+
+        const parametros = new URLSearchParams({
+            numero: numero
+        });
+
+        try {
+            const respuesta = await fetch(
+                "{% url 'prestamos:buscar_ejemplar' %}?" +
+                parametros.toString()
+            );
+
+            const datos = await respuesta.json();
+            ejemplarConsultado = true;
+
+            if (!datos.encontrado) {
+                mostrarErrorEjemplar(datos.mensaje);
+                inventario.focus();
+                inventario.select();
+                return false;
+            }
+
+            ejemplarTitulo.textContent =
+                datos.numero_inventario + " — " + datos.titulo;
+
+            ejemplarAutor.textContent = datos.autor;
+            ejemplarUbicacion.textContent = datos.ubicacion;
+            ejemplarSignatura.textContent = datos.signatura;
+            ejemplarCondicion.textContent = datos.condicion;
+            ejemplarMensaje.textContent = datos.mensaje;
+
+            if (datos.disponible) {
+                resultadoEjemplar.className =
+                    "alert alert-success mb-3";
+
+                fecha.focus();
+                return true;
+            }
+
+            resultadoEjemplar.className =
+                "alert alert-warning mb-3";
+
+            inventario.focus();
+            inventario.select();
+            return false;
+
+        } catch (error) {
+            ejemplarConsultado = false;
+
+            mostrarErrorEjemplar(
+                "No se pudo consultar el ejemplar."
+            );
+
+            return false;
+        }
+    }
+
+    cedula.focus();
+
+    cedula.addEventListener("input", ocultarBeneficiario);
+    inventario.addEventListener("input", ocultarEjemplar);
+
+    tipo.addEventListener("change", function () {
+        ocultarBeneficiario();
+        cedula.focus();
+        cedula.select();
+    });
+
+    cedula.addEventListener("keydown", async function (evento) {
         if (evento.key === "Enter") {
             evento.preventDefault();
-            inventario?.focus();
-            inventario?.select();
+            await consultarBeneficiario();
         }
     });
 
-    inventario?.addEventListener("keydown", function (evento) {
-        if (evento.key === "Enter") {
-            evento.preventDefault();
-            fecha?.focus();
+    cedula.addEventListener("blur", async function () {
+        if (
+            cedula.value.trim()
+            && !beneficiarioConsultado
+        ) {
+            await consultarBeneficiario();
         }
     });
 
-    formulario?.addEventListener("submit", function () {
-        if (boton) {
-            boton.disabled = true;
-            boton.textContent = "Registrando…";
+    inventario.addEventListener(
+        "keydown",
+        async function (evento) {
+            if (evento.key === "Enter") {
+                evento.preventDefault();
+                await consultarEjemplar();
+            }
         }
+    );
+
+    inventario.addEventListener("blur", async function () {
+        if (
+            inventario.value.trim()
+            && !ejemplarConsultado
+        ) {
+            await consultarEjemplar();
+        }
+    });
+
+    formulario.addEventListener("submit", function () {
+        boton.disabled = true;
+        boton.textContent = "Registrando…";
     });
 });
 </script>
+
 {% endblock %}
+

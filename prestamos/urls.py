@@ -17,6 +17,19 @@ urlpatterns = [
         views.prestamo_crear,
         name="crear",
     ),
+    
+    path(
+    "buscar-beneficiario/",
+    views.buscar_beneficiario,
+    name="buscar_beneficiario",
+),
+    
+path(
+    "buscar-ejemplar/",
+    views.buscar_ejemplar,
+    name="buscar_ejemplar",
+),
+
     path(
         "<int:prestamo_id>/devolver/",
         views.prestamo_devolver,
@@ -28,4 +41,6 @@ urlpatterns = [
     views.prestamo_reporte,
     name="reporte",
 ),
+    
+
 ]

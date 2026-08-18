@@ -15,14 +15,6 @@
    
 </div>
 
-{% if messages %}
-    {% for message in messages %}
-        <div class="mensaje mensaje-{{ message.tags }}">
-            {{ message }}
-        </div>
-    {% endfor %}
-{% endif %}
-
 <div class="tarjeta prestamos-tarjeta">
 
     <form method="get" class="formulario-busqueda">
@@ -176,14 +168,18 @@
                         </td>
 
                         <td>
-                            {{ prestamo.fecha_prestamo|date:"d/m/Y" }}
+                            <span style="text-transform: capitalize;">
+    {{ prestamo.fecha_prestamo|date:"l d/m/Y" }}
+</span>
                         </td>
 
                         <td>
                             {% if prestamo.fecha_devolucion_real %}
                                 {{ prestamo.fecha_devolucion_real|date:"d/m/Y" }}
                             {% else %}
-                                {{ prestamo.fecha_devolucion_prevista|date:"d/m/Y" }}
+                                <span style="text-transform: capitalize;">
+    {{ prestamo.fecha_devolucion_prevista|date:"l d/m/Y" }}
+</span>
                             {% endif %}
                         </td>
 

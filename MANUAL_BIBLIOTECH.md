@@ -204,18 +204,53 @@ Antes de imprimir, revisar los filtros y las fechas.
 
 ---
 
-## 15. Respaldo de seguridad
+## 15. Respaldo y restauración de seguridad
 
-El sistema crea un respaldo al iniciarse mediante
-`iniciar_bibliotech.bat`.
+### Crear un respaldo
 
-También puede utilizarse la opción **Crear respaldo** del panel.
+El sistema crea automáticamente un respaldo cada vez que se inicia
+mediante `iniciar_bibliotech.bat`.
 
-Los respaldos se guardan en:
+También puede utilizarse la opción **Crear respaldo** de la pantalla
+de inicio. Esta opción guarda una copia en la carpeta `backups` y
+descarga otra mediante el navegador.
 
-`backups`
+Debe crearse un respaldo antes de:
 
-No eliminar todos los respaldos. Conservar siempre varias copias.
+- Importar alumnos, docentes o libros.
+- Realizar la promoción anual.
+- Efectuar cambios importantes.
+- Copiar la base de datos a otra computadora.
+
+No eliminar todos los respaldos. Conservar siempre varias copias y
+guardar periódicamente una copia en un dispositivo externo.
+
+### Restaurar un respaldo
+
+La restauración debe realizarla solamente el administrador mediante:
+
+`restaurar_bibliotech.bat`
+
+Este procedimiento reemplaza la base de datos actual por una copia
+anterior. Los cambios realizados después de ese respaldo se perderán.
+
+Procedimiento:
+
+1. Cerrar completamente BIBLIOTECH con `Ctrl + C`.
+2. Ejecutar `restaurar_bibliotech.bat`.
+3. Escribir `RESTAURAR` cuando el sistema solicite confirmación.
+4. Arrastrar a la ventana el archivo `.sqlite3` que se desea recuperar.
+5. Presionar `Enter`.
+6. Esperar la verificación y la restauración.
+7. Iniciar BIBLIOTECH normalmente.
+
+Antes de reemplazar la base, el script guarda automáticamente la base
+actual en la carpeta `backups` con un nombre similar a:
+
+`db_antes_restaurar_2026-08-19_11-30-00.sqlite3`
+
+No ejecutar la restauración mientras BIBLIOTECH esté abierto y no
+seleccionar directamente el archivo activo `db.sqlite3`.
 
 ---
 

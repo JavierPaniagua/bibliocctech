@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    Iniciar sesión | BIBLIOTECH
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .pagina-login {
+        min-height: calc(100vh - 100px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 16px;
+    }
+
+    .tarjeta-login {
+        width: 100%;
+        max-width: 470px;
+        background-color: #ffffff;
+        border: 0;
+        border-radius: 14px;
+        box-shadow: 0 10px 30px rgba(15, 35, 70, 0.15);
+        overflow: hidden;
+    }
+
+    .contenido-login {
+        padding: 38px 42px 42px;
+    }
+
+    .logo-login {
+        display: block;
+        width: 115px;
+        height: 115px;
+        object-fit: contain;
+        margin: 0 auto 16px;
+    }
+
+    .titulo-login {
+        margin-bottom: 4px;
+        color: #163b87;
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+    }
+
+    .subtitulo-login {
+        margin-bottom: 0;
+        color: #64748b;
+        font-size: 1rem;
+    }
+
+    .encabezado-login {
+        margin-bottom: 30px;
+        text-align: center;
+    }
+
+    .campo-login {
+        margin-bottom: 20px;
+    }
+
+    .campo-login label {
+        display: block;
+        margin-bottom: 7px;
+        color: #18253a;
+        font-weight: 700;
+    }
+
+    .campo-login input {
+        display: block;
+        width: 100%;
+        min-height: 49px;
+        padding: 10px 14px;
+        color: #172033;
+        background-color: #ffffff;
+        border: 1px solid #bcc9d8;
+        border-radius: 8px;
+        outline: none;
+        transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+
+    .campo-login input:focus {
+        border-color: #2468b3;
+        box-shadow: 0 0 0 4px rgba(36, 104, 179, 0.17);
+    }
+
+    .boton-login {
+        width: 100%;
+        min-height: 50px;
+        margin-top: 5px;
+        color: #ffffff;
+        background-color: #2468b3;
+        border: 0;
+        border-bottom: 4px solid #98CA3F;
+        border-radius: 8px;
+        font-size: 1.05rem;
+        font-weight: 700;
+        transition:
+            background-color 0.2s ease,
+            transform 0.1s ease;
+    }
+
+    .boton-login:hover {
+        color: #ffffff;
+        background-color: #1d5798;
+    }
+
+    .boton-login:active {
+        transform: translateY(1px);
+    }
+
+    .error-login {
+        margin-bottom: 22px;
+        padding: 12px 14px;
+        color: #842029;
+        background-color: #f8d7da;
+        border: 1px solid #f5c2c7;
+        border-radius: 8px;
+    }
+
+    .pie-login {
+        margin-top: 24px;
+        color: #6b7280;
+        font-size: 0.88rem;
+        text-align: center;
+    }
+
+    @media (max-width: 576px) {
+        .pagina-login {
+            align-items: flex-start;
+            padding-top: 25px;
+        }
+
+        .contenido-login {
+            padding: 30px 24px 34px;
+        }
+
+        .logo-login {
+            width: 95px;
+            height: 95px;
+        }
+
+        .titulo-login {
+            font-size: 1.7rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="pagina-login">
+    <div class="tarjeta-login">
+        <div class="contenido-login">
+
+            <div class="encabezado-login">
+                <img
+                    src="{% static 'img/logo_cctl.png' %}"
+                    alt="logo CCTL"
+                    class="logo-login"
+                >
+
+                <h1 class="titulo-login">
+                    BIBLIOTECH
+                </h1>
+
+                <p class="subtitulo-login">
+                    Biblioteca Escolar CCTL
+                </p>
+            </div>
+
+            {% if form.errors %}
+                <div class="error-login" role="alert">
+                    <strong>No se pudo iniciar sesión.</strong><br>
+                    Verifique el usuario y la contraseña.
+                </div>
+            {% endif %}
+
+            {% if next and user.is_authenticated %}
+                <div class="error-login" role="alert">
+                    Su cuenta no tiene permiso para acceder a esta página.
+                </div>
+            {% endif %}
+
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {% if next %}
+                    <input
+                        type="hidden"
+                        name="next"
+                        value="{{ next }}"
+                    >
+                {% endif %}
+
+                <div class="campo-login">
+                    <label for="id_username">
+                        Usuario
+                    </label>
+
+                    <input
+                        type="text"
+                        name="username"
+                        id="id_username"
+                        value="{{ form.username.value|default:'' }}"
+                        autocomplete="username"
+                        autocapitalize="none"
+                        spellcheck="false"
+                        maxlength="150"
+                        placeholder="Ingrese su usuario"
+                        required
+                        autofocus
+                    >
+                </div>
+
+                <div class="campo-login">
+                    <label for="id_password">
+                        Contraseña
+                    </label>
+
+                    <input
+                        type="password"
+                        name="password"
+                        id="id_password"
+                        autocomplete="current-password"
+                        placeholder="Ingrese su contraseña"
+                        required
+                    >
+                </div>
+
+                <button
+                    type="submit"
+                    class="boton-login"
+                >
+                    Iniciar sesión
+                </button>
+            </form>
+
+            <div class="pie-login">
+                Sistema de gestión de la Biblioteca Escolar CCTL
+            </div>
+
+        </div>
+    </div>
+</section>
+{% endblock %}

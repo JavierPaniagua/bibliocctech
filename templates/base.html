@@ -1,4 +1,5 @@
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -26,10 +27,10 @@
         href="{% static 'bootstrap/css/bootstrap.min.css' %}"
     >
 
-    <!-- Diseño institucional de BIBLIOTECH -->
+    <!-- Diseño de BIBLIOTECH -->
     <link
         rel="stylesheet"
-        href="{% static 'css/estilos.css' %}"
+        href="{% static 'css/estilos.css' %}?v=20260819-04"
     >
 
     {% block extra_css %}{% endblock %}
@@ -37,105 +38,143 @@
 
 <body>
 
-    <!-- ENCABEZADO -->
-    <header class="encabezado">
-        <div class="encabezado-contenido">
+    <!--
+        El encabezado y el navbar solamente aparecen
+        cuando el usuario inició sesión.
+    -->
+    {% if user.is_authenticated %}
+        <header class="encabezado">
+            <div class="encabezado-contenido">
 
-            <!-- MARCA DEL SISTEMA -->
-            <a href="/" class="marca">
-                <span class="marca-titulo">
-                    BIBLIOTECH
-                </span>
-
-                <span class="marca-subtitulo">
-                    Biblioteca Escolar CCTL
-                </span>
-            </a>
-
-            <!-- BOTÓN DEL MENÚ PARA CELULARES -->
-            <button
-                type="button"
-                class="boton-menu"
-                id="boton-menu"
-                aria-label="Abrir menú de navegación"
-                aria-controls="navegacion"
-                aria-expanded="false"
-            >
-                ☰
-            </button>
-
-            <!-- NAVEGACIÓN PRINCIPAL -->
-            <nav
-                class="navegacion"
-                id="navegacion"
-                aria-label="Navegación principal"
-            >
-
+                <!-- Marca del sistema -->
                 <a
                     href="/"
-                    class="nav-enlace
-                    {% if request.path == '/' %}
-                        activo
-                    {% endif %}"
+                    class="marca"
+                    aria-label="Ir al panel principal"
                 >
-                    Inicio
+                    <span class="marca-titulo">
+                        BIBLIOTECH
+                    </span>
+
+                    <span class="marca-subtitulo">
+                        Biblioteca Escolar CCTL
+                    </span>
                 </a>
 
-                <a
-                    href="{% url 'alumnos:lista' %}"
-                    class="nav-enlace
-                    {% if request.resolver_match.namespace == 'alumnos' %}
-                        activo
-                    {% endif %}"
+                <!-- Botón para abrir el menú en celulares -->
+                <button
+                    type="button"
+                    class="boton-menu"
+                    id="boton-menu"
+                    aria-label="Abrir menú de navegación"
+                    aria-controls="navegacion"
+                    aria-expanded="false"
                 >
-                    Alumnos
-                </a>
+                    ☰
+                </button>
 
-                <a
-                    href="{% url 'docentes:lista' %}"
-                    class="nav-enlace
-                    {% if request.resolver_match.namespace == 'docentes' %}
-                        activo
-                    {% endif %}"
+                <!-- Navegación principal -->
+                <nav
+                    class="navegacion"
+                    id="navegacion"
+                    aria-label="Navegación principal"
                 >
-                    Docentes
-                </a>
+                    <a
+                        href="/"
+                        class="
+                            nav-enlace
+                            {% if request.path == '/' %}
+                                activo
+                            {% endif %}
+                        "
+                    >
+                        Inicio
+                    </a>
 
-                <a
-                    href="{% url 'libros:lista' %}"
-                    class="nav-enlace
-                    {% if request.resolver_match.namespace == 'libros' %}
-                        activo
-                    {% endif %}"
-                >
-                    Libros
-                </a>
+                    <a
+                        href="{% url 'alumnos:lista' %}"
+                        class="
+                            nav-enlace
+                            {% if request.resolver_match.namespace == 'alumnos' %}
+                                activo
+                            {% endif %}
+                        "
+                    >
+                        Alumnos
+                    </a>
 
-                <a
-                    href="{% url 'prestamos:lista' %}"
-                    class="nav-enlace
-                    {% if request.resolver_match.namespace == 'prestamos' %}
-                        activo
-                    {% endif %}"
-                >
-                    Préstamos
-                </a>
+                    <a
+                        href="{% url 'docentes:lista' %}"
+                        class="
+                            nav-enlace
+                            {% if request.resolver_match.namespace == 'docentes' %}
+                                activo
+                            {% endif %}
+                        "
+                    >
+                        Docentes
+                    </a>
 
-                <a
-                    href="{% url 'prestamos:crear' %}"
-                    class="nav-enlace nav-destacado"
-                >
-                    + Registrar préstamo
-                </a>
+                    <a
+                        href="{% url 'libros:lista' %}"
+                        class="
+                            nav-enlace
+                            {% if request.resolver_match.namespace == 'libros' %}
+                                activo
+                            {% endif %}
+                        "
+                    >
+                        Libros
+                    </a>
 
-            </nav>
-        </div>
-    </header>
+                    <a
+                        href="{% url 'prestamos:lista' %}"
+                        class="
+                            nav-enlace
+                            {% if request.resolver_match.namespace == 'prestamos' %}
+                                activo
+                            {% endif %}
+                        "
+                    >
+                        Préstamos
+                    </a>
 
-    <!-- CONTENIDO PRINCIPAL -->
+                    <!-- Acceso rápido a la operación más utilizada -->
+                    <a
+                        href="{% url 'prestamos:crear' %}"
+                        class="nav-enlace nav-destacado"
+                    >
+                        + Registrar préstamo
+                    </a>
+
+                    <!-- Cerrar sesión -->
+                    <form
+                        method="post"
+                        action="{% url 'logout' %}"
+                        class="m-0 ms-lg-2 formulario-salir"
+                    >
+                        {% csrf_token %}
+
+                        <button
+                            type="submit"
+                            class="btn btn-outline-light btn-sm boton-salir"
+                            title="Cerrar sesión de {{ user.username }}"
+                            aria-label="Cerrar sesión de {{ user.username }}"
+                        >
+                            Salir
+                        </button>
+                    </form>
+                </nav>
+
+            </div>
+        </header>
+    {% endif %}
+
+
+    <!-- Contenido principal -->
     <main class="contenido-principal">
 
-        <!-- MENSAJES GENERADOS POR DJANGO -->
+        <!-- Mensajes generados por Django -->
         {% if messages %}
             <div
                 class="contenedor-mensajes"
@@ -145,8 +184,8 @@
                     <div
                         class="
                             mensaje
-                            mensaje-{{ message.tags }}
                             alert
+
                             {% if message.tags == 'success' %}
                                 alert-success
                             {% elif message.tags == 'error' %}
@@ -156,6 +195,7 @@
                             {% else %}
                                 alert-info
                             {% endif %}
+
                             alert-dismissible
                             fade
                             show
@@ -168,29 +208,33 @@
                             type="button"
                             class="btn-close"
                             data-bs-dismiss="alert"
-                            aria-label="Cerrar"
+                            aria-label="Cerrar mensaje"
                         ></button>
                     </div>
                 {% endfor %}
             </div>
         {% endif %}
 
-        <!-- CONTENIDO DE CADA PÁGINA -->
+        <!-- Contenido de cada página -->
         {% block content %}{% endblock %}
 
     </main>
 
-    <!-- PIE DE PÁGINA -->
-    <footer class="pie-pagina">
-        BIBLIOTECH · Biblioteca Escolar CCTL
-    </footer>
+
+    <!-- Pie general: no aparece en el login -->
+    {% if user.is_authenticated %}
+        <footer class="pie-pagina">
+            BIBLIOTECH · Biblioteca Escolar CCTL
+        </footer>
+    {% endif %}
+
 
     <!-- Bootstrap JavaScript instalado localmente -->
     <script
         src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"
     ></script>
 
-    <!-- MENÚ RESPONSIVO DE BIBLIOTECH -->
+    <!-- Menú responsive -->
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const botonMenu =
@@ -227,7 +271,7 @@
         });
     </script>
 
-    <!-- JAVASCRIPT PROPIO DE CADA PÁGINA -->
+    <!-- JavaScript propio de cada página -->
     {% block extra_js %}{% endblock %}
 
 </body>

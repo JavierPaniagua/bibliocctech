@@ -4,28 +4,126 @@ from .models import Ejemplar, Libro
 
 
 CLASIFICACIONES_SUGERIDAS = [
-    ('', 'Seleccione un tema para recibir una sugerencia'),
-    ('510', '510 — Matemática general'),
-    ('512', '512 — Álgebra'),
-    ('513', '513 — Aritmética'),
-    ('515', '515 — Cálculo y análisis'),
-    ('516', '516 — Geometría general'),
-    ('516.2', '516.2 — Geometría euclidiana'),
-    ('516.22', '516.22 — Geometría plana'),
-    ('516.23', '516.23 — Geometría del espacio'),
-    ('516.24', '516.24 — Trigonometría'),
-    ('516.3', '516.3 — Geometría analítica'),
-    ('516.9', '516.9 — Geometrías no euclidianas'),
-    ('519', '519 — Probabilidad y matemática aplicada'),
-    ('500', '500 — Ciencias naturales'),
-    ('520', '520 — Astronomía'),
-    ('530', '530 — Física'),
-    ('540', '540 — Química'),
-    ('550', '550 — Ciencias de la Tierra'),
-    ('570', '570 — Biología'),
-    ('600', '600 — Tecnología'),
-    ('620', '620 — Ingeniería'),
-    ('621.3', '621.3 — Electricidad y electrónica'),
+    (
+        '',
+        'Seleccione un tema para recibir una sugerencia',
+    ),
+
+    (
+        'Informática y computación',
+        [
+            ('004', '004 — Informática y computación'),
+            ('004.6', '004.6 — Redes de computadoras'),
+            ('005', '005 — Programación y programas'),
+            ('005.1', '005.1 — Programación'),
+            ('005.43', '005.43 — Sistemas operativos'),
+            ('005.74', '005.74 — Bases de datos'),
+            ('006', '006 — Métodos especiales de computación'),
+            ('006.7', '006.7 — Multimedia y desarrollo web'),
+        ],
+    ),
+
+    (
+        'Filosofía y psicología',
+        [
+            ('100', '100 — Filosofía'),
+            ('150', '150 — Psicología'),
+            ('160', '160 — Lógica'),
+            ('170', '170 — Ética'),
+        ],
+    ),
+
+    (
+        'Ciencias sociales y educación',
+        [
+            ('300', '300 — Ciencias sociales'),
+            ('330', '330 — Economía'),
+            ('334', '334 — Cooperativismo'),
+            ('337', '337 — Economía internacional'),
+            ('370', '370 — Educación'),
+            ('373', '373 — Educación secundaria'),
+            ('380', '380 — Comercio y comunicaciones'),
+            ('382', '382 — Comercio internacional'),
+        ],
+    ),
+
+    (
+        'Administración y contabilidad',
+        [
+            ('650', '650 — Administración y servicios auxiliares'),
+            ('651', '651 — Servicios de oficina'),
+            ('657', '657 — Contabilidad'),
+            ('658', '658 — Administración general'),
+            ('659', '659 — Publicidad y relaciones públicas'),
+        ],
+    ),
+
+    (
+        'Lengua y literatura',
+        [
+            ('400', '400 — Lenguas'),
+            ('460', '460 — Lengua española'),
+            ('800', '800 — Literatura'),
+            ('860', '860 — Literatura española'),
+        ],
+    ),
+
+    (
+        'Matemática',
+        [
+            ('510', '510 — Matemática general'),
+            ('511', '511 — Principios generales de matemática'),
+            ('512', '512 — Álgebra'),
+            ('513', '513 — Aritmética'),
+            ('515', '515 — Cálculo y análisis'),
+            ('516', '516 — Geometría'),
+            ('516.2', '516.2 — Geometría euclidiana'),
+            ('516.22', '516.22 — Geometría plana'),
+            ('516.23', '516.23 — Geometría del espacio'),
+            ('516.24', '516.24 — Trigonometría'),
+            ('516.3', '516.3 — Geometría analítica'),
+            ('519', '519 — Probabilidad y matemática aplicada'),
+        ],
+    ),
+
+    (
+        'Ciencias naturales',
+        [
+            ('500', '500 — Ciencias naturales'),
+            ('520', '520 — Astronomía'),
+            ('530', '530 — Física'),
+            ('537', '537 — Electricidad y electrónica'),
+            ('540', '540 — Química'),
+            ('550', '550 — Ciencias de la Tierra'),
+            ('570', '570 — Biología'),
+        ],
+    ),
+
+    (
+        'Tecnología, electricidad y electrónica',
+        [
+            ('600', '600 — Tecnología'),
+            ('620', '620 — Ingeniería'),
+            ('621', '621 — Física aplicada'),
+            ('621.3', '621.3 — Ingeniería eléctrica y electrónica'),
+            ('621.31', '621.31 — Generación y distribución eléctrica'),
+            ('621.381', '621.381 — Electrónica'),
+            ('621.382', '621.382 — Telecomunicaciones'),
+            ('621.39', '621.39 — Ingeniería de computadoras'),
+        ],
+    ),
+
+    (
+        'Artes, geografía e historia',
+        [
+            ('700', '700 — Artes'),
+            ('740', '740 — Dibujo y artes decorativas'),
+            ('900', '900 — Geografía e historia'),
+            ('910', '910 — Geografía y viajes'),
+            ('980', '980 — Historia de América del Sur'),
+            ('989', '989 — Historia del Paraguay'),
+        ],
+    ),
 ]
 
 
@@ -157,6 +255,21 @@ class LibroCrearForm(
             'El código sugerido reemplazará la clasificación escrita.'
         ),
     )
+    codigo_existente = forms.CharField(
+        label='Código existente del libro',
+        required=False,
+        max_length=30,
+        widget=forms.TextInput(
+            attrs={
+                'class': 'campo',
+                'placeholder': 'Ejemplo: 1, 200 o 1000',
+            }
+        ),
+        help_text=(
+            'Ingrese el código que ya aparece en el libro. '
+            'Déjelo vacío si el libro no posee uno.'
+        ),
+    )
 
     cantidad_ejemplares = forms.IntegerField(
         label='Cantidad de ejemplares',
@@ -197,6 +310,11 @@ class LibroCrearForm(
         ),
     )
 
+    def clean_codigo_existente(self):
+        return self.cleaned_data.get(
+            'codigo_existente',
+            '',
+        ).strip()
     condicion_inicial = forms.ChoiceField(
         label='Condición inicial',
         choices=Ejemplar.Condicion.choices,

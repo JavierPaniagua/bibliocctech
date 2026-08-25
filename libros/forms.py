@@ -86,7 +86,7 @@ CLASIFICACIONES_SUGERIDAS = [
         ],
     ),
 
-    (
+      (
         'Ciencias naturales',
         [
             ('500', '500 — Ciencias naturales'),
@@ -95,7 +95,12 @@ CLASIFICACIONES_SUGERIDAS = [
             ('537', '537 — Electricidad y electrónica'),
             ('540', '540 — Química'),
             ('550', '550 — Ciencias de la Tierra'),
-            ('570', '570 — Biología'),
+            ('570', '570 — Ciencias de la vida'),
+            ('574', '574 — Biología'),
+            ('580', '580 — Ciencias botánicas'),
+            ('581', '581 — Botánica'),
+            ('590', '590 — Ciencias zoológicas'),
+            ('591', '591 — Zoología'),
         ],
     ),
 
